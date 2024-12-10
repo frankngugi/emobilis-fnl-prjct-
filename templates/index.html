@@ -1,0 +1,360 @@
+
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta content="width=device-width, initial-scale=1.0" name="viewport">
+
+   
+  <title>RGC-Church Management System</title>
+  <meta content="" name="description">
+  <meta content="" name="keywords">
+
+
+  <!-- Favicons -->
+  <link href="{% static 'assets/img/img/logo.jpg' %}" rel="icon">
+  <!-- <link href="{% static 'assets/img/apple-touch-icon.png' %}" rel="apple-touch-icon"> -->
+  <link rel="stylesheet" href="{% static 'assets/css/remixicon.css' %}">
+  <link
+    href="https://cdn.jsdelivr.net/npm/remixicon@4.1.0/fonts/remixicon.css"
+    rel="stylesheet"
+/>
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css?family=Open+Sans:300,300i,400,400i,600,600i,700,700i|Raleway:300,300i,400,400i,500,500i,600,600i,700,700i|Poppins:300,300i,400,400i,500,500i,600,600i,700,700i" rel="stylesheet">
+   
+    <!--swipper css-->
+  <link rel="stylesheet" href="{% static 'assets/css/swiper-bundle.min.css'%}">
+
+
+  <!-- Vendor CSS Files -->
+  <link href="{% static 'assets/vendor/aos/aos.css' %}" rel="stylesheet">
+  <link href="{% static 'assets/vendor/bootstrap/css/bootstrap.min.css' %}" rel="stylesheet">
+  <link href="{% static 'assets/vendor/bootstrap-icons/bootstrap-icons.css' %}" rel="stylesheet">
+  <link href="{% static 'assets/vendor/boxicons/css/boxicons.min.css' %}" rel="stylesheet">
+  <link href="{% static 'assets/vendor/glightbox/css/glightbox.min.css' %}" rel="stylesheet">
+  <link href="{% static 'assets/vendor/remixicon/remixicon.css' %}" rel="stylesheet">
+  <link href="{% static 'assets/vendor/swiper/swiper-bundle.min.css' %}" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/aos@2.3.4/dist/aos.css" rel="stylesheet">
+
+
+  <link href="{% static 'assets/css/style.css' %}" rel="stylesheet">
+
+
+</head>
+
+<body>
+  
+
+  <script src="https://cdn.jsdelivr.net/npm/aos@2.3.4/dist/aos.js"></script>
+  <script>
+    AOS.init();
+  </script>
+
+  <!-- ======= Header ======= -->
+  <header id="header" class="fixed-top">
+    <div class="branding">
+    <div class="container d-flex align-items-center justify-content-between">
+
+      <!-- <h1 class="logo"><a href="/">RGC-Church</a></h1> -->
+      <a href="/" class="logo"><img src="{% static 'assets/img/img/logo word.png' %}" alt="" class="img-fluid"></a>
+
+      <nav id="navbar" class="navbar">
+        <ul>
+          <li><a class="nav-link scrollto active" href="/">Home</a></li>
+          <li><a class="nav-link scrollto" href="#about">About</a></li>
+          <li><a class="nav-link scrollto" href="/events">Events</a></li>
+          <li><a class="nav-link scrollto" href="/gallery">Gallery</a></li>
+          <!-- <li><a class="nav-link scrollto" href="/chats">Chats</a></li> -->
+          <li><a class="nav-link scrollto" href="/contribute">Contributions</a></li>
+          <li><a class="nav-link scrollto" href="/video">videos</a></li>
+          <li class="dropdown"><a href="#"><span>Groups</span> <i class="bi bi-chevron-down"></i></a>
+            <ul>
+              <li><a href="join_group">Groups</a></li>
+
+            </ul>
+          </li>
+          <li><a class="nav-link scrollto" href="#contact">Contact</a></li>
+          {% if user.is_authenticated %}
+          {% if user.is_staff %}
+          <li><a class="login scrollto" href="adminn">Admin</a></li>
+           {% endif %}
+          <li><a class="login scrollto" href="logout">Logout</a></li>
+          {% else %}
+          <li><a class="login scrollto" href="login">Login or Sign Up</a></li>
+          {% endif %}
+       
+        </ul>
+        <i class="bi bi-list mobile-nav-toggle"></i>
+      </nav><!-- .navbar -->
+
+    </div>
+  </div>
+  </header><!-- End Header -->
+
+  <!-- ======= dashboard Section ======= -->
+  <section id="dashboard" class="d-flex align-items-center">
+
+    
+    <img src="{% static 'assets/img/img/Christ on the Cross - Red and Teal.jpg' %}" alt="" data-aos="fade-in">
+
+    <div class="container position-relative" data-aos="fade-up" data-aos-delay="100">
+      <div class="row justify-content-center">
+        <div class="col-xl-7 col-lg-9 text-center">
+          
+          {% if user.is_authenticated %}
+          <h1>Welcome {{user.username}}!</h1>
+          
+          <!-- <p>You are logged in as a {{user.role}}. You can access different features of the website by clicking on the buttons below
+          <p>You can use this Dashboard to manage your account and access different features of the website.</p>
+          <p>You are logged in as a member of the {{user.group}} group.</p> -->
+          <!-- <a href="/" class="btn-get-started scrollto">Go to Dashboard</a> -->
+          {% else %}
+          <h1>RGC-System</h1>
+          {% endif %}
+          <h2>Where everybody is somebody</h2>
+
+  
+          
+          
+          
+          
+        </div>
+      </div>
+      <div class="text-center">
+        <a href="register" class="btn-get-started scrollto">Get Started</a>
+      </div>
+
+      
+    </div>
+  </section>
+  <!-- End dashboard -->
+
+
+  <main id="main">
+  
+
+    <!-- ======= About Section ======= -->
+    <section id="about" class="about">
+      <div class="container" data-aos="fade-up">
+
+        <div class="section-title">
+          <h2>About Our Church</h2>
+          <p>
+            <strong>Welcome to Redeemed Gospel Church!</strong>
+            We are a vibrant and inclusive Christian community in [Nairobi, Kenya] where all are welcome to explore faith, connect with others, and grow in their relationship with God.
+          </p>
+        </div>
+
+        <div class="row content">
+          <div class="col-lg-6">
+            <p>
+              come get to know us
+            </p>
+            <ul>
+              <li><i class="ri-check-double-line"></i> <strong>Our Mission:</strong>  To build bridges of love, acceptance, and compassion within our community, reflecting the teachings of Jesus Christ.</li>
+              <li><i class="ri-check-double-line"></i> <strong>Our Values:</strong>We believe in grace, inclusivity, and service.  We offer a judgment-free space where everyone can feel welcome, regardless of background or beliefs.  We are passionate about serving our community and making a positive difference in the lives of others</li>
+              <li><i class="ri-check-double-line"></i> <strong>What We Believe: </strong>  We are a non-denominational church grounded in the core teachings of Christianity, emphasizing the importance of love, forgiveness, and service.</li>
+            </ul class= "hidden">
+            <strong>Our Worship Services:</strong> Our Sunday services are a blend of contemporary music, inspiring messages, and opportunities for reflection and connection.  We offer childcare and age-appropriate activities for children during the service.  Whether you're new to faith or a seasoned believer, you'll find a warm welcome at Redeemed Gospel Church.<br>
+
+            <strong>Our Ministries:</strong>  We offer a variety of ministries to connect with others and serve our community, including a young adult group, a community outreach program, and a weekly Bible study.
+
+            <strong>We invite you to join us for a service, explore our website, or reach out to learn more about our church.  We look forward to getting to know you!</strong>
+          </div>
+          <div class="col-lg-6 pt-4 pt-lg-0">
+
+            <a href="#" class="btn-learn-more">Learn More</a>
+          </div>
+        </div>
+
+      </div>
+    </section><!-- End About Section -->
+
+
+
+    <!-- ======= Services Section ======= -->
+
+
+    <!-- ======= Cta Section ======= -->
+    <section id="cta" class="cta">
+      <img src="{% static 'assets/img/img/worship experience.jpg' %}" alt="">
+      <div class="container" data-aos="zoom-in" data-aos-duration="600">
+        <div class="text-center">
+          <h3>Join us in Worship Experience</h3>
+          <p> Reach out to us at our offices</p>
+          <a class="cta-btn" href="register">Register Now</a>
+        </div>
+      </div>
+    </section><!-- End Cta Section -->
+
+
+    <!-- =====leaders Section ======= -->
+    <section id="leaders" class="leaders section-bg">
+      <div class="container" data-aos="fade-up">
+
+        <div class="section-title">
+          <h2>leaders</h2>
+          <p>Below are the Leader of Our Church.</p>
+        </div>
+
+        <div class="row">
+
+          <div class="col-lg-3 col-md-6 d-flex align-items-stretch" data-aos="fade-up" data-aos-delay="100" data-aos-duration="600">
+            <div class="member">
+              <div class="member-img">
+                <img src="{% static 'assets/img/download.jpeg' %}" class="img-fluid" alt="">
+             
+              </div>
+              <div class="member-info">
+                <h4>Bshp. John</h4>
+                <span>Lead Pastor</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-lg-3 col-md-6 d-flex align-items-stretch" data-aos="fade-up" data-aos-delay="200" data-aos-duration="600">
+            <div class="member">
+              <div class="member-img">
+                <img src="{% static 'assets/img/download.jpeg' %}" class="img-fluid" alt="">
+                
+              </div>
+              <div class="member-info">
+                <h4>Rev Grace</h4>
+                <span></span>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-lg-3 col-md-6 d-flex align-items-stretch" data-aos="fade-up" data-aos-delay="300" data-aos-duration="600">
+            <div class="member">
+              <div class="member-img">
+                <img src="{% static 'assets/img/download.jpeg' %}" class="img-fluid" alt="">
+                
+              </div>
+              <div class="member-info">
+                <h4>Eld. Joel</h4>
+                <span>Outreach Ministries Head</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-lg-3 col-md-6 d-flex align-items-stretch" data-aos="fade-up" data-aos-delay="400">
+            <div class="member">
+              <div class="member-img">
+                <img src="{% static 'assets/img/download.jpeg' %}" class="img-fluid" alt="">
+                
+                  
+              </div>
+              <div class="member-info">
+                <h4>Mrs. Ndirangu</h4>
+                <span>Youth Patron</span>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+    </section><!-- End leaders Section -->
+
+
+
+    <!-- ======= Contact Section ======= -->
+    <section id="contact" class="contact">
+      <div class="container" data-aos="fade-up">
+
+        <div class="section-title">
+          <h2>Contact</h2>
+          <p>Reach us using this contacts.</p>
+        <!-- </div> -->
+        
+        <div>
+          <!-- <iframe style="border:0; width: 100%; height: 270px;" src="https://www.google.com/maps/embed?pb=!4m6!3m5!1s0x1787622d3749c62f:0x284a0b34323309d7!8m2!3d0.0296135!4d36.3590016!16s%2Fg%2F11gg3hph2_?entry=ttu" frameborder="0" allowfullscreen></iframe> -->
+        </div>
+       
+        <div class="row mt-5">
+
+          <div class="col-lg-4">
+            <div class="info">
+              <div class="address">
+                <i class="bi bi-geo-alt"></i>
+                <h4>Nairobi</h4>
+                <p>Kenya</p>
+              </div>
+
+              <div class="email">
+                <i class="bi bi-envelope"></i>
+                <h4>Email:</h4>
+                <p>frankngugi@gmail.com</p>
+              </div>
+
+              <div class="phone">
+                <i class="bi bi-phone"></i>
+                <h4>Call:</h4>
+                <p>+254112760740</p>
+              </div>
+
+            </div>
+
+          </div>
+
+
+
+        </div>
+
+      </div>
+    </section><!-- End Contact Section -->
+
+  </main><!-- End #main -->
+ 
+
+  <!-- ======= Footer ======= -->
+  <footer id="footer">
+
+    <div class="footer-top">
+      <div class="container">
+        <div class="row">
+
+          <div class="col-lg-3 col-md-6 footer-contact">
+            <h3>RGC</h3>
+            <p>
+              Nairobi,Kenya <br>
+              <strong>Phone:</strong> +254---------<br>
+              <strong>Email:</strong> frankngugi@gmail.com<br>
+            </p>
+          </div>
+
+        
+      </div>
+      <div class="social-links text-center text-md-right pt-3 pt-md-0">
+        <a href="https://www.facebook.com/" class="twitter"><i class="ri-facebook-box-fill"></i></a>
+        <a href="https://twitter.com/?lang=en" class="facebook"><i class="ri-twitter-x-fill"></i></a>
+        <a href="https://www.instagram.com/" class="instagram"><i class="ri-instagram-fill"></i></a>
+        
+        <a href="https://ke.linkedin.com/" class="linkedin"><i class="ri-linkedin-fill"></i></i></a>
+      </div>
+    </div>
+  </footer><!-- End Footer -->
+
+  <div id="preloader"></div>
+  <a href="#" class="back-to-top d-flex align-items-center justify-content-center"><i class="bi bi-arrow-up-short"></i></a>
+
+  <!-- Vendor JS Files -->
+  
+  <script src="{% static 'assets/vendor/aos/aos.js' %}"></script>
+  <script src="{% static 'assets/vendor/scrollreveal.min.js' %}"></script>
+  <script src="{% static 'assets/vendor/bootstrap/js/bootstrap.bundle.min.js' %}"></script>
+  <script src="{% static 'assets/vendor/glightbox/js/glightbox.min.js' %}"></script>
+  <script src="{% static 'assets/vendor/isotope-layout/isotope.pkgd.min.js' %}"></script>
+  <script src="{% static 'assets/vendor/swiper/swiper-bundle.min.js' %}"></script>
+  <script src="{% static 'assets/vendor/php-email-form/validate.js' %}"></script>
+
+  <!-- Template Main JS File -->
+  <script src="{% static '/assets/js/main.js' %}" ></script>
+  
+</body>
+
+</html>

@@ -1,0 +1,27 @@
+{% extends "adminn.html" %}
+
+{% block content %}
+  <h1>User and Group Report</h1>
+  <table>
+    <thead>
+      <tr>
+        <th>User</th>
+        <th>Groups</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for user in users %}
+        <tr>
+          <td>{{ user.username }}</td>
+          <td>
+            {% for group in user.groups.all %}
+              {{ group.name }}{% if not forloop.last %},{% endif %}
+            {% empty %}
+              None
+            {% endfor %}
+          </td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+{% endblock %}

@@ -1,0 +1,95 @@
+<style>
+.message{
+    color: red;
+}
+
+</style>
+{% load static %}
+
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta content="width=device-width, initial-scale=1.0" name="viewport">
+
+   
+  <title>RGC-Church Management System</title>
+  <meta content="" name="description">
+  <meta content="" name="keywords">
+
+
+  <!-- Favicons -->
+
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css?family=Open+Sans:300,300i,400,400i,600,600i,700,700i|Raleway:300,300i,400,400i,500,500i,600,600i,700,700i|Poppins:300,300i,400,400i,500,500i,600,600i,700,700i" rel="stylesheet">
+   
+    <!--swipper css-->
+  
+</head>
+
+<body>
+
+  <!-- Vendor CSS Files -->
+  
+  <link href="{% static 'assets/vendor/bootstrap/css/bootstrap.min.css' %}" rel="stylesheet">
+  
+  
+  
+  <link href="{% static 'assets/vendor/remixicon/remixicon.css' %}" rel="stylesheet">
+  
+
+  <!-- Template Main CSS File -->
+  <link href="{% static 'assets/css/style.css' %}" rel="stylesheet">
+
+{% for message in messages %}
+<h5 class="message">{{message}}</h5><br />
+{% endfor %}
+<section id="loginpage" class="d-flex align-items-center login-container">
+  <img src="{% static 'assets/img/img/leaf.jpg' %}" alt="" data-aos="fade-in">
+    <div class="container position-relative" data-aos="fade-up" data-aos-delay="100">
+      <div class="login-form justify-content-center">
+        <div class="col-xl-7 col-lg-9 text-center">
+            <h1>Login</h1>
+            <form method="POST" id="login-form" action="login">
+                {% csrf_token %}
+                <p>Admin</p>
+              <input type="radio" placeholder="admin" name="user_type" value="admin"/>
+              <div class="form-group">
+                <p>User</p>
+                <input type="radio" id="user" name="user_type" value="user" checked/><br>
+                    
+                <input type="submit"/><br>
+                <br>
+                <span class="login__signup">
+                    You don't have an account? <a href="register" class="register">Sign Up</a>
+                </span><br>
+            
+                <a href="#" class="login__forgot">
+                    You forgot your password?
+                </a>
+            
+            </form>
+        </div>
+       </div>
+    </div>
+</section> 
+
+<script src="https://cdn.jsdelivr.net/npm/@clerk/clerk-sdk-js"></script>
+<script>
+  const clerk = new Clerk({ apiKey: 'pk_test_aW5ub2NlbnQtamFja2FsLTMwLmNsZXJrLmFjY291bnRzLmRldiQ' });
+</script>
+
+
+
+<script src="{% static 'assets/vendor/bootstrap/js/bootstrap.bundle.min.js' %}"></script>
+
+<script src="{% static 'assets/vendor/php-email-form/validate.js' %}"></script>
+
+<!-- Template Main JS File -->
+<script src="{% static 'assets/js/main.js' %}"></script>
+
+
+</body>
+</html>

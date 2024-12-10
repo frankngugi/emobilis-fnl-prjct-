@@ -1,0 +1,185 @@
+{% load static %}
+
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta content="width=device-width, initial-scale=1.0" name="viewport">
+
+   
+  <title>RGC-Church Management System</title>
+  <meta content="" name="description">
+  <meta content="" name="keywords">
+
+
+  <!-- Favicons -->
+  <link href="{% static 'assets/img/img/logo.jpg' %}" rel="icon">
+  <!-- <link href="{% static 'assets/img/apple-touch-icon.png' %}" rel="apple-touch-icon"> -->
+  <link rel="stylesheet" href="{% static 'assets/css/remixicon.css' %}">
+  <link
+    href="https://cdn.jsdelivr.net/npm/remixicon@4.1.0/fonts/remixicon.css"
+    rel="stylesheet"
+/>
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css?family=Open+Sans:300,300i,400,400i,600,600i,700,700i|Raleway:300,300i,400,400i,500,500i,600,600i,700,700i|Poppins:300,300i,400,400i,500,500i,600,600i,700,700i" rel="stylesheet">
+   
+    <!--swipper css-->
+  <link rel="stylesheet" href="{% static 'assets/css/swiper-bundle.min.css'%}">
+
+
+  <!-- Vendor CSS Files -->
+  <link href="{% static 'assets/vendor/aos/aos.css' %}" rel="stylesheet">
+  <link href="{% static 'assets/vendor/bootstrap/css/bootstrap.min.css' %}" rel="stylesheet">
+  <link href="{% static 'assets/vendor/bootstrap-icons/bootstrap-icons.css' %}" rel="stylesheet">
+  <link href="{% static 'assets/vendor/boxicons/css/boxicons.min.css' %}" rel="stylesheet">
+  <link href="{% static 'assets/vendor/glightbox/css/glightbox.min.css' %}" rel="stylesheet">
+  <link href="{% static 'assets/vendor/remixicon/remixicon.css' %}" rel="stylesheet">
+  <link href="{% static 'assets/vendor/swiper/swiper-bundle.min.css' %}" rel="stylesheet">
+
+  <link href="https://cdn.jsdelivr.net/npm/aos@2.3.4/dist/aos.css" rel="stylesheet">
+
+  
+  <link href="{% static 'assets/css/style.css' %}" rel="stylesheet">
+
+
+</head>
+
+<body>
+
+
+  <script src="https://cdn.jsdelivr.net/npm/aos@2.3.4/dist/aos.js"></script>
+  <script>
+    AOS.init();
+  </script>
+
+  <!-- ======= Header ======= -->
+  <header id="header" class="fixed-top">
+    <div class="branding">
+    <div class="container d-flex align-items-center justify-content-between">
+
+      <!-- <h1 class="logo"><a href="/">RGC-Church</a></h1> -->
+      <!-- Uncomment below if you prefer to use an image logo -->
+      <a href="/" class="logo"><img src="{% static 'assets/img/img/logo word.png' %}" alt="" class="img-fluid"></a>
+
+      <nav id="navbar" class="navbar">
+        <ul>
+          <li><a class="nav-link scrollto active" href="/">Home</a></li>
+          <li><a class="nav-link scrollto" href="#about">About</a></li>
+          <li><a class="nav-link scrollto" href="#services">Service</a></li>
+          <li><a class="nav-link scrollto" href="/gallery">Gallery</a></li>
+          <!-- <li><a class="nav-link scrollto" href="/chats">Chats</a></li> -->
+          <li><a class="nav-link scrollto" href="#Contributions">Contributions</a></li>
+          <li class="dropdown"><a href="#"><span>Groups</span> <i class="bi bi-chevron-down"></i></a>
+            <ul>
+              <li><a href="#">Groups</a></li>
+              <li class="dropdown"><a href="#"><span>Church fellowships/groups</span> <i class="bi bi-chevron-right"></i></a>
+                <ul>
+                  <li><a href="#">Town</a></li>
+                  <li><a href="#">Runda fellowship</a></li>
+                  <li><a href="#">Beraka</a></li>
+                  <li><a href="#">Cosite fellowship</a></li>
+                  <li><a href="#">etc....</a></li>
+                </ul>
+              </li>
+              <li><a href="#">Men</a></li>
+              <li><a href="#">Women</a></li>
+              <li><a href="#">Youth</a></li>
+              <li><a href="#">Sunday School</a>ha></li>
+            </ul>
+          </li>
+        </ul>
+        <i class="bi bi-list mobile-nav-toggle"></i>
+      </nav><!-- .navbar -->
+
+    </div>
+  </div>
+  </header><!-- End Header -->
+
+  
+  
+  <section id="abt-video" class="abt-video">
+    <div class="video-container" data-aos="fade-up">
+      <h2>Preachings, Sermons  and Videos</h2>
+        <p>Watch our latest sermons and preaching videos here. You can also listen to them on the radio or download them for offline viewing</p>
+        
+
+          <div class="row">
+            
+            
+            {% for x in video %}
+                <h1>Videos</h1>
+              <div class="col-lg-6 col-md-8 col-sm-6 video-box align-self-baseline position-relative" data-aos="fade-right" data-aos-delay="100">
+                <h3>{{x.title}}</h3>
+                <video class = "this_video embed-responsive centered-video embed-responsive-16by9" width="360" height="240" controls="controls">
+                    <source src="{{x.video.url}}" type="video/mp4" />
+                </video>
+              </div>    
+                <div class="col-lg-6 pt-3 pt-lg-0 content" data-aos="fade-left" data-aos-delay="100">
+                  <h3>description</h3>
+                    <p class="fst-italic">
+                      {{x.description}}
+                    </p>
+
+                  <h3>details</h3> 
+                    <p class="fst-italic">
+                      {{x.details}}
+                    </p> 
+                </div>
+              
+             
+                {% endfor %}
+                
+          </div>
+    
+    </div>
+  </section><!-- End About Video Section -->
+
+  <!-- ======= Footer ======= -->
+  <footer id="footer">
+
+    <div class="footer-top">
+      <div class="container">
+        <div class="row">
+
+          <div class="col-lg-3 col-md-6 footer-contact">
+            <h3>RGC</h3>
+            <p>
+              Nairobi,Kenya <br>
+              <strong>Phone:</strong> +254---------<br>
+              <strong>Email:</strong> frankngugi@gmail.com<br>
+            </p>
+          </div>
+
+        
+      </div>
+      <div class="social-links text-center text-md-right pt-3 pt-md-0">
+        <a href="#" class="twitter"><i class="bx bxl-twitter"></i></a>
+        <a href="#" class="facebook"><i class="bx bxl-facebook"></i></a>
+        <a href="#" class="instagram"><i class="bx bxl-instagram"></i></a>
+        <a href="#" class="google-plus"><i class="bx bxl-skype"></i></a>
+        <a href="#" class="linkedin"><i class="bx bxl-linkedin"></i></a>
+      </div>
+    </div>
+  </footer><!-- End Footer -->
+
+  <div id="preloader"></div>
+  <a href="#" class="back-to-top d-flex align-items-center justify-content-center"><i class="bi bi-arrow-up-short"></i></a>
+
+  <!-- Vendor JS Files -->
+  
+  <script src="{% static 'assets/vendor/aos/aos.js' %}"></script>
+  <script src="{% static 'assets/vendor/scrollreveal.min.js' %}"></script>
+  <script src="{% static 'assets/vendor/bootstrap/js/bootstrap.bundle.min.js' %}"></script>
+  <script src="{% static 'assets/vendor/glightbox/js/glightbox.min.js' %}"></script>
+  <script src="{% static 'assets/vendor/isotope-layout/isotope.pkgd.min.js' %}"></script>
+  <script src="{% static 'assets/vendor/swiper/swiper-bundle.min.js' %}"></script>
+  <script src="{% static 'assets/vendor/php-email-form/validate.js' %}"></script>
+
+  <!-- Template Main JS File -->
+  <script src="{% static 'assets/js/main.js' %}"></script>
+
+</body>
+
+</html>
