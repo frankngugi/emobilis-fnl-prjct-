@@ -1,0 +1,89 @@
+
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta content="width=device-width, initial-scale=1.0" name="viewport">
+  <title>RGC-Church Management System</title>
+  <meta content="" name="description">
+  <meta content="" name="keywords">
+  <!-- Favicons -->
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css?family=Open+Sans:300,300i,400,400i,600,600i,700,700i|Raleway:300,300i,400,400i,500,500i,600,600i,700,700i|Poppins:300,300i,400,400i,500,500i,600,600i,700,700i" rel="stylesheet">
+  <!-- Vendor CSS Files -->
+  <link href="{% static 'assets/vendor/bootstrap/css/bootstrap.min.css' %}" rel="stylesheet">
+  <link href="{% static 'assets/vendor/remixicon/remixicon.css' %}" rel="stylesheet">
+  <!-- Template Main CSS File -->
+  <link href="{% static 'assets/css/style.css' %}" rel="stylesheet">
+  <style>
+    .messages {
+      color: red;
+    }
+  </style>
+</head>
+
+<body>
+  {% for message in messages %}
+  <h5 class="messages">{{message}}</h5><br />
+  {% endfor %}
+  <section id="loginpage" class="d-flex align-items-center">
+    <img src="{% static 'assets/img/img/leaf.jpg' %}" alt="" data-aos="fade-in">
+    <div class="container position-relative" data-aos="fade-up" data-aos-delay="100">
+      <div class="login-form justify-content-center">
+        <div class="col-xl-7 col-lg-9 text-center">
+          <h1>Register Now</h1>
+          <form id="signup-form" method="POST" action="register">
+            {% csrf_token %}
+            <p>Username:</p>
+            <input type="text" name="username" />
+            <p>Phone Number:</p>
+            <input type="text" name="phone" />
+            <p>Email:</p>
+            <input type="email" name="email" />
+            <p>Password:</p>
+            <input type="password" name="password" />
+            <p>Confirm Password:</p>
+            <input type="password" name="confirm_password" /><br>
+            <p>Select Group:</p>
+            <select name="group">
+                <option value="">-- Select Group --</option>
+                {% for group in groups %}
+                    <option value="{{ group.id }}">{{ group.name }}</option>
+                {% endfor %}
+            </select>
+            <br><br>
+            <input type="submit" />
+            <!-- <div id="otp-form" style="display: none;">
+              <p>Enter OTP:</p>
+              <input type="text" id="otp" required>
+              <button onclick="validateOTP()">Submit</button>
+          </div> -->
+            <br><br>
+            <span class="login__signup">
+              You already have an account? <br><a href="login" class="signup">Login</a>
+            </span>
+          </form>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Vendor JS Files -->
+  <script src="{% static 'assets/vendor/bootstrap/js/bootstrap.bundle.min.js' %}"></script>
+  <script src="{% static 'assets/vendor/php-email-form/validate.js' %}"></script>
+
+  <!-- Clerk SDK and OTP Handling -->
+  <script src="https://cdn.jsdelivr.net/npm/@clerk/clerk-sdk-js"></script>
+
+
+<div id="message"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@clerk/clerk-sdk-js"></script>
+  <!-- Template Main JS File -->
+  <script src="{% static 'assets/js/main.js' %}"></script>
+
+</body>
+
+</html>

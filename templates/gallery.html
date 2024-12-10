@@ -1,0 +1,565 @@
+
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta content="width=device-width, initial-scale=1.0" name="viewport">
+
+   
+  <title>RGC-Church Management System</title>
+  <meta content="" name="description">
+  <meta content="" name="keywords">
+
+
+  <!-- Favicons -->
+  <link href="{% static 'assets/img/img/logo.jpg' %}" rel="icon">
+  <!-- <link href="{% static 'assets/img/apple-touch-icon.png' %}" rel="apple-touch-icon"> -->
+  <link rel="stylesheet" href="{% static 'assets/css/remixicon.css' %}">
+  <link
+    href="https://cdn.jsdelivr.net/npm/remixicon@4.1.0/fonts/remixicon.css"
+    rel="stylesheet"
+/>
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css?family=Open+Sans:300,300i,400,400i,600,600i,700,700i|Raleway:300,300i,400,400i,500,500i,600,600i,700,700i|Poppins:300,300i,400,400i,500,500i,600,600i,700,700i" rel="stylesheet">
+   
+    <!--swipper css-->
+  <link rel="stylesheet" href="{% static 'assets/css/swiper-bundle.min.css'%}">
+
+
+  <!-- Vendor CSS Files -->
+  <link href="{% static 'assets/vendor/aos/aos.css' %}" rel="stylesheet">
+  <link href="{% static 'assets/vendor/bootstrap/css/bootstrap.min.css' %}" rel="stylesheet">
+  <link href="{% static 'assets/vendor/bootstrap-icons/bootstrap-icons.css' %}" rel="stylesheet">
+  <link href="{% static 'assets/vendor/boxicons/css/boxicons.min.css' %}" rel="stylesheet">
+  <link href="{% static 'assets/vendor/glightbox/css/glightbox.min.css' %}" rel="stylesheet">
+  <link href="{% static 'assets/vendor/remixicon/remixicon.css' %}" rel="stylesheet">
+  <link href="{% static 'assets/vendor/swiper/swiper-bundle.min.css' %}" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/aos@2.3.4/dist/aos.css" rel="stylesheet">
+
+
+  <link href="{% static 'assets/css/style.css' %}" rel="stylesheet">
+
+
+</head>
+
+<body>
+  
+
+  <script src="https://cdn.jsdelivr.net/npm/aos@2.3.4/dist/aos.js"></script>
+  <script>
+    AOS.init();
+  </script>
+
+  <!-- ======= Header ======= -->
+  <header id="header" class="fixed-top">
+    <div class="branding">
+    <div class="container d-flex align-items-center justify-content-between">
+
+      <!-- <h1 class="logo"><a href="/">RGC-Church</a></h1> -->
+      <a href="/" class="logo"><img src="{% static 'assets/img/img/logo word.png' %}" alt="" class="img-fluid"></a>
+
+      <nav id="navbar" class="navbar">
+        <ul>
+          <li><a class="nav-link scrollto active" href="/">Home</a></li>
+          <li><a class="nav-link scrollto" href="#about">About</a></li>
+          <li><a class="nav-link scrollto" href="/events">Events</a></li>
+          <li><a class="nav-link scrollto" href="/gallery">Gallery</a></li>
+          <!-- <li><a class="nav-link scrollto" href="/chats">Chats</a></li> -->
+          <li><a class="nav-link scrollto" href="/contribute">Contributions</a></li>
+          <li><a class="nav-link scrollto" href="/video">videos</a></li>
+          <li class="dropdown"><a href="#"><span>Groups</span> <i class="bi bi-chevron-down"></i></a>
+            <ul>
+              <li><a href="#">Groups</a></li>
+              <li class="dropdown"><a href="#"><span>Church fellowships/groups</span> <i class="bi bi-chevron-right"></i></a>
+                <ul>
+                  <li><a href="#">Town</a></li>
+                  <li><a href="#">Runda fellowship</a></li>
+                  <li><a href="#">Beraka</a></li>
+                  <li><a href="#">Cosite fellowship</a></li>
+                  <li><a href="#">etc....</a></li>
+                </ul>
+              </li>
+              <li><a href="#">Men</a></li>
+              <li><a href="#">Women</a></li>
+              <li><a href="#">Youth</a></li>
+              <li><a href="#">Sunday School</a>ha></li>
+            </ul>
+          </li>
+          <li><a class="nav-link scrollto" href="#contact">Contact</a></li>
+          {% if user.is_authenticated %}
+          <li><a class="login scrollto" href="logout">Logout</a></li>
+          {% else %}
+          <li><a class="login scrollto" href="login">Login or Sign Up</a></li>
+          {% endif %}
+       
+        </ul>
+        <i class="bi bi-list mobile-nav-toggle"></i>
+      </nav><!-- .navbar -->
+
+    </div>
+  </div>
+  </header><!-- End Header -->
+
+<main id="main">
+
+    
+
+
+    <!-- ======= Breadcrumbs ======= -->
+    <section id="breadcrumbs" class="breadcrumbs">
+      <div class="container">
+
+        <div class="d-flex justify-content-between align-items-center">
+          <h2>images</h2>
+          <ol>
+            <li><a href="/">Home</a></li>
+            <li>Images</li>
+          </ol>
+        </div>
+
+      </div>
+    </section>
+    <!-- End Breadcrumbs -->
+  <section id="gallery" class="gallery">
+    <div class="container" data-aos="fade-up">
+    
+      <div class="row" data-aos="fade-up" data-aos-delay="150">
+        <div class="col-lg-12 d-flex justify-content-center">
+          <ul id="gallery-flters">
+            <li data-filter="*" class="filter-active">All</li>
+            <li data-filter=".filter-app">services</li>
+            <li data-filter=".filter-Activities">Activities</li>
+            <li data-filter=".filter-Charities">Charity</li>
+            <li data-filter=".filter-Retreates">Retreates</li>
+            <li data-filter=".filter-Fun">Fun</li>
+            <li data-filter=".filter-Weddings">Weddings</li>
+          </ul>
+        </div>
+      </div>
+
+      <h1>Media Gallery</h1>
+
+
+    <div class="row gallery-container" data-aos="fade-up" data-aos-delay="300">
+      {% for x in image %}
+      <div class="col-lg-4 col-md-6 gallery-item filter-Activities">
+        <div class="gallery-wrap">
+          <img src="{{x.image.url}}" class="img-fluid" alt="">
+
+        </div>
+        
+      </div>
+      {% endfor %}
+
+      <div class="col-lg-4 col-md-6 gallery-item filter-Weddings">
+        <div class="gallery-wrap">
+          <img src="{% static 'assets/img/wedding 2.jpeg' %}" class="img-fluid" alt="">
+          <div class="gallery-info">
+            <h4>Weddings</h4>
+            <p>Weddings</p>
+            <div class="gallery-links">
+              <a href="{% static 'assets/img/wedding 2.jpeg' %}" data-gallery="galleryGallery" class="gallery-lightbox" title="Weddings"><i class="bx bx-plus"></i></a>
+              
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-lg-4 col-md-6 gallery-item filter-Fun">
+        <div class="gallery-wrap">
+          <img src="{% static 'assets/img/fun1.jpeg' %}" class="img-fluid" alt="">
+          <div class="gallery-info">
+            <h4>Fun</h4>
+            <p>Fun</p>
+            <div class="gallery-links">
+              <a href="{% static 'assets/img/fun1.jpeg' %}" data-gallery="galleryGallery" class="gallery-lightbox" title="Fun"><i class="bx bx-plus"></i></a>
+              
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-lg-4 col-md-6 gallery-item filter-Charities">
+        <div class="gallery-wrap">
+          <img src="{% static 'assets/img/charity.jpeg' %}" class="img-fluid" alt="">
+          <div class="gallery-info">
+            <h4>Charities</h4>
+            <p>Charities</p>
+            <div class="gallery-links">
+              <a href="{% static 'assets/img/charity.jpeg' %}" data-gallery="galleryGallery" class="gallery-lightbox" title="Charities"><i class="bx bx-plus"></i></a>
+              
+            </div>
+          </div>
+        </div>
+      </div>
+
+      
+
+
+      <div class="col-lg-4 col-md-6 gallery-item filter-Activities">
+        <divgallery-wrap">
+          <img src="{% static 'assets/img/events.jpeg' %}" class="img-fluid" alt="">
+          <div class="gallery-info">
+            <h4>Activities</h4>
+            <p>Activities</p>
+            <div class="gallery-links">
+              <a href="{% static 'assets/img/events.jpeg' %}" data-gallery="galleryGallery" class="gallery-lightbox" title="Charities"><i class="bx bx-plus"></i></a>
+              
+            </div>
+          </div>
+        </div>
+      
+
+      <div class="col-lg-4 col-md-6 gallery-item filter-Weddings">
+        <div class="gallery-wrap">
+          <img src="{% static 'assets/img/charity2.jpeg' %}" class="img-fluid" alt="">
+          <div class="gallery-info">
+            <h4>Weddings 3</h4>
+            <p>Weddings</p>
+            <div class="gallery-links">
+              <a href="{% static 'assets/img/charity2.jpeg' %}" data-gallery="galleryGallery" class="gallery-lightbox" title="Charities"><i class="bx bx-plus"></i></a>
+              
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-lg-4 col-md-6 gallery-item filter-Activities">
+        <div class="gallery-wrap">
+          <img src="{% static 'assets/img/wedding 2.jpeg' %}" class="img-fluid" alt="">
+          <div class="gallery-info">
+            <h4>Events</h4>
+            <p>Events</p>
+            <div class="gallery-links">
+              <a href="{% static 'assets/img/wedding 2.jpeg' %}" data-gallery="galleryGallery" class="gallery-lightbox" title="Activities"><i class="bx bx-plus"></i></a>
+              
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-lg-4 col-md-6 gallery-item filter-Activities">
+        <div class="gallery-wrap">
+          <img src="{% static 'assets/img/events2.jpeg' %}" class="img-fluid" alt="">
+          <div class="gallery-info">
+            <h4>Activities</h4>
+            <p>Activities</p>
+            <div class="gallery-links">
+              <a href="{% static 'assets/img/events2.jpeg' %}" data-gallery="galleryGallery" class="gallery-lightbox" title="Activities"><i class="bx bx-plus"></i></a>
+              <a href="gallery" title="More Details"><i class="bx bx-link"></i></a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-lg-4 col-md-6 gallery-item filter-Charities">
+        <div class="gallery-wrap">
+          <img src="{% static 'assets/img/charity.jpeg' %}" class="img-fluid" alt="">
+          <div class="gallery-info">
+            <h4>Charities 1</h4>
+            <p>Charities</p>
+            <div class="gallery-links">
+              <a href="{% static 'assets/img/charity.jpeg' %}" data-gallery="galleryGallery" class="gallery-lightbox" title="Charities 1"><i class="bx bx-plus"></i></a>
+              <a href="gallery" title="More Details"><i class="bx bx-link"></i></a>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+  <div class="col-lg-4 col-md-6 gallery-item filter-Activities">
+    <div class="gallery-wrap">
+      <img src="{% static 'assets/img/events2.jpeg' %}" class="img-fluid" alt="">
+      <div class="gallery-info">
+        <h4>Activities 1</h4>
+        <p>Activities</p>
+        <div class="gallery-links">
+          <a href="{% static 'assets/img/events2.jpeg' %}" data-gallery="galleryGallery" class="gallery-lightbox" title="Activities 1"><i class="bx bx-plus"></i></a>
+          
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-4 col-md-6 gallery-item filter-Weddings">
+    <div class="gallery-wrap">
+      <img src="{% static 'assets/img/weddings.jpeg' %}" class="img-fluid" alt="">
+      <div class="gallery-info">
+        <h4>Weddings 1</h4>
+        <p>Weddings</p>
+        <div class="gallery-links">
+          <a href="{% static 'assets/img/weddings.jpeg' %}" data-gallery="galleryGallery" class="gallery-lightbox" title="Weddings 1"><i class="bx bx-plus"></i></a>
+          
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-4 col-md-6 gallery-item filter-Fun">
+    <div class="gallery-wrap">
+      <img src="{% static 'assets/img/images activities.jpeg' %}" class="img-fluid" alt="">
+      <div class="gallery-info">
+        <h4>Fun 1</h4>
+        <p>Fun</p>
+        <div class="gallery-links">
+          <a href="{% static 'assets/img/images activities.jpeg' %}" data-gallery="galleryGallery" class="gallery-lightbox" title="Fun 1"><i class="bx bx-plus"></i></a>
+          
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-4 col-md-6 gallery-item filter-Charities">
+    <div class="gallery-wrap">
+      <img src="{% static 'assets/img/charity.jpeg' %}" class="img-fluid" alt="">
+      <div class="gallery-info">
+        <h4>Charities 2</h4>
+        <p>Charities</p>
+        <div class="gallery-links">
+          <a href="{% static 'assets/img/charity.jpeg' %}" data-gallery="galleryGallery" class="gallery-lightbox" title="Charities 2"><i class="bx bx-plus"></i></a>
+          
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+  <div class="col-lg-4 col-md-6 gallery-item filter-Activities">
+    <div  class="gallery-wrap">
+      <img src="{% static 'assets/img/events 3.jpeg' %}" class="img-fluid" alt="">
+      <div class="gallery-info">
+        <h4>Activities 2</h4>
+        <p>Activities</p>
+        <div class="gallery-links">
+          <a href="{% static 'assets/img/events 3.jpeg' %}" data-gallery="galleryGallery" class="gallery-lightbox" title="Activities 2"><i class="bx bx-plus"></i></a>
+          
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-4 col-md-6 gallery-item filter-Activities">
+    <div class="gallery-wrap">
+      <img src="{% static 'assets/img/downloadw.jpeg' %}" class="img-fluid" alt="">
+      <div class="gallery-info">
+        <h4>Activities 3</h4>
+        <p>Activities</p>
+        <div class="gallery-links">
+          <a href="{% static 'assets/img/downloadw.jpeg' %}" data-gallery="galleryGallery" class="gallery-lightbox" title="Activities 3"><i class="bx bx-plus"></i></a>
+          
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-4 col-md-6 gallery-item filter-Activities">
+    <div class="gallery-wrap">
+      <img src="{% static 'assets/img/downloadw.jpeg' %}" class="img-fluid" alt="">
+      <div class="gallery-info">
+        <h4>Activities 4</h4>
+        <p>Activities</p>
+        <div class="gallery-links">
+          <a href="{% static 'assets/img/downloadw.jpeg' %}" data-gallery="galleryGallery" class="gallery-lightbox" title="Activities 4"><i class="bx bx-plus"></i></a>
+          
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-4 col-md-6 gallery-item filter-Activities">
+    <div class="gallery-wrap">
+      <img src="{% static 'assets/img/downloadw1.jpeg' %}" class="img-fluid" alt="">
+      <div class="gallery-info">
+        <h4>Activities 5</h4>
+        <p>Activities</p>
+        <div class="gallery-links">
+          <a href="{% static 'assets/img/downloadw1.jpeg' %}" data-gallery="galleryGallery" class="gallery-lightbox" title="Activities 5"><i class="bx bx-plus"></i></a>
+          
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-4 col-md-6 gallery-item filter-Activities">
+    <div class="gallery-wrap">
+      <img src="{% static 'assets/img/downloadw3.jpeg' %}" class="img-fluid" alt="">
+      <div class="gallery-info">
+        <h4>Activities 6</h4>
+        <p>Activities</p>
+        <div class="gallery-links">
+          <a href="{% static 'assets/img/downloadw3.jpeg' %}" data-gallery="galleryGallery" class="gallery-lightbox" title="Activities 5"><i class="bx bx-plus"></i></a>
+          
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-4 col-md-6 gallery-item filter-Activities">
+    <div class="gallery-wrap">
+      <img src="{% static 'assets/img/downloadw4.jpeg' %}" class="img-fluid" alt="">
+      <div class="gallery-info">
+        <h4>Activities 7</h4>
+        <p>Activities</p>
+        <div class="gallery-links">
+          <a href="{% static 'assets/img/downloadw4.jpeg' %}" data-gallery="galleryGallery" class="gallery-lightbox" title="Activities 7"><i class="bx bx-plus"></i></a>
+          
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-4 col-md-6 gallery-item filter-Weddings">
+    <div class="gallery-wrap">
+      <img src="{% static 'assets/img/charity2.jpeg' %}" class="img-fluid" alt="">
+      <div class="gallery-info">
+        <h4>Weddings 3</h4>
+        <p>Weddings</p>
+        <div class="gallery-links">
+          <a href="{% static 'assets/img/charity2.jpeg' %}" data-gallery="galleryGallery" class="gallery-lightbox" title="Charities"><i class="bx bx-plus"></i></a>
+          
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-4 col-md-6 gallery-item filter-Activities">
+    <div class="gallery-wrap">
+      <img src="{% static 'assets/img/wedding 2.jpeg' %}" class="img-fluid" alt="">
+      <div class="gallery-info">
+        <h4>Events</h4>
+        <p>Events</p>
+        <div class="gallery-links">
+          <a href="{% static 'assets/img/wedding 2.jpeg' %}" data-gallery="galleryGallery" class="gallery-lightbox" title="Activities"><i class="bx bx-plus"></i></a>
+          
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+    </div>
+
+    </div>
+  </section><!-- End gallery Section -->
+
+
+    <!-- ======= gallery Details Section ======= -->
+  <section id="gallery-details" class="gallery-details">
+    <div class="container">
+
+      <div class="row gy-4">
+
+        <div class="col-lg-8">
+          <div class="gallery-details-slider swiper">
+            <div class="swiper-wrapper align-items-center">
+
+              <div class="swiper-slide">
+                <img src="{% static 'assets/img/charity.jpeg' %}" alt="">
+              </div>
+
+              <div class="swiper-slide">
+                <img src="{% static 'assets/img/weddings.jpeg' %}" alt="">
+              </div>
+
+              <div class="swiper-slide">
+                <img src="{% static 'assets/img/events 3.jpeg' %}" alt="">
+              </div>
+              <div class="swiper-slide">
+                <img src="{% static 'assets/img/events2.jpeg' %}" alt="">
+              </div>
+              <div class="swiper-slide">
+                <img src="{% static 'assets/img/events.jpeg' %}" alt="">
+              </div>
+              <div class="swiper-slide">
+                <img src="{% static 'assets/img/images activities.jpeg' %}" alt="">
+              </div>
+              <div class="swiper-slide">
+                <img src="{% static 'assets/img/imageservice.jpeg' %}" alt="">
+              </div>
+
+            </div>
+            <div class="swiper-pagination"></div>
+          </div>
+        </div>
+
+        <div class="col-lg-4">
+          <div class="gallery-info">
+            <h3>About the Image</h3>
+            <ul>
+              <p>xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx</p>
+            </ul>
+          </div>
+          <div class="gallery-description">
+            <h2>Gallery</h2>
+            <p>
+              A collection of our events, celebrations, charities, services, etc.
+            </p>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+  </section><!-- End gallery Details Section -->
+
+</main><!-- End #main -->
+
+  <!-- ======= Footer ======= -->
+  <footer id="footer">
+
+    <div class="footer-top">
+      <div class="container">
+        <div class="row">
+
+          <div class="col-lg-3 col-md-6 footer-contact">
+            <h3>RGC</h3>
+            <p>
+              Nairobi,Kenya <br>
+              <strong>Phone:</strong> +254---------<br>
+              <strong>Email:</strong> frankngugi@gmail.com<br>
+            </p>
+          </div>
+
+          
+          <div class="col-lg-4 col-md-6 footer-newsletter">
+            <h4>Join Our Newsletter</h4>
+            <p>xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx</p>
+            <form action="" method="post">
+              <input type="email" name="email"><input type="submit" value="Subscribe">
+            </form>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+
+      <div class="social-links text-center text-md-right pt-3 pt-md-0">
+        <a href="#" class="twitter"><i class="bx bxl-twitter"></i></a>
+        <a href="#" class="facebook"><i class="bx bxl-facebook"></i></a>
+        <a href="#" class="instagram"><i class="bx bxl-instagram"></i></a>
+        <a href="#" class="google-plus"><i class="bx bxl-skype"></i></a>
+        <a href="#" class="linkedin"><i class="bx bxl-linkedin"></i></a>
+      </div>
+    </div>
+  </footer><!-- End Footer -->
+
+  <div id="preloader"></div>
+  <a href="#" class="back-to-top d-flex align-items-center justify-content-center"><i class="bi bi-arrow-up-short"></i></a>
+
+  <!-- Vendor JS Files -->
+  
+  <script src="{% static 'assets/vendor/aos/aos.js' %}"></script>
+  <script src="{% static 'assets/vendor/bootstrap/js/bootstrap.bundle.min.js' %}"></script>
+  <script src="{% static 'assets/vendor/glightbox/js/glightbox.min.js' %}"></script>
+  <script src="{% static 'assets/vendor/isotope-layout/isotope.pkgd.min.js' %}"></script>
+  <script src="{% static 'assets/vendor/swiper/swiper-bundle.min.js' %}"></script>
+  <script src="{% static 'assets/vendor/php-email-form/validate.js' %}"></script>
+
+  <!-- Template Main JS File -->
+  <script src="{% static 'assets/js/main.js' %}"></script>
+
+</body>
+
+</html>
+
+

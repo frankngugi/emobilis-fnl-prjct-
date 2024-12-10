@@ -1,0 +1,52 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>User Profile</title>
+</head>
+<body>
+    <h1>Welcome, {{ name }}!</h1>
+    <p>Your email: {{ email }}</p>
+
+    <h2>Registered Events</h2>
+    <ul>
+        {% for event in registered_events %}
+            <li>{{ event.name }} (ID: {{ event.id }})</li>
+        {% endfor %}
+    </ul>
+
+    <form method="POST">
+        {% csrf_token %}  <input type="hidden" name="action" value="addEvent">
+        <select name="event">
+            </select>
+        <button type="submit">Register</button>
+    </form>
+    
+
+    <h1>{{ user.username }}'s Profile</h1>
+    <div class="profile">
+        {% block content %}
+        <h1>Profile</h1>
+        <form method="post" enctype="multipart/form-data">
+          {% csrf_token %}
+          {{ form.as_p }}
+          <button type="submit">Save</button>
+        </form>
+        <h2>Current Group</h2>
+        {% if user.userprofile.group %}
+          <p>{{ user.userprofile.group.name }}</p>
+        {% else %}
+          <p>No group selected</p>
+        {% endif %}
+        <h2>Available Groups</h2>
+        <ul>
+          {% for group in groups %}
+            <li>{{ group.name }}</li>
+          {% endfor %}
+        </ul>
+      {% endblock %}
+    </div>
+    
+    {% if user.userprofile.profile_picture %}
+      <img src="{{ user.userprofile.profile_picture.url }}" alt="{{ user.username }}'s Profile Picture">
+    {% endif %}

@@ -1,0 +1,166 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta content="width=device-width, initial-scale=1.0" name="viewport">
+
+   
+  <title>{% block title %}{% endblock %}</title>
+  <meta content="" name="description">
+  <meta content="" name="keywords">
+
+
+  <!-- Favicons -->
+  <link href="{% static 'assets/img/img/logo.jpg' %}" rel="icon">
+  <!-- <link href="{% static 'assets/img/apple-touch-icon.png' %}" rel="apple-touch-icon"> -->
+  <link rel="stylesheet" href="{% static 'assets/css/remixicon.css' %}">
+  <link
+    href="https://cdn.jsdelivr.net/npm/remixicon@4.1.0/fonts/remixicon.css"
+    rel="stylesheet"
+/>
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css?family=Open+Sans:300,300i,400,400i,600,600i,700,700i|Raleway:300,300i,400,400i,500,500i,600,600i,700,700i|Poppins:300,300i,400,400i,500,500i,600,600i,700,700i" rel="stylesheet">
+   
+    <!--swipper css-->
+  <link rel="stylesheet" href="{% static 'assets/css/swiper-bundle.min.css'%}">
+
+
+  <!-- Vendor CSS Files -->
+  <link href="{% static 'assets/vendor/aos/aos.css' %}" rel="stylesheet">
+  <link href="{% static 'assets/vendor/bootstrap/css/bootstrap.min.css' %}" rel="stylesheet">
+  <link href="{% static 'assets/vendor/bootstrap-icons/bootstrap-icons.css' %}" rel="stylesheet">
+  <link href="{% static 'assets/vendor/boxicons/css/boxicons.min.css' %}" rel="stylesheet">
+  <link href="{% static 'assets/vendor/glightbox/css/glightbox.min.css' %}" rel="stylesheet">
+  <link href="{% static 'assets/vendor/remixicon/remixicon.css' %}" rel="stylesheet">
+  <link href="{% static 'assets/vendor/swiper/swiper-bundle.min.css' %}" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/aos@2.3.4/dist/aos.css" rel="stylesheet">
+
+
+  <link href="{% static 'assets/css/style.css' %}" rel="stylesheet">
+
+
+</head>
+
+<body>
+  
+
+  <script src="https://cdn.jsdelivr.net/npm/aos@2.3.4/dist/aos.js"></script>
+  <script>
+    AOS.init();
+  </script>
+
+  <!-- ======= Header ======= -->
+  <header id="header" class="fixed-top">
+    <div class="branding">
+    <div class="container d-flex align-items-center justify-content-between">
+
+      <!-- <h1 class="logo"><a href="/">RGC-Church</a></h1> -->
+      <a href="/" class="logo"><img src="{% static 'assets/img/img/logo word.png' %}" alt="" class="img-fluid"></a>
+
+      <nav id="navbar" class="navbar">
+        <ul>
+          <li><a class="nav-link scrollto active" href="/">Home</a></li>
+          <nav>
+            <ul>
+              <li><a href="/">Home</a></li>
+              {% if user.is_authenticated %}
+                <li><a href="profile">Profile</a></li>
+                <li><a href="logout">Logout</a></li>
+              {% else %}
+                <li><a href="register">Register</a></li>
+                <li><a href="login">Login</a></li>
+              {% endif %}
+              <li><a href="create_group">Create Group</a></li>
+              <li><a href="join_group">Join Group</a></li>
+            </ul>
+          </nav>
+          <li><a class="nav-link scrollto" href="#contact">Contact</a></li>
+          {% if user.is_authenticated %}
+          {% if user.is_staff %}
+          <li><a class="login scrollto" href="adminn">Admin</a></li>
+           {% endif %}
+          <li><a class="login scrollto" href="logout">Logout</a></li>
+          {% else %}
+          <li><a class="login scrollto" href="login">Login or Sign Up</a></li>
+          {% endif %}
+       
+        </ul>
+        <i class="bi bi-list mobile-nav-toggle"></i>
+      </nav><!-- .navbar -->
+
+    </div>
+  </div>
+  </header><!-- End Header -->
+
+  <!-- ======= dashboard Section ======= -->
+  <section id="dashboard" class="d-flex align-items-center">
+
+    
+    <img src="{% static 'assets/img/img/Christ on the Cross - Red and Teal.jpg' %}" alt="" data-aos="fade-in">
+
+    <div class="container position-relative" data-aos="fade-up" data-aos-delay="100">
+      <div class="row justify-content-center">
+        <div class="col-xl-7 col-lg-9 text-center">
+          
+          {% if user.is_authenticated %}
+          <h1>Welcome {{user.username}}!</h1>
+          
+          <!-- <p>You are logged in as a {{user.role}}. You can access different features of the website by clicking on the buttons below
+          <p>You can use this Dashboard to manage your account and access different features of the website.</p>
+          <p>You are logged in as a member of the {{user.group}} group.</p> -->
+          <!-- <a href="/" class="btn-get-started scrollto">Go to Dashboard</a> -->
+          {% else %}
+          <h1>RGC-System</h1>
+          {% endif %}
+          <h2>Where everybody is somebody</h2>
+
+  
+          
+          
+          
+          
+        </div>
+      </div>
+      <div class="text-center">
+        <a href="register" class="btn-get-started scrollto">Get Started</a>
+      </div>
+
+      
+    </div>
+  </section>
+  <!-- End dashboard -->
+
+    <nav class="navbar navbar-expand-lg navbar-light bg-light">
+      <a class="navbar-brand" href="#">Media Library</a>
+      <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navbarNav">
+        <ul class="navbar-nav">
+          {% if user.is_authenticated %}
+            {% if user.is_staff %}
+              <li class="nav-item">
+                <a class="nav-link" href="{% url 'admin:index' %}">Admin Panel</a>
+              </li>
+            {% endif %}
+            <li class="nav-item">
+              <a class="nav-link" href="{% url 'logout' %}">Logout</a>
+            </li>
+          {% else %}
+            <li class="nav-item">
+              <a class="nav-link" href="{% url 'login' %}">Login</a>
+            </li>
+          {% endif %}
+        </ul>
+      </div>
+    </nav>
+    <div class="container">
+      {% block content %}
+      {% endblock %}
+    </div>
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+  </body>
+</html>

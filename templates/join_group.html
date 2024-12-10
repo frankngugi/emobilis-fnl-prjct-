@@ -1,0 +1,14 @@
+{% extends 'base.html' %}
+{% block title %}Join Group{% endblock %}
+
+{% block content %}
+  <h2>Join Group</h2>
+  <form method="post">
+    {% csrf_token %}
+    {% for group in groups %}
+      <input type="radio" id="group{{ forloop.parentloop.counter }}" name="group" value="{{ group.id }}">
+      <label for="group{{ forloop.parentloop.counter }}">{{ group.name }}</label><br>
+    {% endfor %}
+    <button type="submit">Join Group</button>
+  </form>
+{% endblock %}

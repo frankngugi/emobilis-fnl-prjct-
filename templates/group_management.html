@@ -1,0 +1,27 @@
+{% extends 'base.html' %}
+
+{% block content %}
+  <h1>Group Management</h1>
+  <h2>List of Groups</h2>
+  <ul>
+    {% for group in groups %}
+      <li>{{ group.name }} - {{ group.description }}</li>
+      <ul>
+        {% for member in group.member_set.all %}
+          <li>{{ member.user.username }} - {{ member.name }}</li>
+        {% endfor %}
+      </ul>
+    {% endfor %}
+  </ul>
+
+  <h2>Add/Edit/Delete Groups</h2>
+  {% for group in groups %}
+    <h2>{{ group.name }}</h2>
+    <p>{{ group.description }}</p>
+    <a href="{% url 'group_edit' group.pk %}">Edit</a>
+    <a href="{% url 'group_delete' group.pk %}">Delete</a>
+{% endfor %}
+<a href="{% url 'group_add' %}">Add Group</a>
+  <!-- Add/Edit/Delete forms for Group model -->
+
+{% endblock %}

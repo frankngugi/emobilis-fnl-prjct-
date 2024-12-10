@@ -1,0 +1,16 @@
+{% extends 'base.html' %}
+
+{% block content %}
+  <h1>Change Group</h1>
+  <form method="post">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit">Change Group</button>
+  </form>
+  <h2>Current Groups:</h2>
+  <ul>
+    {% for group in groups %}
+      <li>{{ group }}</li>
+    {% endfor %}
+  </ul>
+{% endblock %}
