@@ -265,6 +265,9 @@ def add_announcement(request):
             ann = form.save(commit=False)
             ann.posted_by = request.user
             ann.save()
+            # Push to all mobile app users for free
+            from .services import push_new_announcement
+            push_new_announcement(ann)
             messages.success(request, "Announcement posted successfully.")
             return redirect('announcements')
     else:

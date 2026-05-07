@@ -49,4 +49,8 @@ urlpatterns = [
 
     # Metadata
     path('categories/', api_views.categories_meta, name='api_categories'),
+
+    # Push notifications (Expo — free)
+    path('notifications/register/', api_views.register_push_token, name='api_push_register'),
+    path('notifications/unregister/', api_views.unregister_push_token, name='api_push_unregister'),
 ]

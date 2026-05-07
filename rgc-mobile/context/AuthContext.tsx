@@ -118,6 +118,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   async function logout() {
+    // Unregister push token before clearing auth
+    try {
+      const { unregisterPushToken } = await import('../hooks/usePushNotifications');
+      await unregisterPushToken();
+    } catch (e) {}
     await clearAuth();
   }
 

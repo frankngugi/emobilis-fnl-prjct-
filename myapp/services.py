@@ -1,10 +1,17 @@
 """
 RGC Notification Services
--  send_email()       — Gmail SMTP
--  send_phone_otp()   — Twilio Verify
--  verify_phone_otp() — Twilio Verify check
--  send_sms()         — Africa's Talking
--  notify_user()      — Sends both email + SMS based on what's available
+-  send_email()            — Gmail SMTP (FREE)
+-  send_push()             — Expo Push Notifications (FREE, for mobile app)
+-  send_push_to_user()     — Send push to all devices of a user
+-  send_push_to_all()      — Broadcast to all app users (announcements etc.)
+-  send_sms()              — Africa's Talking (paid, optional)
+-  send_phone_otp()        — Twilio Verify (optional, email OTP is default)
+-  verify_phone_otp()      — Twilio Verify check
+-  notify_user()           — Email + Push (free) + SMS (optional)
+
+NOTE: Twilio is NOT required. Email OTP works out of the box.
+      Push notifications replace SMS for mobile app users — completely FREE.
+      Africa's Talking SMS is available but costs ~KES 1.20/msg.
 """
 import logging
 from django.conf import settings
@@ -118,7 +125,125 @@ def send_announcement_email(announcement, recipient_emails: list[str]) -> bool:
     return send_email(subject, message, recipient_emails)
 
 
-# ── Twilio Phone OTP ──────────────────────────────────────────────────────────
+# ── Expo Push Notifications (FREE) ───────────────────────────────────────────
+
+EXPO_PUSH_URL = 'https://exp.host/--/api/v2/push/send'
+
+
+def send_push(token: str, title: str, body: str, data: dict = None, sound: str = 'default') -> bool:
+    """
+    Send a single push notification via Expo's free push service.
+    Token format: 'ExponentPushToken[xxxx]'
+    Returns True on success.
+    """
+    import requests as _req
+    payload = {
+        'to': token,
+        'title': title,
+        'body': body,
+        'sound': sound,
+        'data': data or {},
+    }
+    try:
+        resp = _req.post(
+            EXPO_PUSH_URL,
+            json=payload,
+            headers={'Content-Type': 'application/json', 'Accept': 'application/json'},
+            timeout=10,
+        )
+        result = resp.json()
+        status = result.get('data', {}).get('status', '')
+        if status == 'error':
+            details = result.get('data', {}).get('details', {})
+            error = details.get('error', 'unknown')
+            if error == 'DeviceNotRegistered':
+                # Token is stale — remove it
+                from .models import PushToken
+                PushToken.objects.filter(token=token).delete()
+                logger.info(f'Removed stale push token: {token[:20]}...')
+            else:
+                logger.warning(f'Push notification error for {token[:20]}...: {error}')
+            return False
+        logger.info(f'Push sent to {token[:20]}...: {title}')
+        return True
+    except Exception as e:
+        logger.error(f'Push failed: {e}')
+        return False
+
+
+def send_push_batch(tokens: list[str], title: str, body: str, data: dict = None) -> int:
+    """Send push to multiple tokens in one request. Returns count of successes."""
+    if not tokens:
+        return 0
+    import requests as _req
+    messages = [{'to': t, 'title': title, 'body': body, 'sound': 'default', 'data': data or {}} for t in tokens]
+    try:
+        resp = _req.post(
+            EXPO_PUSH_URL,
+            json=messages,
+            headers={'Content-Type': 'application/json', 'Accept': 'application/json'},
+            timeout=15,
+        )
+        results = resp.json().get('data', [])
+        ok = sum(1 for r in results if r.get('status') == 'ok')
+        # Clean up stale tokens
+        stale = [messages[i]['to'] for i, r in enumerate(results)
+                 if r.get('details', {}).get('error') == 'DeviceNotRegistered']
+        if stale:
+            from .models import PushToken
+            PushToken.objects.filter(token__in=stale).delete()
+        return ok
+    except Exception as e:
+        logger.error(f'Batch push failed: {e}')
+        return 0
+
+
+def send_push_to_user(user, title: str, body: str, data: dict = None) -> int:
+    """Send push notification to all devices registered for a user. Returns count sent."""
+    from .models import PushToken
+    tokens = list(PushToken.objects.filter(user=user).values_list('token', flat=True))
+    if not tokens:
+        return 0
+    return send_push_batch(tokens, title, body, data)
+
+
+def send_push_to_all(title: str, body: str, data: dict = None) -> int:
+    """Broadcast push notification to ALL app users (e.g. for announcements)."""
+    from .models import PushToken
+    tokens = list(PushToken.objects.values_list('token', flat=True))
+    if not tokens:
+        logger.info('No push tokens registered yet — no push notifications sent')
+        return 0
+    sent = 0
+    chunk_size = 100  # Expo recommends max 100 per request
+    for i in range(0, len(tokens), chunk_size):
+        sent += send_push_batch(tokens[i:i + chunk_size], title, body, data)
+    logger.info(f'Broadcast push sent to {sent}/{len(tokens)} devices')
+    return sent
+
+
+def push_new_announcement(announcement) -> int:
+    """Push notification when a new announcement is posted."""
+    title = f'{"🚨 " if announcement.is_urgent else "📢 "}{announcement.title}'
+    body = announcement.content[:120] + ('...' if len(announcement.content) > 120 else '')
+    return send_push_to_all(title, body, data={'screen': 'announcements', 'id': announcement.id})
+
+
+def push_event_reminder(user, event) -> int:
+    """Push reminder for an event the user is registered for."""
+    title = f'📅 Reminder: {event.title}'
+    body = f'{event.date} at {str(event.time)[:5]} — {event.location}'
+    return send_push_to_user(user, title, body, data={'screen': 'events', 'id': event.id})
+
+
+def push_payment_confirmed(user, payment) -> int:
+    """Push payment confirmation."""
+    title = '✅ Payment Received — RGC Nyahururu'
+    body = f'KES {payment.amount} ({payment.get_purpose_display()}) confirmed. Receipt: {payment.mpesa_receipt_number or "pending"}'
+    return send_push_to_user(user, title, body, data={'screen': 'give'})
+
+
+# ── Twilio Phone OTP (optional — skip if not configured) ─────────────────────
 
 def send_phone_otp(phone: str) -> dict:
     """
@@ -230,14 +355,23 @@ def send_welcome_sms(phone: str, name: str) -> bool:
 
 # ── Combined notifier ─────────────────────────────────────────────────────────
 
-def notify_user(user, subject: str, email_body: str, sms_body: str = '') -> dict:
-    """Send both email and SMS to a user."""
-    results = {'email': False, 'sms': False}
+def notify_user(user, subject: str, email_body: str, push_body: str = '', sms_body: str = '') -> dict:
+    """
+    Send notification to user via all available free channels first, then paid.
+    Priority: Email (free) → Push notification (free) → SMS (paid, optional)
+    """
+    results = {'email': False, 'push': 0, 'sms': False}
+    # Email (always free)
     if user.email:
         results['email'] = send_email(subject, email_body, [user.email])
-    if user.phone and sms_body:
-        result = send_sms(user.phone, sms_body)
-        results['sms'] = result.get('success', False)
+    # Push notification (free for app users)
+    if push_body:
+        results['push'] = send_push_to_user(user, subject, push_body)
+    # SMS (optional, costs money — only if AT is configured and sms_body given)
+    if sms_body and settings.AT_API_KEY and settings.AT_API_KEY != 'PASTE_YOUR_AT_API_KEY_HERE':
+        if user.phone:
+            result = send_sms(user.phone, sms_body)
+            results['sms'] = result.get('success', False)
     return results
 
 

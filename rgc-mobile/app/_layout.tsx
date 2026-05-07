@@ -3,11 +3,15 @@ import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { AuthProvider, useAuth } from '../context/AuthContext';
 import { useRouter, useSegments } from 'expo-router';
+import { usePushNotifications, registerForPushNotifications } from '../hooks/usePushNotifications';
 
 function RootNavigator() {
   const { user, loading } = useAuth();
   const segments = useSegments();
   const router = useRouter();
+
+  // Register push notifications (free — no cost, no Twilio needed)
+  usePushNotifications();
 
   useEffect(() => {
     if (loading) return;
@@ -16,6 +20,8 @@ function RootNavigator() {
       router.replace('/(auth)/login');
     } else if (user && inAuth) {
       router.replace('/(tabs)/home');
+      // Register push token once logged in
+      registerForPushNotifications();
     }
   }, [user, loading, segments]);
 

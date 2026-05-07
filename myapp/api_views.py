@@ -12,7 +12,8 @@ from django.conf import settings
 
 from .models import (
     Events, Attendee, Announcement, Hymn, Group, Member,
-    Images, Video, Payment, RoleRequest, CustomUser, MEDIA_CATEGORY_CHOICES, EVENT_CATEGORY_CHOICES
+    Images, Video, Payment, RoleRequest, CustomUser, PushToken,
+    MEDIA_CATEGORY_CHOICES, EVENT_CATEGORY_CHOICES
 )
 from .serializers import (
     RegisterSerializer, UserSerializer, ProfileUpdateSerializer,
@@ -412,3 +413,31 @@ def categories_meta(request):
         'event_categories': EVENT_CATEGORY_CHOICES,
         'group_categories': [c for c in Group.CATEGORY_CHOICES],
     })
+
+
+# ── Push Notifications ─────────────────────────────────────────────────────────
+
+@api_view(['POST'])
+@permission_classes([permissions.IsAuthenticated])
+def register_push_token(request):
+    """Register an Expo push token for this user's device."""
+    token = request.data.get('token', '').strip()
+    platform = request.data.get('platform', 'android')
+    if not token:
+        return Response({'error': 'token is required'}, status=400)
+    if not token.startswith('ExponentPushToken['):
+        return Response({'error': 'Invalid Expo push token format'}, status=400)
+    obj, created = PushToken.objects.update_or_create(
+        token=token,
+        defaults={'user': request.user, 'platform': platform}
+    )
+    return Response({'registered': True, 'created': created})
+
+
+@api_view(['DELETE'])
+@permission_classes([permissions.IsAuthenticated])
+def unregister_push_token(request):
+    """Remove a push token (on logout or permission revoked)."""
+    token = request.data.get('token', '').strip()
+    deleted, _ = PushToken.objects.filter(user=request.user, token=token).delete()
+    return Response({'removed': deleted > 0})
