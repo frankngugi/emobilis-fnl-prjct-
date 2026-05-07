@@ -1,14 +1,111 @@
-{% extends 'base.html' %}
-{% block title %}Create Group{% endblock %}
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Create Group – RGC Nyahururu{% endblock %}
+
+{% block extra_css %}
+<style>
+  .category-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }
+  .cat-option { border: 2px solid #e0e0e0; border-radius: 10px; padding: 14px 10px; text-align: center; cursor: pointer; transition: all 0.2s; }
+  .cat-option input[type=radio] { display: none; }
+  .cat-option:has(input:checked) { border-color: #8b0000; background: #fff5f5; }
+  .cat-option label { cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 6px; font-size: 0.85rem; font-weight: 600; color: #444; margin: 0; width: 100%; }
+  .cat-option label i { font-size: 1.6rem; color: #c9a227; }
+  .cat-option:has(input:checked) label { color: #8b0000; }
+  .cat-option:has(input:checked) label i { color: #8b0000; }
+  .form-section { background: #fff; border-radius: 14px; box-shadow: 0 3px 15px rgba(0,0,0,0.07); padding: 28px; margin-bottom: 20px; }
+  .form-section h5 { font-weight: 700; color: #8b0000; border-bottom: 2px solid #f0f0f0; padding-bottom: 12px; margin-bottom: 18px; }
+  .btn-create { background: linear-gradient(135deg, #8b0000, #c9a227); border: none; color: #fff; padding: 14px 40px; border-radius: 10px; font-weight: 700; font-size: 1rem; }
+  .btn-create:hover { opacity: 0.88; color: #fff; }
+</style>
+{% endblock %}
 
 {% block content %}
-  <h2>Create Group</h2>
-  <form method="post">
-    {% csrf_token %}
-    <label for="name">Name:</label>
-    <input type="text" id="name" name="name" required><br>
-    <label for="description">Description:</label>
-    <textarea id="description" name="description" required></textarea><br>
-    <button type="submit">Create Group</button>
-  </form>
+<div style="margin-top:80px; background:#f5f5f5; min-height:calc(100vh - 70px);" class="py-5">
+  <div class="container">
+    <div class="row justify-content-center">
+      <div class="col-lg-8">
+
+        <div class="d-flex align-items-center gap-3 mb-4">
+          <div style="width:52px;height:52px;background:linear-gradient(135deg,#8b0000,#c9a227);border-radius:12px;display:flex;align-items:center;justify-content:center;">
+            <i class="bi bi-people-fill text-white fs-4"></i>
+          </div>
+          <div>
+            <h4 class="mb-0 fw-bold">Create Ministry / Group</h4>
+            <p class="text-muted mb-0 small">Add a new group, ministry, or fellowship to the church</p>
+          </div>
+        </div>
+
+        {% if messages %}
+          {% for m in messages %}
+          <div class="alert alert-{% if m.tags == 'error' %}danger{% else %}{{ m.tags }}{% endif %} alert-dismissible fade show">
+            {{ m }}<button class="btn-close" data-bs-dismiss="alert"></button>
+          </div>
+          {% endfor %}
+        {% endif %}
+
+        <form method="POST" action="/create-group/">
+          {% csrf_token %}
+
+          <!-- Basic Info -->
+          <div class="form-section">
+            <h5><i class="bi bi-info-circle me-2"></i>Basic Information</h5>
+            <div class="mb-3">
+              <label class="form-label fw-semibold">Group Name <span class="text-danger">*</span></label>
+              <input type="text" name="name" class="form-control" placeholder="e.g. Youth Fellowship, Men's Ministry, Choir..." required value="{{ request.POST.name }}">
+            </div>
+            <div class="mb-0">
+              <label class="form-label fw-semibold">Description <span class="text-danger">*</span></label>
+              <textarea name="description" class="form-control" rows="3" placeholder="What is this group about? Who can join?" required>{{ request.POST.description }}</textarea>
+            </div>
+          </div>
+
+          <!-- Category -->
+          <div class="form-section">
+            <h5><i class="bi bi-tag me-2"></i>Category <span class="text-danger">*</span></h5>
+            <div class="category-grid">
+              <div class="cat-option">
+                <input type="radio" name="category" id="cat-ministry" value="ministry" required {% if request.POST.category == 'ministry' %}checked{% endif %}>
+                <label for="cat-ministry"><i class="bi bi-church"></i>Ministry</label>
+              </div>
+              <div class="cat-option">
+                <input type="radio" name="category" id="cat-fellowship" value="fellowship" {% if request.POST.category == 'fellowship' %}checked{% endif %}>
+                <label for="cat-fellowship"><i class="bi bi-people"></i>Fellowship</label>
+              </div>
+              <div class="cat-option">
+                <input type="radio" name="category" id="cat-youth" value="youth" {% if request.POST.category == 'youth' %}checked{% endif %}>
+                <label for="cat-youth"><i class="bi bi-stars"></i>Youth</label>
+              </div>
+              <div class="cat-option">
+                <input type="radio" name="category" id="cat-women" value="women" {% if request.POST.category == 'women' %}checked{% endif %}>
+                <label for="cat-women"><i class="bi bi-gender-female"></i>Women's Ministry</label>
+              </div>
+              <div class="cat-option">
+                <input type="radio" name="category" id="cat-men" value="men" {% if request.POST.category == 'men' %}checked{% endif %}>
+                <label for="cat-men"><i class="bi bi-gender-male"></i>Men's Ministry</label>
+              </div>
+              <div class="cat-option">
+                <input type="radio" name="category" id="cat-children" value="children" {% if request.POST.category == 'children' %}checked{% endif %}>
+                <label for="cat-children"><i class="bi bi-emoji-smile"></i>Sunday School</label>
+              </div>
+              <div class="cat-option">
+                <input type="radio" name="category" id="cat-choir" value="choir" {% if request.POST.category == 'choir' %}checked{% endif %}>
+                <label for="cat-choir"><i class="bi bi-music-note-beamed"></i>Choir</label>
+              </div>
+              <div class="cat-option">
+                <input type="radio" name="category" id="cat-other" value="other" {% if request.POST.category == 'other' or not request.POST.category %}checked{% endif %}>
+                <label for="cat-other"><i class="bi bi-three-dots"></i>Other</label>
+              </div>
+            </div>
+          </div>
+
+          <div class="d-flex gap-3">
+            <button type="submit" class="btn-create"><i class="bi bi-plus-circle me-2"></i>Create Group</button>
+            <a href="/groups/" class="btn btn-outline-secondary px-4">Cancel</a>
+          </div>
+        </form>
+
+      </div>
+    </div>
+  </div>
+</div>
 {% endblock %}

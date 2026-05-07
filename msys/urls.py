@@ -22,8 +22,8 @@ from django.conf.urls.static import static
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path('api/', include('myapp.api_urls')),   # Mobile app REST API
     path('', include('myapp.urls')),
-
 ]
 
 if settings.DEBUG:

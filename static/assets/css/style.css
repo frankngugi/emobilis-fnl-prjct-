@@ -1,26 +1,48 @@
-/* Global Colors */
+/* ================================================================
+   Redeemed Gospel Church Nyahururu – Brand Color System
+   Colors: Black (#1a1a1a), Deep Red (#8b0000), Gold (#c9a227)
+   ================================================================ */
+
 :root {
+  /* Church Brand Colors */
+  --rgc-black: #1a1a1a;
+  --rgc-red: #8b0000;
+  --rgc-red-light: #cc1616;
+  --rgc-gold: #c9a227;
+  --rgc-gold-light: #d4b84a;
+  --rgc-white: #ffffff;
+  --rgc-light-bg: #f5f5f5;
+
+  /* Site Colors */
   --background-color: #ffffff;
   --background-color-rgb: 255, 255, 255;
   --default-color: #444444;
   --default-color-rgb: 68, 68, 68;
-  --heading-color: #191919;
-  --heading-color-rgb: 25, 25, 25;
-  --accent-color: #cc1616;
-  --accent-color-rgb: 204, 22, 22;
+  --heading-color: #1a1a1a;
+  --heading-color-rgb: 26, 26, 26;
+  --accent-color: #8b0000;
+  --accent-color-rgb: 139, 0, 0;
+  --gold-color: #c9a227;
   --contrast-color: #ffffff;
   --contrast-color-rgb: 255, 255, 255;
-  
+  --default-font: "Poppins", "Open Sans", sans-serif;
 }
 
 /* Nav Menu Colors */
 :root {
   --nav-color: #ffffff;
-  --nav-hover-color: #cc1616;
-  --nav-dropdown-color: #212529;
-  --nav-dropdown-hover-color: #cc1616;
+  --nav-hover-color: #c9a227;
+  --nav-dropdown-color: #1a1a1a;
+  --nav-dropdown-hover-color: #8b0000;
   --nav-dropdown-background-color: #ffffff;
 }
+
+/* ---- Utility classes ---- */
+.text-rgc-red { color: var(--rgc-red) !important; }
+.text-rgc-gold { color: var(--rgc-gold) !important; }
+.bg-rgc-red { background: var(--rgc-red) !important; }
+.bg-rgc-gold { background: var(--rgc-gold) !important; }
+.bg-rgc-dark { background: var(--rgc-black) !important; }
 
 
 body {
@@ -248,17 +270,19 @@ body.admin {
 .navbar .dropdown ul {
   display: block;
   position: absolute;
-  left: 14px;
-  top: calc(100% + 30px);
+  left: 0;
+  top: calc(100% + 5px);
   margin: 0;
-  padding: 10px 0;
-  z-index: 99;
+  padding: 8px 0;
+  z-index: 9990;           /* must exceed header z-index:997 */
   opacity: 0;
   visibility: hidden;
-  background: var(--nav-dropdown-background-color);
-  box-shadow: 0px 0px 30px rgba(127, 137, 161, 0.25);
-  transition: 0.3s;
-  border-radius: 4px;
+  background: #fff;
+  box-shadow: 0 8px 30px rgba(0,0,0,0.15);
+  transition: opacity 0.25s ease, visibility 0.25s ease, top 0.25s ease;
+  border-radius: 8px;
+  min-width: 200px;
+  border-top: 3px solid #8b0000;
 }
 
 .navbar .dropdown ul li {
@@ -266,28 +290,50 @@ body.admin {
 }
 
 .navbar .dropdown ul a {
-  padding: 10px 20px;
+  padding: 10px 18px;
+  font-size: 0.88rem;
   text-transform: none;
-  color: var(--nav-dropdown-color);
-  background-color: var(--contrast-color);
+  color: #1a1a1a;
+  background-color: #fff;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.2s;
 }
 
 .navbar .dropdown ul a i {
-  font-size: 12px;
+  font-size: 0.9rem;
+  width: 16px;
 }
 
 .navbar .dropdown ul a:hover,
 .navbar .dropdown ul .active:hover,
-.navbar .dropdown ul li:hover>a {
-  color: var(--contrast-color);
-  background-color: var(--nav-hover-color);
+.navbar .dropdown ul li:hover > a {
+  color: #8b0000;
+  background-color: #fff8f8;
+  padding-left: 22px;
+}
+
+.navbar .dropdown ul .dropdown-divider {
+  margin: 4px 12px;
+  border-color: #eee;
 }
 
 .navbar .dropdown:hover>ul {
   opacity: 1;
-  top: 100%;
+  top: calc(100% + 2px);
   visibility: visible;
+}
 
+/* Right-aligned dropdowns — for items near the right edge of the navbar */
+.navbar .dropdown.dropdown-end > ul {
+  left: auto;
+  right: 0;
+}
+
+.navbar .dropdown.dropdown-end:hover > ul {
+  left: auto;
+  right: 0;
 }
 
 .navbar .dropdown .dropdown ul {
@@ -460,13 +506,7 @@ body.admin {
   background-color: #aab7cf;
 }
 
-@media (min-width: 1200px) {
-
-  #main,
-  #footer {
-    margin-left: 300px;
-  }
-}
+/* Sidebar margin removed — admin uses standalone layout, public site uses base.html */
 
 @media (max-width: 1199px) {
   .toggle-sidebar .sidebar {
@@ -2056,7 +2096,482 @@ section#mpesa {
 }
 
 #footer .social-links a:hover {
-  background: #3194db;
+  background: #c9a227;
   color: #fff;
   text-decoration: none;
+}
+
+/* ==================================================================
+   RGC Nyahururu – Additional Brand Styles (black, red, gold theme)
+   ================================================================== */
+
+/* ---- Hero Section ---- */
+#hero {
+  --default-color: #ffffff;
+  --heading-color: #ffffff;
+  --background-color-rgb: 0, 0, 0;
+  width: 100%;
+  min-height: 100vh;
+  position: relative;
+  padding: 160px 0 100px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 70px;
+}
+
+#hero img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  z-index: 1;
+}
+
+#hero:before {
+  content: "";
+  background: linear-gradient(135deg, rgba(26,26,26,0.85) 0%, rgba(139,0,0,0.7) 100%);
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+}
+
+#hero .container {
+  z-index: 3;
+}
+
+#hero h1 {
+  margin: 0;
+  font-size: 3.5rem;
+  font-weight: 700;
+  color: #c9a227;
+  font-family: "Raleway", sans-serif;
+}
+
+#hero h2 {
+  color: rgba(255,255,255,0.9);
+  margin: 10px 0;
+  font-size: 1.4rem;
+}
+
+#hero .hero-tagline {
+  color: rgba(255,255,255,0.85);
+  font-size: 1.1rem;
+  font-style: italic;
+}
+
+#hero .btn-get-started {
+  font-family: "Poppins", sans-serif;
+  font-weight: 600;
+  font-size: 0.9rem;
+  letter-spacing: 0.5px;
+  display: inline-block;
+  padding: 13px 35px;
+  border-radius: 50px;
+  transition: all 0.3s;
+  margin-top: 20px;
+  color: #fff;
+  background: linear-gradient(135deg, #8b0000, #c9a227);
+  border: none;
+  text-decoration: none;
+  box-shadow: 0 4px 15px rgba(139,0,0,0.4);
+}
+
+#hero .btn-get-started:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(139,0,0,0.5);
+  color: #fff;
+}
+
+@media (max-width: 992px) {
+  #hero h1 { font-size: 2.2rem; }
+  #hero h2 { font-size: 1.1rem; }
+}
+
+/* ---- Section Styles ---- */
+.section-title h2 {
+  color: #1a1a1a;
+  font-size: 2.2rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.section-title h2::after {
+  content: '';
+  display: block;
+  width: 60px;
+  height: 4px;
+  background: linear-gradient(90deg, #8b0000, #c9a227);
+  margin: 15px auto 0;
+  border-radius: 2px;
+}
+
+.section-title p {
+  color: #666;
+  font-size: 1rem;
+  margin-bottom: 0;
+}
+
+.section-bg {
+  background-color: #f5f5f5 !important;
+}
+
+/* ---- Service Cards (Quick Access) ---- */
+.service-card {
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 3px 15px rgba(0,0,0,0.07);
+  transition: all 0.3s;
+  border: 2px solid transparent;
+}
+
+.service-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 25px rgba(139,0,0,0.15);
+  border-color: #c9a227;
+}
+
+.service-card h5 {
+  font-weight: 700;
+  color: #1a1a1a;
+  margin-bottom: 2px;
+}
+
+/* ---- Announcement Cards ---- */
+.announcement-card {
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 3px 15px rgba(0,0,0,0.07);
+  padding: 22px 25px;
+  border-left: 5px solid #ddd;
+  transition: all 0.3s;
+}
+
+.announcement-card:hover {
+  transform: translateY(-3px);
+  border-left-color: #8b0000;
+}
+
+.announcement-card.urgent {
+  border-left-color: #c9a227;
+  background: linear-gradient(135deg, #fff 70%, #fffbea 100%);
+}
+
+.announcement-card h5 {
+  font-weight: 700;
+  color: #1a1a1a;
+}
+
+/* ---- Group Cards ---- */
+.group-card {
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 3px 15px rgba(0,0,0,0.07);
+  transition: all 0.3s;
+  border-bottom: 3px solid transparent;
+}
+
+.group-card:hover {
+  transform: translateY(-4px);
+  border-bottom-color: #c9a227;
+}
+
+/* ---- Event Cards ---- */
+.event-card {
+  background: #fff;
+  border-radius: 14px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+  overflow: hidden;
+  transition: transform 0.2s;
+}
+
+.event-card:hover { transform: translateY(-4px); }
+
+/* ---- Call to Action ---- */
+#cta {
+  background: linear-gradient(135deg, rgba(26,26,26,0.92), rgba(139,0,0,0.85));
+  position: relative;
+  padding: 80px 0;
+}
+
+#cta img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  z-index: -1;
+}
+
+#cta h3 { color: #c9a227; font-weight: 700; font-size: 1.8rem; }
+#cta p { color: rgba(255,255,255,0.85); }
+
+.cta-btn {
+  font-family: "Poppins", sans-serif;
+  font-weight: 600;
+  font-size: 0.9rem;
+  display: inline-block;
+  padding: 12px 35px;
+  border-radius: 50px;
+  transition: all 0.3s;
+  color: #fff;
+  background: linear-gradient(135deg, #8b0000, #c9a227);
+  text-decoration: none;
+  border: 2px solid transparent;
+}
+
+.cta-btn:hover {
+  background: transparent;
+  border-color: #fff;
+  color: #fff;
+}
+
+/* ---- Buttons ---- */
+.btn-learn-more {
+  font-family: "Poppins", sans-serif;
+  font-weight: 600;
+  font-size: 0.85rem;
+  display: inline-block;
+  padding: 11px 28px;
+  border-radius: 50px;
+  transition: all 0.3s;
+  background: linear-gradient(135deg, #8b0000, #c9a227);
+  color: #fff;
+  text-decoration: none;
+  border: none;
+}
+
+.btn-learn-more:hover {
+  opacity: 0.9;
+  transform: translateY(-2px);
+  color: #fff;
+}
+
+/* ---- Footer overrides ---- */
+#footer {
+  background: #1a1a1a;
+  color: rgba(255,255,255,0.75);
+}
+
+#footer .footer-top {
+  padding: 50px 0 30px;
+}
+
+#footer h3 {
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: #c9a227;
+  margin-bottom: 15px;
+}
+
+#footer h4 {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #fff;
+  margin-bottom: 15px;
+  padding-bottom: 10px;
+  border-bottom: 2px solid #c9a227;
+}
+
+#footer .footer-links ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+#footer .footer-links ul li {
+  padding: 6px 0;
+  display: flex;
+  align-items: center;
+  font-size: 0.9rem;
+}
+
+#footer .footer-links ul i {
+  color: #c9a227;
+  margin-right: 8px;
+}
+
+#footer .footer-links a {
+  color: rgba(255,255,255,0.7);
+  transition: color 0.3s;
+}
+
+#footer .footer-links a:hover {
+  color: #c9a227;
+}
+
+#footer .footer-contact p {
+  font-size: 0.9rem;
+  line-height: 1.8;
+}
+
+#footer .footer-bottom {
+  border-top: 1px solid rgba(255,255,255,0.1);
+  padding: 20px 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  font-size: 0.85rem;
+}
+
+#footer .copyright strong { color: #c9a227; }
+#footer .credits { color: rgba(255,255,255,0.5); }
+
+#footer .social-links { margin-top: 0; }
+#footer .social-links a {
+  background: rgba(255,255,255,0.1);
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 1.1rem;
+  margin-right: 5px;
+  transition: all 0.3s;
+}
+
+#footer .social-links a:hover {
+  background: #c9a227;
+  color: #1a1a1a;
+}
+
+/* ---- Header branding ---- */
+#header {
+  background: #1a1a1a;
+}
+
+#header .logo img {
+  max-height: 50px;
+}
+
+.navbar a:hover,
+.navbar .active,
+.navbar li:hover > a {
+  color: #c9a227 !important;
+  background-color: transparent;
+}
+
+.navbar .login,
+.navbar .login:focus {
+  background: linear-gradient(135deg, #8b0000, #c9a227);
+  padding: 8px 20px;
+  margin-left: 20px;
+  border-radius: 50px;
+  color: #fff;
+  font-weight: 600;
+}
+
+.navbar .login:hover {
+  opacity: 0.9;
+  color: #fff;
+}
+
+/* ---- Leaders / Ministries ---- */
+.leaders {
+  padding: 60px 0;
+}
+
+.leaders .member {
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 3px 15px rgba(0,0,0,0.07);
+  overflow: hidden;
+  transition: all 0.3s;
+}
+
+.leaders .member:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 25px rgba(0,0,0,0.12);
+}
+
+.leaders .member-img { position: relative; }
+.leaders .member-img img { width: 100%; aspect-ratio: 1; object-fit: cover; }
+
+.leaders .member-info {
+  padding: 20px 15px;
+  text-align: center;
+}
+
+.leaders .member-info h4 {
+  font-weight: 700;
+  font-size: 1rem;
+  color: #1a1a1a;
+  margin-bottom: 5px;
+}
+
+.leaders .member-info span {
+  font-size: 0.82rem;
+  color: #888;
+}
+
+/* ---- About Section ---- */
+.about { padding: 70px 0; }
+.about .content ul { padding-left: 0; list-style: none; }
+.about .content ul li { padding: 8px 0 8px 32px; position: relative; border-bottom: 1px solid #f0f0f0; }
+.about .content ul li:last-child { border-bottom: none; }
+.about .content ul i { position: absolute; left: 0; top: 10px; font-size: 1.2rem; color: #8b0000; }
+.about .content ul li strong { color: #1a1a1a; }
+
+/* ---- Contact Section ---- */
+.contact { padding: 70px 0; }
+.contact .info .address, .contact .info .email, .contact .info .phone {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+.contact .info i { font-size: 1.5rem; color: #8b0000; flex-shrink: 0; }
+.contact .info h4 { font-weight: 700; font-size: 1rem; color: #1a1a1a; margin-bottom: 2px; }
+.contact .info p { color: #666; margin: 0; font-size: 0.9rem; }
+
+/* ---- Gallery ---- */
+.gallery-item { border-radius: 10px; overflow: hidden; position: relative; }
+.gallery-item img { width: 100%; height: 220px; object-fit: cover; transition: transform 0.4s; }
+.gallery-item:hover img { transform: scale(1.08); }
+
+/* ---- Videos ---- */
+.video-card {
+  background: #1a1a1a;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+}
+
+/* ---- Profile page ---- */
+.profile-header {
+  background: linear-gradient(135deg, #1a1a1a, #8b0000);
+  color: #fff;
+  padding: 50px 30px;
+  border-radius: 16px;
+  text-align: center;
+  margin-bottom: 25px;
+}
+
+/* ---- Back to top ---- */
+.back-to-top {
+  background: linear-gradient(135deg, #8b0000, #c9a227);
+}
+
+.back-to-top:hover {
+  background: #1a1a1a;
+  color: #c9a227;
+}
+
+/* ---- Preloader ---- */
+#preloader:before {
+  border: 6px solid #c9a227;
+  border-top-color: #8b0000;
+  border-bottom-color: #fff;
+}
+
+/* ---- Responsive ---- */
+@media (max-width: 768px) {
+  .section-title h2 { font-size: 1.6rem; }
+  #hero h1 { font-size: 2rem; }
+  .auth-card { margin: 10px; }
 }

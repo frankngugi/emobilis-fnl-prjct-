@@ -1,360 +1,321 @@
-
+{% extends "base.html" %}
 {% load static %}
 
-<!DOCTYPE html>
-<html lang="en">
+{% block title %}Redeemed Gospel Church Nyahururu – Home{% endblock %}
+{% block nav_home %}active{% endblock %}
 
-<head>
-  <meta charset="utf-8">
-  <meta content="width=device-width, initial-scale=1.0" name="viewport">
+{% block content %}
 
-   
-  <title>RGC-Church Management System</title>
-  <meta content="" name="description">
-  <meta content="" name="keywords">
-
-
-  <!-- Favicons -->
-  <link href="{% static 'assets/img/img/logo.jpg' %}" rel="icon">
-  <!-- <link href="{% static 'assets/img/apple-touch-icon.png' %}" rel="apple-touch-icon"> -->
-  <link rel="stylesheet" href="{% static 'assets/css/remixicon.css' %}">
-  <link
-    href="https://cdn.jsdelivr.net/npm/remixicon@4.1.0/fonts/remixicon.css"
-    rel="stylesheet"
-/>
-  <!-- Google Fonts -->
-  <link href="https://fonts.googleapis.com/css?family=Open+Sans:300,300i,400,400i,600,600i,700,700i|Raleway:300,300i,400,400i,500,500i,600,600i,700,700i|Poppins:300,300i,400,400i,500,500i,600,600i,700,700i" rel="stylesheet">
-   
-    <!--swipper css-->
-  <link rel="stylesheet" href="{% static 'assets/css/swiper-bundle.min.css'%}">
-
-
-  <!-- Vendor CSS Files -->
-  <link href="{% static 'assets/vendor/aos/aos.css' %}" rel="stylesheet">
-  <link href="{% static 'assets/vendor/bootstrap/css/bootstrap.min.css' %}" rel="stylesheet">
-  <link href="{% static 'assets/vendor/bootstrap-icons/bootstrap-icons.css' %}" rel="stylesheet">
-  <link href="{% static 'assets/vendor/boxicons/css/boxicons.min.css' %}" rel="stylesheet">
-  <link href="{% static 'assets/vendor/glightbox/css/glightbox.min.css' %}" rel="stylesheet">
-  <link href="{% static 'assets/vendor/remixicon/remixicon.css' %}" rel="stylesheet">
-  <link href="{% static 'assets/vendor/swiper/swiper-bundle.min.css' %}" rel="stylesheet">
-  <link href="https://cdn.jsdelivr.net/npm/aos@2.3.4/dist/aos.css" rel="stylesheet">
-
-
-  <link href="{% static 'assets/css/style.css' %}" rel="stylesheet">
-
-
-</head>
-
-<body>
-  
-
-  <script src="https://cdn.jsdelivr.net/npm/aos@2.3.4/dist/aos.js"></script>
-  <script>
-    AOS.init();
-  </script>
-
-  <!-- ======= Header ======= -->
-  <header id="header" class="fixed-top">
-    <div class="branding">
-    <div class="container d-flex align-items-center justify-content-between">
-
-      <!-- <h1 class="logo"><a href="/">RGC-Church</a></h1> -->
-      <a href="/" class="logo"><img src="{% static 'assets/img/img/logo word.png' %}" alt="" class="img-fluid"></a>
-
-      <nav id="navbar" class="navbar">
-        <ul>
-          <li><a class="nav-link scrollto active" href="/">Home</a></li>
-          <li><a class="nav-link scrollto" href="#about">About</a></li>
-          <li><a class="nav-link scrollto" href="/events">Events</a></li>
-          <li><a class="nav-link scrollto" href="/gallery">Gallery</a></li>
-          <!-- <li><a class="nav-link scrollto" href="/chats">Chats</a></li> -->
-          <li><a class="nav-link scrollto" href="/contribute">Contributions</a></li>
-          <li><a class="nav-link scrollto" href="/video">videos</a></li>
-          <li class="dropdown"><a href="#"><span>Groups</span> <i class="bi bi-chevron-down"></i></a>
-            <ul>
-              <li><a href="join_group">Groups</a></li>
-
-            </ul>
-          </li>
-          <li><a class="nav-link scrollto" href="#contact">Contact</a></li>
-          {% if user.is_authenticated %}
-          {% if user.is_staff %}
-          <li><a class="login scrollto" href="adminn">Admin</a></li>
-           {% endif %}
-          <li><a class="login scrollto" href="logout">Logout</a></li>
-          {% else %}
-          <li><a class="login scrollto" href="login">Login or Sign Up</a></li>
-          {% endif %}
-       
-        </ul>
-        <i class="bi bi-list mobile-nav-toggle"></i>
-      </nav><!-- .navbar -->
-
+<!-- Hero Section -->
+<section id="hero" class="d-flex align-items-center">
+  <img src="{% static 'assets/img/img/Christ on the Cross - Red and Teal.jpg' %}" alt="Church" data-aos="fade-in" onerror="this.style.display='none'">
+  <div class="container position-relative" data-aos="fade-up" data-aos-delay="100">
+    <div class="row justify-content-center">
+      <div class="col-xl-7 col-lg-9 text-center">
+        {% if user.is_authenticated %}
+          <h1>Welcome, {{ user.first_name|default:user.username }}!</h1>
+        {% else %}
+          <h1>Redeemed Gospel Church</h1>
+          <h2>Nyahururu, Laikipia County</h2>
+        {% endif %}
+        <p class="hero-tagline">"Where everybody is somebody"</p>
+      </div>
+    </div>
+    <div class="text-center mt-3">
+      {% if not user.is_authenticated %}
+      <a href="/register" class="btn-get-started me-2">Join Us <i class="bi bi-arrow-right"></i></a>
+      <a href="/announcements/" class="btn-get-started btn-outline-light">Announcements</a>
+      {% else %}
+      <a href="/events" class="btn-get-started me-2">Upcoming Events</a>
+      <a href="/contribute" class="btn-get-started">Give / Contribute</a>
+      {% endif %}
     </div>
   </div>
-  </header><!-- End Header -->
+</section>
 
-  <!-- ======= dashboard Section ======= -->
-  <section id="dashboard" class="d-flex align-items-center">
+<!-- Urgent Announcements Banner -->
+{% for ann in announcements %}
+  {% if ann.is_urgent %}
+  <div class="alert alert-warning text-center mb-0 py-2" style="border-radius:0; background:#c9a227; color:#1a1a1a; font-weight:600;">
+    <i class="bi bi-megaphone-fill me-2"></i>{{ ann.title }}
+    <a href="/announcements/" class="ms-3 text-dark small fw-normal">Read more →</a>
+  </div>
+  {% endif %}
+{% endfor %}
 
-    
-    <img src="{% static 'assets/img/img/Christ on the Cross - Red and Teal.jpg' %}" alt="" data-aos="fade-in">
+<main id="main">
 
-    <div class="container position-relative" data-aos="fade-up" data-aos-delay="100">
-      <div class="row justify-content-center">
-        <div class="col-xl-7 col-lg-9 text-center">
-          
-          {% if user.is_authenticated %}
-          <h1>Welcome {{user.username}}!</h1>
-          
-          <!-- <p>You are logged in as a {{user.role}}. You can access different features of the website by clicking on the buttons below
-          <p>You can use this Dashboard to manage your account and access different features of the website.</p>
-          <p>You are logged in as a member of the {{user.group}} group.</p> -->
-          <!-- <a href="/" class="btn-get-started scrollto">Go to Dashboard</a> -->
-          {% else %}
-          <h1>RGC-System</h1>
-          {% endif %}
-          <h2>Where everybody is somebody</h2>
-
-  
-          
-          
-          
-          
+  <!-- About Section -->
+  <section id="about" class="about">
+    <div class="container" data-aos="fade-up">
+      <div class="section-title">
+        <h2>About Redeemed Gospel Church Nyahururu</h2>
+        <p>A vibrant, Spirit-filled Christian community in the heart of Nyahururu, Laikipia County — where everyone is welcomed and valued.</p>
+      </div>
+      <div class="row content">
+        <div class="col-lg-6">
+          <ul>
+            <li><i class="ri-check-double-line"></i><strong>Our Mission:</strong> To build bridges of love, acceptance, and compassion, reflecting the teachings of Jesus Christ.</li>
+            <li><i class="ri-check-double-line"></i><strong>Our Vision:</strong> A community where every soul experiences the transforming grace of God.</li>
+            <li><i class="ri-check-double-line"></i><strong>Our Values:</strong> Grace, Inclusivity, Service, Faith, and Community.</li>
+            <li><i class="ri-check-double-line"></i><strong>What We Believe:</strong> Grounded in the core teachings of Christianity — love, forgiveness, and service.</li>
+          </ul>
+        </div>
+        <div class="col-lg-6 pt-4 pt-lg-0">
+          <p><strong>Sunday Services:</strong> 9:00 AM every Sunday. All are welcome — regardless of background or beliefs. We offer Sunday School for children and vibrant worship for the whole family.</p>
+          <p><strong>Our Ministries:</strong> Men's Ministry, Women's Ministry, Youth Fellowship, Sunday School, Choir, and Community Outreach.</p>
+          <div class="mt-3">
+            <a href="/register" class="btn-learn-more">Join Our Family</a>
+            <a href="/groups/" class="btn-learn-more ms-2" style="background:transparent; color:#8b0000; border:2px solid #8b0000;">Our Groups</a>
+          </div>
         </div>
       </div>
-      <div class="text-center">
-        <a href="register" class="btn-get-started scrollto">Get Started</a>
-      </div>
-
-      
     </div>
   </section>
-  <!-- End dashboard -->
 
-
-  <main id="main">
-  
-
-    <!-- ======= About Section ======= -->
-    <section id="about" class="about">
-      <div class="container" data-aos="fade-up">
-
-        <div class="section-title">
-          <h2>About Our Church</h2>
-          <p>
-            <strong>Welcome to Redeemed Gospel Church!</strong>
-            We are a vibrant and inclusive Christian community in [Nairobi, Kenya] where all are welcome to explore faith, connect with others, and grow in their relationship with God.
-          </p>
-        </div>
-
-        <div class="row content">
-          <div class="col-lg-6">
-            <p>
-              come get to know us
-            </p>
-            <ul>
-              <li><i class="ri-check-double-line"></i> <strong>Our Mission:</strong>  To build bridges of love, acceptance, and compassion within our community, reflecting the teachings of Jesus Christ.</li>
-              <li><i class="ri-check-double-line"></i> <strong>Our Values:</strong>We believe in grace, inclusivity, and service.  We offer a judgment-free space where everyone can feel welcome, regardless of background or beliefs.  We are passionate about serving our community and making a positive difference in the lives of others</li>
-              <li><i class="ri-check-double-line"></i> <strong>What We Believe: </strong>  We are a non-denominational church grounded in the core teachings of Christianity, emphasizing the importance of love, forgiveness, and service.</li>
-            </ul class= "hidden">
-            <strong>Our Worship Services:</strong> Our Sunday services are a blend of contemporary music, inspiring messages, and opportunities for reflection and connection.  We offer childcare and age-appropriate activities for children during the service.  Whether you're new to faith or a seasoned believer, you'll find a warm welcome at Redeemed Gospel Church.<br>
-
-            <strong>Our Ministries:</strong>  We offer a variety of ministries to connect with others and serve our community, including a young adult group, a community outreach program, and a weekly Bible study.
-
-            <strong>We invite you to join us for a service, explore our website, or reach out to learn more about our church.  We look forward to getting to know you!</strong>
-          </div>
-          <div class="col-lg-6 pt-4 pt-lg-0">
-
-            <a href="#" class="btn-learn-more">Learn More</a>
-          </div>
-        </div>
-
+  <!-- Quick Access Cards -->
+  <section id="services" class="services section-bg">
+    <div class="container" data-aos="fade-up">
+      <div class="section-title">
+        <h2>Church Resources</h2>
+        <p>Access everything you need for your spiritual journey</p>
       </div>
-    </section><!-- End About Section -->
-
-
-
-    <!-- ======= Services Section ======= -->
-
-
-    <!-- ======= Cta Section ======= -->
-    <section id="cta" class="cta">
-      <img src="{% static 'assets/img/img/worship experience.jpg' %}" alt="">
-      <div class="container" data-aos="zoom-in" data-aos-duration="600">
-        <div class="text-center">
-          <h3>Join us in Worship Experience</h3>
-          <p> Reach out to us at our offices</p>
-          <a class="cta-btn" href="register">Register Now</a>
-        </div>
-      </div>
-    </section><!-- End Cta Section -->
-
-
-    <!-- =====leaders Section ======= -->
-    <section id="leaders" class="leaders section-bg">
-      <div class="container" data-aos="fade-up">
-
-        <div class="section-title">
-          <h2>leaders</h2>
-          <p>Below are the Leader of Our Church.</p>
-        </div>
-
-        <div class="row">
-
-          <div class="col-lg-3 col-md-6 d-flex align-items-stretch" data-aos="fade-up" data-aos-delay="100" data-aos-duration="600">
-            <div class="member">
-              <div class="member-img">
-                <img src="{% static 'assets/img/download.jpeg' %}" class="img-fluid" alt="">
-             
-              </div>
-              <div class="member-info">
-                <h4>Bshp. John</h4>
-                <span>Lead Pastor</span>
-              </div>
+      <div class="row">
+        <div class="col-md-4 col-lg-2 col-sm-6 mb-4" data-aos="zoom-in" data-aos-delay="100">
+          <a href="/bible/" class="text-decoration-none">
+            <div class="service-card text-center p-3 h-100">
+              <i class="ri-book-open-line fs-1 text-danger mb-2 d-block"></i>
+              <h5>Bible</h5>
+              <small class="text-muted">Read & Search</small>
             </div>
-          </div>
-
-          <div class="col-lg-3 col-md-6 d-flex align-items-stretch" data-aos="fade-up" data-aos-delay="200" data-aos-duration="600">
-            <div class="member">
-              <div class="member-img">
-                <img src="{% static 'assets/img/download.jpeg' %}" class="img-fluid" alt="">
-                
-              </div>
-              <div class="member-info">
-                <h4>Rev Grace</h4>
-                <span></span>
-              </div>
-            </div>
-          </div>
-
-          <div class="col-lg-3 col-md-6 d-flex align-items-stretch" data-aos="fade-up" data-aos-delay="300" data-aos-duration="600">
-            <div class="member">
-              <div class="member-img">
-                <img src="{% static 'assets/img/download.jpeg' %}" class="img-fluid" alt="">
-                
-              </div>
-              <div class="member-info">
-                <h4>Eld. Joel</h4>
-                <span>Outreach Ministries Head</span>
-              </div>
-            </div>
-          </div>
-
-          <div class="col-lg-3 col-md-6 d-flex align-items-stretch" data-aos="fade-up" data-aos-delay="400">
-            <div class="member">
-              <div class="member-img">
-                <img src="{% static 'assets/img/download.jpeg' %}" class="img-fluid" alt="">
-                
-                  
-              </div>
-              <div class="member-info">
-                <h4>Mrs. Ndirangu</h4>
-                <span>Youth Patron</span>
-              </div>
-            </div>
-          </div>
-
+          </a>
         </div>
-
-      </div>
-    </section><!-- End leaders Section -->
-
-
-
-    <!-- ======= Contact Section ======= -->
-    <section id="contact" class="contact">
-      <div class="container" data-aos="fade-up">
-
-        <div class="section-title">
-          <h2>Contact</h2>
-          <p>Reach us using this contacts.</p>
-        <!-- </div> -->
-        
-        <div>
-          <!-- <iframe style="border:0; width: 100%; height: 270px;" src="https://www.google.com/maps/embed?pb=!4m6!3m5!1s0x1787622d3749c62f:0x284a0b34323309d7!8m2!3d0.0296135!4d36.3590016!16s%2Fg%2F11gg3hph2_?entry=ttu" frameborder="0" allowfullscreen></iframe> -->
-        </div>
-       
-        <div class="row mt-5">
-
-          <div class="col-lg-4">
-            <div class="info">
-              <div class="address">
-                <i class="bi bi-geo-alt"></i>
-                <h4>Nairobi</h4>
-                <p>Kenya</p>
-              </div>
-
-              <div class="email">
-                <i class="bi bi-envelope"></i>
-                <h4>Email:</h4>
-                <p>frankngugi@gmail.com</p>
-              </div>
-
-              <div class="phone">
-                <i class="bi bi-phone"></i>
-                <h4>Call:</h4>
-                <p>+254112760740</p>
-              </div>
-
+        <div class="col-md-4 col-lg-2 col-sm-6 mb-4" data-aos="zoom-in" data-aos-delay="150">
+          <a href="/hymns/" class="text-decoration-none">
+            <div class="service-card text-center p-3 h-100">
+              <i class="ri-music-2-line fs-1 mb-2 d-block" style="color:#c9a227;"></i>
+              <h5>Hymns</h5>
+              <small class="text-muted">Songs & Worship</small>
             </div>
-
-          </div>
-
-
-
+          </a>
         </div>
-
-      </div>
-    </section><!-- End Contact Section -->
-
-  </main><!-- End #main -->
- 
-
-  <!-- ======= Footer ======= -->
-  <footer id="footer">
-
-    <div class="footer-top">
-      <div class="container">
-        <div class="row">
-
-          <div class="col-lg-3 col-md-6 footer-contact">
-            <h3>RGC</h3>
-            <p>
-              Nairobi,Kenya <br>
-              <strong>Phone:</strong> +254---------<br>
-              <strong>Email:</strong> frankngugi@gmail.com<br>
-            </p>
-          </div>
-
-        
-      </div>
-      <div class="social-links text-center text-md-right pt-3 pt-md-0">
-        <a href="https://www.facebook.com/" class="twitter"><i class="ri-facebook-box-fill"></i></a>
-        <a href="https://twitter.com/?lang=en" class="facebook"><i class="ri-twitter-x-fill"></i></a>
-        <a href="https://www.instagram.com/" class="instagram"><i class="ri-instagram-fill"></i></a>
-        
-        <a href="https://ke.linkedin.com/" class="linkedin"><i class="ri-linkedin-fill"></i></i></a>
+        <div class="col-md-4 col-lg-2 col-sm-6 mb-4" data-aos="zoom-in" data-aos-delay="200">
+          <a href="/events" class="text-decoration-none">
+            <div class="service-card text-center p-3 h-100">
+              <i class="ri-calendar-event-line fs-1 text-danger mb-2 d-block"></i>
+              <h5>Events</h5>
+              <small class="text-muted">Church Calendar</small>
+            </div>
+          </a>
+        </div>
+        <div class="col-md-4 col-lg-2 col-sm-6 mb-4" data-aos="zoom-in" data-aos-delay="250">
+          <a href="/announcements/" class="text-decoration-none">
+            <div class="service-card text-center p-3 h-100">
+              <i class="ri-megaphone-line fs-1 mb-2 d-block" style="color:#c9a227;"></i>
+              <h5>Announcements</h5>
+              <small class="text-muted">Latest News</small>
+            </div>
+          </a>
+        </div>
+        <div class="col-md-4 col-lg-2 col-sm-6 mb-4" data-aos="zoom-in" data-aos-delay="300">
+          <a href="/contribute" class="text-decoration-none">
+            <div class="service-card text-center p-3 h-100">
+              <i class="ri-secure-payment-line fs-1 text-danger mb-2 d-block"></i>
+              <h5>Give</h5>
+              <small class="text-muted">M-Pesa / Tithe</small>
+            </div>
+          </a>
+        </div>
+        <div class="col-md-4 col-lg-2 col-sm-6 mb-4" data-aos="zoom-in" data-aos-delay="350">
+          <a href="/groups/" class="text-decoration-none">
+            <div class="service-card text-center p-3 h-100">
+              <i class="ri-group-line fs-1 mb-2 d-block" style="color:#c9a227;"></i>
+              <h5>Groups</h5>
+              <small class="text-muted">Ministries</small>
+            </div>
+          </a>
+        </div>
       </div>
     </div>
-  </footer><!-- End Footer -->
+  </section>
 
-  <div id="preloader"></div>
-  <a href="#" class="back-to-top d-flex align-items-center justify-content-center"><i class="bi bi-arrow-up-short"></i></a>
+  <!-- Announcements Section -->
+  {% if announcements %}
+  <section id="announcements" class="announcements-section">
+    <div class="container" data-aos="fade-up">
+      <div class="section-title">
+        <h2>Latest Announcements</h2>
+        <p>Stay updated with what's happening at RGC Nyahururu</p>
+      </div>
+      <div class="row">
+        {% for ann in announcements %}
+        <div class="col-md-6 col-lg-4 mb-4" data-aos="fade-up" data-aos-delay="{{ forloop.counter0 }}00">
+          <div class="announcement-card h-100 {% if ann.is_urgent %}urgent{% endif %}">
+            {% if ann.is_urgent %}<span class="badge bg-warning text-dark mb-2">URGENT</span>{% endif %}
+            <h5>{{ ann.title }}</h5>
+            <p class="text-muted small">{{ ann.content|truncatewords:25 }}</p>
+            <small class="text-muted"><i class="bi bi-clock me-1"></i>{{ ann.date_posted|date:"M d, Y" }}</small>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+      <div class="text-center mt-2">
+        <a href="/announcements/" class="btn-learn-more">View All Announcements</a>
+      </div>
+    </div>
+  </section>
+  {% endif %}
 
-  <!-- Vendor JS Files -->
-  
-  <script src="{% static 'assets/vendor/aos/aos.js' %}"></script>
-  <script src="{% static 'assets/vendor/scrollreveal.min.js' %}"></script>
-  <script src="{% static 'assets/vendor/bootstrap/js/bootstrap.bundle.min.js' %}"></script>
-  <script src="{% static 'assets/vendor/glightbox/js/glightbox.min.js' %}"></script>
-  <script src="{% static 'assets/vendor/isotope-layout/isotope.pkgd.min.js' %}"></script>
-  <script src="{% static 'assets/vendor/swiper/swiper-bundle.min.js' %}"></script>
-  <script src="{% static 'assets/vendor/php-email-form/validate.js' %}"></script>
+  <!-- Upcoming Events -->
+  {% if events %}
+  <section id="events" class="services section-bg">
+    <div class="container" data-aos="fade-up">
+      <div class="section-title">
+        <h2>Upcoming Events</h2>
+        <p>Join us for these upcoming church activities</p>
+      </div>
+      <div class="row icon-boxes">
+        {% for event in events %}
+        <div class="col-md-6 col-lg-4 mb-4" data-aos="zoom-in" data-aos-delay="{{ forloop.counter0 }}00">
+          <div class="icon-box event-card h-100">
+            <div class="icon"><i class="ri-calendar-event-line"></i></div>
+            <h4 class="title">{{ event.title }}</h4>
+            <p class="description text-muted small">{{ event.description|truncatewords:15 }}</p>
+            <div class="event-meta mt-2">
+              <span class="badge bg-danger me-1"><i class="bi bi-calendar me-1"></i>{{ event.date }}</span>
+              <span class="badge bg-dark"><i class="bi bi-clock me-1"></i>{{ event.time }}</span>
+            </div>
+            <p class="small mt-2 mb-0"><i class="bi bi-geo-alt text-danger me-1"></i>{{ event.location }}</p>
+            {% if user.is_authenticated %}
+            <form method="POST" action="/events/register/{{ event.id }}/" class="mt-2">
+              {% csrf_token %}
+              <button type="submit" class="btn btn-sm btn-outline-danger">Register</button>
+            </form>
+            {% endif %}
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+      <div class="text-center mt-2">
+        <a href="/events" class="btn-learn-more">All Events</a>
+      </div>
+    </div>
+  </section>
+  {% endif %}
 
-  <!-- Template Main JS File -->
-  <script src="{% static '/assets/js/main.js' %}" ></script>
-  
-</body>
+  <!-- Call to Action -->
+  <section id="cta" class="cta">
+    <img src="{% static 'assets/img/img/worship experience.jpg' %}" alt="Worship" onerror="this.style.display='none'">
+    <div class="container" data-aos="zoom-in">
+      <div class="text-center">
+        <h3>Join Us in Worship This Sunday</h3>
+        <p>Every Sunday at 9:00 AM — Nyahururu, Laikipia County, Kenya</p>
+        <a class="cta-btn me-2" href="/register">Register Now</a>
+        <a class="cta-btn" href="/contribute" style="background:transparent; border:2px solid #fff;">Give Online</a>
+      </div>
+    </div>
+  </section>
 
-</html>
+  <!-- Church Groups -->
+  {% if groups %}
+  <section id="ministries" class="leaders section-bg">
+    <div class="container" data-aos="fade-up">
+      <div class="section-title">
+        <h2>Our Ministries & Groups</h2>
+        <p>Find your place to serve and grow</p>
+      </div>
+      <div class="row">
+        {% for group in groups %}
+        <div class="col-lg-3 col-md-6 d-flex align-items-stretch mb-4" data-aos="fade-up" data-aos-delay="{{ forloop.counter0 }}00">
+          <div class="member group-card w-100 text-center p-3">
+            <div class="group-icon mb-2">
+              <i class="ri-group-line fs-1" style="color:#c9a227;"></i>
+            </div>
+            <div class="member-info">
+              <h4>{{ group.name }}</h4>
+              <span class="badge bg-dark">{{ group.get_category_display }}</span>
+              <p class="small text-muted mt-2">{{ group.description|truncatewords:10 }}</p>
+              <p class="small"><strong>{{ group.member_count }}</strong> members</p>
+              <a href="/groups/{{ group.id }}/" class="btn btn-sm btn-outline-danger">Learn More</a>
+            </div>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+  </section>
+  {% endif %}
+
+  <!-- Gallery Preview -->
+  {% if images_list %}
+  <section id="gallery-preview" class="about">
+    <div class="container" data-aos="fade-up">
+      <div class="section-title">
+        <h2>Photo Gallery</h2>
+        <p>Moments from our church community</p>
+      </div>
+      <div class="row g-2">
+        {% for img in images_list %}
+        <div class="col-6 col-md-3">
+          <a href="{{ img.image.url }}" data-gallery="gallery" class="glightbox">
+            <img src="{{ img.image.url }}" alt="{{ img.title }}" class="img-fluid rounded" style="height:150px;width:100%;object-fit:cover;">
+          </a>
+        </div>
+        {% endfor %}
+      </div>
+      <div class="text-center mt-3">
+        <a href="/gallery" class="btn-learn-more">View Full Gallery</a>
+      </div>
+    </div>
+  </section>
+  {% endif %}
+
+  <!-- Contact Section -->
+  <section id="contact" class="contact">
+    <div class="container" data-aos="fade-up">
+      <div class="section-title">
+        <h2>Contact Us</h2>
+        <p>We'd love to hear from you</p>
+      </div>
+      <div class="row mt-5">
+        <div class="col-lg-4">
+          <div class="info">
+            <div class="address mb-3">
+              <i class="bi bi-geo-alt" style="color:#8b0000;"></i>
+              <h4>Location</h4>
+              <p>Nyahururu, Laikipia County, Kenya</p>
+            </div>
+            <div class="email mb-3">
+              <i class="bi bi-envelope" style="color:#8b0000;"></i>
+              <h4>Email</h4>
+              <p>info@redeemedgospelchurch.org</p>
+            </div>
+            <div class="phone mb-3">
+              <i class="bi bi-telephone" style="color:#8b0000;"></i>
+              <h4>Phone</h4>
+              <p>+254 712 760 740</p>
+            </div>
+          </div>
+        </div>
+        <div class="col-lg-8">
+          <div class="p-4 rounded shadow-sm" style="background:#f9f9f9;">
+            <h5 class="mb-3">Service Times</h5>
+            <table class="table table-sm">
+              <tr><td><strong>Sunday Morning Service</strong></td><td>9:00 AM</td></tr>
+              <tr><td><strong>Sunday School</strong></td><td>8:00 AM</td></tr>
+              <tr><td><strong>Wednesday Bible Study</strong></td><td>6:00 PM</td></tr>
+              <tr><td><strong>Friday Prayer Meeting</strong></td><td>6:00 PM</td></tr>
+            </table>
+            <div class="mt-3">
+              <a href="/register" class="btn btn-danger me-2"><i class="bi bi-person-plus me-1"></i>Join Us</a>
+              <a href="/contribute" class="btn btn-warning text-dark"><i class="bi bi-heart me-1"></i>Give Online</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+{% endblock %}

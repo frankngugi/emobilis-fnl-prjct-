@@ -1,0 +1,151 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Bible – Redeemed Gospel Church Nyahururu{% endblock %}
+
+{% block extra_css %}
+<style>
+  .bible-hero { background: linear-gradient(135deg, #1a1a1a 0%, #4a1000 100%); color: #fff; padding: 100px 0 50px; margin-top: 70px; text-align: center; }
+  .bible-hero h1 { font-size: 2.5rem; font-weight: 700; color: #c9a227; }
+  .search-card { background: #fff; border-radius: 14px; box-shadow: 0 8px 30px rgba(0,0,0,0.15); padding: 30px; max-width: 700px; margin: -40px auto 0; position: relative; z-index: 2; }
+  .ref-input { border: 2px solid #ddd; border-radius: 10px; padding: 14px 18px; font-size: 1rem; width: 100%; transition: border-color 0.3s; }
+  .ref-input:focus { border-color: #8b0000; outline: none; box-shadow: 0 0 0 3px rgba(139,0,0,0.12); }
+  .btn-bible { background: linear-gradient(135deg, #8b0000, #c9a227); color: #fff; border: none; border-radius: 10px; padding: 13px 30px; font-weight: 600; font-size: 1rem; width: 100%; }
+  .verse-card { background: #fff; border-radius: 14px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); padding: 35px; margin-bottom: 25px; border-left: 5px solid #c9a227; }
+  .verse-reference { font-size: 1.1rem; font-weight: 700; color: #8b0000; margin-bottom: 5px; }
+  .verse-text { font-size: 1.1rem; line-height: 2; color: #333; font-style: italic; }
+  .verse-number { color: #8b0000; font-size: 0.8rem; font-weight: 700; vertical-align: super; margin-right: 3px; }
+  .book-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 6px; }
+  .book-btn { background: #f8f8f8; border: 1.5px solid #e5e5e5; border-radius: 8px; padding: 7px 10px; font-size: 0.8rem; color: #444; text-align: center; transition: all 0.2s; text-decoration: none; display: block; }
+  .book-btn:hover { background: #8b0000; color: #fff; border-color: #8b0000; text-decoration: none; }
+  .book-btn.nt { border-color: #c9a227; }
+  .book-btn.nt:hover { background: #c9a227; color: #1a1a1a; }
+  .section-label { font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: #888; margin: 18px 0 8px; }
+  .tip-card { background: #fffbea; border: 1px solid #c9a227; border-radius: 10px; padding: 12px 18px; font-size: 0.88rem; }
+  .quick-ref { display: inline-block; padding: 5px 12px; background: #f0f0f0; border: 1px solid #ddd; border-radius: 20px; font-size: 0.82rem; color: #555; text-decoration: none; transition: all 0.2s; margin: 3px 2px; }
+  .quick-ref:hover { background: #8b0000; color: #fff; border-color: #8b0000; text-decoration: none; }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<section class="bible-hero">
+  <div class="container">
+    <h1><i class="ri-book-open-line me-2"></i>Holy Bible</h1>
+    <p>Read, search, and meditate on God's Word</p>
+  </div>
+</section>
+
+<section class="py-5" style="background:#f5f5f5; padding-top:80px !important;">
+  <div class="container">
+
+    <!-- Search Card -->
+    <div class="search-card">
+      <h5 class="fw-bold mb-1 text-center">Search a Verse or Passage</h5>
+      <p class="text-muted text-center small mb-4">Enter a Bible reference — e.g. John 3:16 · Psalms 23:1-6 · Romans 8:28</p>
+      <form method="GET" action="/bible/">
+        <div class="row g-2 align-items-end">
+          <div class="col-sm-8">
+            <input type="text" name="ref" class="ref-input" value="{{ reference }}" placeholder="e.g. John 3:16 or Psalms 23" autofocus>
+          </div>
+          <div class="col-sm-4">
+            <button type="submit" class="btn-bible"><i class="bi bi-search me-2"></i>Search</button>
+          </div>
+        </div>
+      </form>
+
+      <!-- Quick reference links (hardcoded — no split filter needed) -->
+      <div class="tip-card mt-3">
+        <strong class="small">Quick examples:</strong>
+        <div class="mt-2">
+          <a href="/bible/?ref=John+3%3A16" class="quick-ref">John 3:16</a>
+          <a href="/bible/?ref=Psalms+23" class="quick-ref">Psalms 23</a>
+          <a href="/bible/?ref=Romans+8%3A28" class="quick-ref">Romans 8:28</a>
+          <a href="/bible/?ref=Proverbs+3%3A5-6" class="quick-ref">Proverbs 3:5-6</a>
+          <a href="/bible/?ref=Philippians+4%3A13" class="quick-ref">Philippians 4:13</a>
+          <a href="/bible/?ref=Genesis+1%3A1" class="quick-ref">Genesis 1:1</a>
+          <a href="/bible/?ref=Isaiah+40%3A31" class="quick-ref">Isaiah 40:31</a>
+          <a href="/bible/?ref=Matthew+6%3A33" class="quick-ref">Matthew 6:33</a>
+          <a href="/bible/?ref=Jeremiah+29%3A11" class="quick-ref">Jeremiah 29:11</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Verse Result -->
+    {% if verse_data %}
+    <div class="mt-5" data-aos="fade-up">
+      <div class="verse-card">
+        <div class="verse-reference"><i class="bi bi-book-fill me-2"></i>{{ verse_data.reference }}</div>
+        <p class="text-muted small mb-4">Translation: {{ verse_data.translation_name|default:"World English Bible" }}</p>
+        <div class="verse-text">
+          {% if verse_data.verses %}
+            {% for verse in verse_data.verses %}
+            <span><sup class="verse-number">{{ verse.verse }}</sup>{{ verse.text }} </span>
+            {% endfor %}
+          {% else %}
+            {{ verse_data.text }}
+          {% endif %}
+        </div>
+        <div class="mt-4 d-flex gap-2 flex-wrap">
+          <button onclick="copyVerse()" class="btn btn-sm btn-outline-secondary"><i class="bi bi-clipboard me-1"></i>Copy</button>
+          <button onclick="window.print()" class="btn btn-sm btn-outline-secondary"><i class="bi bi-printer me-1"></i>Print</button>
+        </div>
+      </div>
+    </div>
+    {% elif error %}
+    <div class="alert alert-warning mt-5 text-center"><i class="bi bi-exclamation-triangle me-2"></i>{{ error }}</div>
+    {% elif reference %}
+    <div class="alert alert-info mt-5 text-center"><i class="bi bi-info-circle me-2"></i>No results found for "{{ reference }}". Try a format like <strong>John 3:16</strong> or <strong>Psalms 23</strong>.</div>
+    {% endif %}
+
+    <!-- Books Browser -->
+    <div class="mt-5">
+      <h5 class="fw-bold mb-1">Browse by Book</h5>
+      <p class="text-muted small mb-3">Click a book to read its first chapter</p>
+      <div class="p-4 bg-white rounded-3 shadow-sm">
+        <div class="section-label">Old Testament (39 books)</div>
+        <div class="book-grid">
+          {% for book in books|slice:":39" %}
+          <a href="/bible/?ref={{ book|urlencode }}+1" class="book-btn">{{ book }}</a>
+          {% endfor %}
+        </div>
+        <div class="section-label mt-4">New Testament (27 books)</div>
+        <div class="book-grid">
+          {% for book in books|slice:"39:" %}
+          <a href="/bible/?ref={{ book|urlencode }}+1" class="book-btn nt">{{ book }}</a>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+
+    <!-- Daily Suggestions Banner -->
+    <div class="mt-4 p-4 rounded-3" style="background:linear-gradient(135deg,#1a1a1a,#8b0000);">
+      <div class="row align-items-center">
+        <div class="col-md-6">
+          <h6 class="mb-1" style="color:#c9a227;"><i class="ri-sun-line me-2"></i>Suggested Passages</h6>
+          <p class="mb-0 opacity-75 small" style="color:#fff;">Great passages to start your day</p>
+        </div>
+        <div class="col-md-6 mt-3 mt-md-0 d-flex flex-wrap gap-2">
+          <a href="/bible/?ref=Psalms+23" class="quick-ref" style="background:rgba(201,162,39,0.2);color:#c9a227;border-color:#c9a227;">Psalm 23</a>
+          <a href="/bible/?ref=John+15%3A1-17" class="quick-ref" style="background:rgba(255,255,255,0.1);color:#fff;border-color:rgba(255,255,255,0.3);">John 15:1-17</a>
+          <a href="/bible/?ref=Isaiah+40%3A28-31" class="quick-ref" style="background:rgba(201,162,39,0.2);color:#c9a227;border-color:#c9a227;">Isaiah 40:28-31</a>
+          <a href="/bible/?ref=Matthew+5%3A1-12" class="quick-ref" style="background:rgba(255,255,255,0.1);color:#fff;border-color:rgba(255,255,255,0.3);">Matthew 5:1-12</a>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function copyVerse() {
+  const ref = document.querySelector('.verse-reference')?.textContent?.trim() || '';
+  const text = document.querySelector('.verse-text')?.textContent?.trim() || '';
+  navigator.clipboard.writeText(ref + '\n\n' + text)
+    .then(() => alert('Verse copied to clipboard!'))
+    .catch(() => { /* fallback */ });
+}
+</script>
+{% endblock %}

@@ -1,0 +1,159 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Edit User – RGC Admin{% endblock %}
+{% block body_class %}admin-portal{% endblock %}
+
+{% block extra_css %}
+<style>
+  .admin-layout { display: flex; min-height: calc(100vh - 70px); margin-top: 70px; }
+  .admin-sidebar { width: 240px; flex-shrink: 0; background: linear-gradient(180deg, #1a1a1a 0%, #2d0000 100%); position: sticky; top: 70px; height: calc(100vh - 70px); overflow-y: auto; }
+  .sidebar-brand-small { padding: 18px 16px; border-bottom: 1px solid rgba(255,255,255,0.08); display: flex; align-items: center; gap: 10px; }
+  .sidebar-brand-small span { color: #c9a227; font-weight: 700; font-size: 0.9rem; }
+  .sidebar-link { display: flex; align-items: center; gap: 9px; padding: 10px 16px; color: rgba(255,255,255,0.75); font-size: 0.84rem; text-decoration: none; transition: all 0.2s; }
+  .sidebar-link:hover { background: rgba(201,162,39,0.13); color: #c9a227; text-decoration: none; }
+  .admin-main { flex: 1; background: #f0f2f5; padding: 24px; display: flex; align-items: flex-start; justify-content: center; }
+  .edit-card { background: #fff; border-radius: 14px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); padding: 35px; width: 100%; max-width: 600px; }
+  .user-avatar { width: 70px; height: 70px; border-radius: 50%; background: linear-gradient(135deg, #8b0000, #c9a227); display: flex; align-items: center; justify-content: center; font-size: 2rem; color: #fff; flex-shrink: 0; }
+  .form-check-lg .form-check-input { width: 1.4em; height: 1.4em; margin-top: 0.1em; }
+  .role-option { border: 2px solid #e0e0e0; border-radius: 10px; padding: 14px 18px; cursor: pointer; transition: all 0.2s; }
+  .role-option:hover { border-color: #8b0000; background: #fff8f8; }
+  .role-option input[type=radio]:checked + .role-label { color: #8b0000; }
+  .role-option.selected-admin { border-color: #8b0000; background: #fff5f5; }
+  .role-option.selected-manager { border-color: #c9a227; background: #fffbea; }
+  .role-option.selected-member { border-color: #27ae60; background: #f0fff4; }
+  .btn-save { background: linear-gradient(135deg, #8b0000, #c9a227); color: #fff; border: none; border-radius: 9px; padding: 13px 30px; font-weight: 700; }
+  @media (max-width: 900px) { .admin-sidebar { display: none; } }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="admin-layout">
+  <aside class="admin-sidebar">
+    <div class="sidebar-brand-small"><i class="bi bi-shield-fill-check" style="color:#c9a227;font-size:1.3rem;"></i><span>RGC Admin</span></div>
+    <a href="/adminn/" class="sidebar-link"><i class="bi bi-speedometer2"></i>Dashboard</a>
+    <a href="/adminn/manage-users/" class="sidebar-link"><i class="bi bi-people"></i>Manage Users</a>
+    <a href="/admin/" class="sidebar-link"><i class="bi bi-gear"></i>Django Admin</a>
+    <a href="/logout" class="sidebar-link" style="color:#ff6b6b;"><i class="bi bi-box-arrow-right"></i>Logout</a>
+  </aside>
+
+  <main class="admin-main">
+    <div class="edit-card">
+      <!-- User Info Header -->
+      <div class="d-flex align-items-center gap-3 mb-4 pb-3" style="border-bottom:2px solid #f0f0f0;">
+        <div class="user-avatar"><i class="bi bi-person-fill"></i></div>
+        <div>
+          <h5 class="mb-0 fw-bold">{{ target_user.get_full_name|default:target_user.username }}</h5>
+          <p class="text-muted mb-0 small">{{ target_user.email }}</p>
+          <div class="mt-1">
+            <span class="badge {% if target_user.is_superuser %}bg-danger{% elif target_user.is_staff %}bg-warning text-dark{% else %}bg-secondary{% endif %}">
+              Current: {{ target_user.role }}
+            </span>
+            {% if target_user.is_superuser %}<span class="badge bg-dark ms-1">Superadmin</span>{% endif %}
+          </div>
+        </div>
+      </div>
+
+      {% if messages %}{% for m in messages %}<div class="alert alert-{% if m.tags == 'error' %}danger{% else %}{{ m.tags }}{% endif %}">{{ m }}</div>{% endfor %}{% endif %}
+
+      <form method="POST">
+        {% csrf_token %}
+        <h6 class="fw-bold mb-3">Assign Role</h6>
+        <div class="row g-2 mb-4">
+          <div class="col-4">
+            <label class="role-option {% if target_user.role == 'member' %}selected-member{% endif %} d-block text-center" id="opt-member">
+              <input type="radio" name="role" value="member" {% if target_user.role == 'member' %}checked{% endif %} class="d-none" onchange="updateOpts()">
+              <i class="bi bi-person-fill d-block" style="font-size:1.8rem; color:#27ae60;"></i>
+              <strong class="small">Member</strong>
+              <div class="text-muted" style="font-size:0.72rem;">Basic access</div>
+            </label>
+          </div>
+          <div class="col-4">
+            <label class="role-option {% if target_user.role == 'manager' %}selected-manager{% endif %} d-block text-center" id="opt-manager">
+              <input type="radio" name="role" value="manager" {% if target_user.role == 'manager' %}checked{% endif %} class="d-none" onchange="updateOpts()">
+              <i class="bi bi-briefcase-fill d-block" style="font-size:1.8rem; color:#c9a227;"></i>
+              <strong class="small">Manager</strong>
+              <div class="text-muted" style="font-size:0.72rem;">Staff + dashboard</div>
+            </label>
+          </div>
+          <div class="col-4">
+            <label class="role-option {% if target_user.role == 'admin' %}selected-admin{% endif %} d-block text-center" id="opt-admin">
+              <input type="radio" name="role" value="admin" {% if target_user.role == 'admin' %}checked{% endif %} class="d-none" onchange="updateOpts()">
+              <i class="bi bi-shield-fill d-block" style="font-size:1.8rem; color:#8b0000;"></i>
+              <strong class="small">Admin</strong>
+              <div class="text-muted" style="font-size:0.72rem;">Full access</div>
+            </label>
+          </div>
+        </div>
+
+        <h6 class="fw-bold mb-3">Permissions</h6>
+        <div class="row g-3 mb-4">
+          <div class="col-md-4">
+            <div class="form-check form-check-lg">
+              <input class="form-check-input" type="checkbox" name="is_staff" id="is_staff" {% if target_user.is_staff %}checked{% endif %}>
+              <label class="form-check-label fw-semibold" for="is_staff">
+                Staff Access
+                <div class="text-muted small fw-normal">Can access /adminn/</div>
+              </label>
+            </div>
+          </div>
+          <div class="col-md-4">
+            {% if user.is_superuser %}
+            <div class="form-check form-check-lg">
+              <input class="form-check-input" type="checkbox" name="is_superuser" id="is_superuser" {% if target_user.is_superuser %}checked{% endif %}>
+              <label class="form-check-label fw-semibold" for="is_superuser">
+                Superadmin
+                <div class="text-muted small fw-normal">Full system access</div>
+              </label>
+            </div>
+            {% else %}
+            <div class="text-muted small p-2 bg-light rounded">Only superadmins can grant superadmin rights.</div>
+            {% endif %}
+          </div>
+          <div class="col-md-4">
+            <div class="form-check form-check-lg">
+              <input class="form-check-input" type="checkbox" name="is_active" id="is_active" {% if target_user.is_active %}checked{% endif %}>
+              <label class="form-check-label fw-semibold" for="is_active">
+                Active Account
+                <div class="text-muted small fw-normal">Can log in</div>
+              </label>
+            </div>
+          </div>
+        </div>
+
+        {% if target_user == user %}
+        <div class="alert alert-warning py-2 small mb-3">
+          <i class="bi bi-exclamation-triangle me-1"></i> You are editing your own account. You cannot remove your own admin role.
+        </div>
+        {% endif %}
+
+        <div class="d-flex gap-2">
+          <button type="submit" class="btn-save"><i class="bi bi-save me-2"></i>Save Changes</button>
+          <a href="/adminn/manage-users/" class="btn btn-outline-secondary">Cancel</a>
+        </div>
+      </form>
+    </div>
+  </main>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function updateOpts() {
+  ['member','manager','admin'].forEach(r => {
+    const opt = document.getElementById('opt-' + r);
+    const radio = opt.querySelector('input[type=radio]');
+    opt.className = 'role-option d-block text-center';
+    if (radio.checked) opt.classList.add('selected-' + r);
+  });
+}
+// Clicking the label div triggers radio
+document.querySelectorAll('.role-option').forEach(opt => {
+  opt.addEventListener('click', function() {
+    const radio = this.querySelector('input[type=radio]');
+    radio.checked = true;
+    updateOpts();
+  });
+});
+</script>
+{% endblock %}

@@ -1,243 +1,463 @@
 import datetime
-from django.shortcuts import render
-from django.http import Http404, HttpResponse, HttpResponseForbidden, HttpResponseNotAllowed, JsonResponse
+import base64
+import requests as http_requests
 from django.shortcuts import render, redirect, get_object_or_404
-from django.contrib.auth import login, logout, authenticate, login as auth_login
-from django.urls import include
-from .models import Events, Attendee, UserProfile, Group, CustomUser, Payment, Member, Images, Video, Media, RegisteredEvent
-from django.contrib.auth.models import User, auth
+from django.http import JsonResponse
 from django.contrib import messages
+from django.contrib.auth import login as auth_login, logout as auth_logout, authenticate
+from django.contrib.auth import get_user_model
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import PasswordChangeForm
-import requests
-import os
-from datetime import datetime
-from typing import Any, List
-
-from django.shortcuts import redirect
-# from intasend import IntaSend
-from django.shortcuts import render, redirect
-from django.contrib.auth.decorators import login_required  # For authentication check
-from django.contrib import admin
+from django.contrib.auth import update_session_auth_hash
 from django.utils import timezone
-from django.contrib.auth import get_user_model
-# from intasend import IntaSend
-from django.shortcuts import render
-from .forms import PaymentForm, EventForm, CustomUserForm, GroupChangeForm, MediaForm, CustomUser, ProfileForm, GroupForm, ImagesForm, VideoForm
-from intasend import APIService
-# from intasend_python import IntaSend
+from django.conf import settings
+from django.core.mail import send_mail
+from django.core.paginator import Paginator
+from django.views.decorators.http import require_POST
 
-# publishable_key = "ISPubKey_live_aef19549-0327-451a-830a-74031f96cf7d"
-# service = APIService(token=ISSecretKey_live_0d4a4729-20c0-4bd5-90c7-f4d81745fa7a, publishable_key=publishable_key, test=True)
+from .models import (
+    Events, Attendee, UserProfile, Group, CustomUser,
+    Payment, Member, Images, Video, Media, Announcement, Hymn, OTPCode, RoleRequest
+)
+from .forms import (
+    PaymentForm, EventForm, CustomUserForm, GroupChangeForm,
+    MediaForm, ProfileForm, GroupForm, ImagesForm, VideoForm,
+    AnnouncementForm, RegistrationForm, OTPVerifyForm
+)
 
-# Create your views here.
-def register(request):
+User = get_user_model()
+
+
+# ─── Authentication ────────────────────────────────────────────────────────────
+
+def login_view(request):
+    if request.user.is_authenticated:
+        return _redirect_by_role(request.user)
     if request.method == 'POST':
-        username = request.POST['username']
-        phone = request.POST.get('phone', '')
-        email = request.POST['email']
-        password = request.POST['password']
-        confirm_password = request.POST['confirm_password']
-        group_id = request.POST.get('group', '')
-
-        try:
-            if group_id:
-
-                group = Group.objects.get(id=group_id)
-            else:
-                group = None
-        except Group.DoesNotExist:
-            group = None
-
-        try:
-            CustomUser.objects.get(username=username)
-            messages.error(request, "Username already exists.")
-        except CustomUser.DoesNotExist:
-            try:
-                CustomUser.objects.get(email=email)
-                messages.error(request, "Email already exists.")
-            except CustomUser.DoesNotExist:
-                if len(username) < 5 or len(password) < 8:
-                    messages.error(request, "Username must be at least 5 characters and Password must be at least 8 characters")
-                    messages.error(request, "Username and Password must be at least 5 characters long.")
-                    return redirect('register')
-
-                elif password != confirm_password:
-                    messages.error(request, "Passwords do not match.")
-                    return redirect('register')
-
-                else:
-                    if phone:
-                        phone_number = int(phone)
-                    else:
-                        phone_number = None
-                    user = CustomUser.objects.create_user(username=username, password=password, email=email, phone=phone_number)
-                    user.save()
-                    member = Member(user=user, name=username, email=email)
-                    member.save()
-                    if group:
-                        member.groups.add(group)
-                    return redirect('login')
-        return render(request, 'register.html')
-
-    else:
-        groups = Group.objects.all()
-        return render(request, 'register.html', {'groups': groups})  
-
-def login(request):
-    if request.method == 'POST':
-        user_type = request.POST.get('user_type')
-        if user_type == 'admin':
-            return render(request, 'adminlogin.html')
-        else:
-            return render(request, 'userlogin.html')
-    else:
-        return render(request, 'login.html')
-
-def adminlogin(request):
-    if request.method == 'POST':
-        username = request.POST['username']
-        password = request.POST['password']
-        user = auth.authenticate(username=username, password=password)
+        username = request.POST.get('username', '').strip()
+        password = request.POST.get('password', '')
+        selected_role = request.POST.get('portal', 'member')
+        user = authenticate(request, username=username, password=password)
         if user is not None:
-            auth.login(request,user)
-            if user.is_superuser:
-                return redirect('adminn')
-            else:
-                return redirect('/')
-            
+            # Validate the user has permission for the selected portal
+            if selected_role == 'admin' and not (user.is_superuser or user.role == 'admin'):
+                messages.error(request, "You do not have admin access.")
+                return render(request, 'login.html')
+            if selected_role == 'manager' and not (user.is_staff or user.is_superuser or user.role in ('admin', 'manager')):
+                messages.error(request, "You do not have manager access.")
+                return render(request, 'login.html')
+            auth_login(request, user)
+            # Store the active portal in session
+            request.session['active_portal'] = selected_role if selected_role in ('admin', 'manager') else 'member'
+            return _redirect_by_role(user, override=selected_role)
         else:
-            messages.error(request,"Invalid username or password")
-    return render(request,'login.html')
+            messages.error(request, "Invalid username or password.")
+    return render(request, 'login.html')
 
-def userlogin(request):
-    if request.method == 'POST':
-        username = request.POST['username']
-        password = request.POST['password']
-        user = auth.authenticate(username=username, password=password)
-        if user is not None:
-            auth.login(request,user)
-            return redirect('/')
-        else:
-            messages.error(request,"Invalid username or password")
-    return render(request,'login.html')
+
+def _redirect_by_role(user, override=None):
+    portal = override or getattr(user, 'role', 'member')
+    if portal == 'admin' or user.is_superuser:
+        return redirect('adminn')
+    if portal == 'manager' or user.is_staff:
+        return redirect('adminn')
+    return redirect('index')
+
 
 @login_required
-def logout(request):
-    auth.logout(request);
-    return redirect('/');
+def switch_portal(request, portal):
+    """Allow a user to switch between member/manager/admin views."""
+    user = request.user
+    if portal == 'admin' and not (user.is_superuser or user.role == 'admin'):
+        messages.error(request, "You do not have admin access.")
+        return redirect('index')
+    if portal == 'manager' and not (user.is_staff or user.is_superuser or user.role in ('admin', 'manager')):
+        messages.error(request, "You do not have manager access.")
+        return redirect('index')
+    request.session['active_portal'] = portal
+    if portal in ('admin', 'manager'):
+        return redirect('adminn')
+    return redirect('index')
+
+
+def register_view(request):
+    if request.user.is_authenticated:
+        return redirect('index')
+    if request.method == 'POST':
+        form = RegistrationForm(request.POST)
+        if form.is_valid():
+            user = form.save(commit=False)
+            user.set_password(form.cleaned_data['password'])
+            user.save()
+            # Create member profile
+            Member.objects.get_or_create(
+                email=user.email,
+                defaults={'user': user, 'name': f"{user.first_name} {user.last_name}".strip() or user.username}
+            )
+            # Send email verification
+            _send_email_otp(request, user)
+            messages.success(request, "Account created! Check your email to verify your account.")
+            return redirect('verify_email_notice')
+        else:
+            for field, errors in form.errors.items():
+                for error in errors:
+                    messages.error(request, f"{error}")
+    else:
+        form = RegistrationForm()
+    groups = Group.objects.all()
+    return render(request, 'register.html', {'form': form, 'groups': groups})
+
+
+def _send_email_otp(request, user):
+    code = OTPCode.generate_code()
+    OTPCode.objects.create(user=user, email=user.email, code=code, purpose='email')
+    subject = f"Email Verification – {settings.CHURCH_NAME}"
+    message = (
+        f"Hello {user.first_name or user.username},\n\n"
+        f"Your email verification code is: {code}\n\n"
+        f"This code expires in 10 minutes.\n\n"
+        f"God bless you!\n{settings.CHURCH_NAME}"
+    )
+    try:
+        send_mail(subject, message, settings.DEFAULT_FROM_EMAIL, [user.email])
+    except Exception:
+        pass  # Console backend will print it
+
+
+def verify_email_notice(request):
+    return render(request, 'verify_email_notice.html')
+
+
+def verify_email(request):
+    if request.method == 'POST':
+        code = request.POST.get('code', '').strip()
+        email = request.POST.get('email', '').strip()
+        try:
+            user = User.objects.get(email=email)
+            otp = OTPCode.objects.filter(
+                user=user, code=code, purpose='email', is_used=False
+            ).latest('created_at')
+            if otp.is_valid():
+                otp.is_used = True
+                otp.save()
+                user.is_email_verified = True
+                user.save()
+                auth_login(request, user)
+                messages.success(request, "Email verified! Welcome to RGC.")
+                return redirect('index')
+            else:
+                messages.error(request, "Code expired or already used.")
+        except (User.DoesNotExist, OTPCode.DoesNotExist):
+            messages.error(request, "Invalid code or email.")
+    return render(request, 'verify_email.html')
+
+
+def send_phone_otp(request):
+    """Send OTP via Twilio Verify to a phone number."""
+    if request.method == 'POST':
+        phone = request.POST.get('phone', '').strip()
+        if not phone.startswith('+'):
+            phone = '+254' + phone.lstrip('0')
+        try:
+            from twilio.rest import Client
+            client = Client(settings.TWILIO_ACCOUNT_SID, settings.TWILIO_AUTH_TOKEN)
+            client.verify.v2.services(settings.TWILIO_VERIFY_SERVICE_SID) \
+                .verifications.create(to=phone, channel='sms')
+            request.session['otp_phone'] = phone
+            messages.success(request, f"OTP sent to {phone}")
+            return redirect('verify_phone')
+        except Exception as e:
+            messages.error(request, f"Could not send OTP: {e}")
+    return render(request, 'send_phone_otp.html')
+
+
+def verify_phone(request):
+    """Verify phone OTP via Twilio Verify."""
+    if request.method == 'POST':
+        phone = request.session.get('otp_phone', '')
+        code = request.POST.get('code', '').strip()
+        try:
+            from twilio.rest import Client
+            client = Client(settings.TWILIO_ACCOUNT_SID, settings.TWILIO_AUTH_TOKEN)
+            result = client.verify.v2.services(settings.TWILIO_VERIFY_SERVICE_SID) \
+                .verification_checks.create(to=phone, code=code)
+            if result.status == 'approved':
+                if request.user.is_authenticated:
+                    request.user.is_phone_verified = True
+                    request.user.phone = phone
+                    request.user.save()
+                    # Update member phone
+                    Member.objects.filter(user=request.user).update(phonenumber=phone)
+                messages.success(request, "Phone number verified!")
+                return redirect('profile')
+            else:
+                messages.error(request, "Invalid or expired OTP.")
+        except Exception as e:
+            messages.error(request, f"Verification failed: {e}")
+    return render(request, 'verify_phone.html')
+
+
+@login_required
+def logout_view(request):
+    auth_logout(request)
+    return redirect('index')
+
+
+# ─── Profile ───────────────────────────────────────────────────────────────────
 
 @login_required
 def profile(request):
-    profile = get_object_or_404(profile, user=request.user)
+    profile_obj, _ = UserProfile.objects.get_or_create(user=request.user)
     if request.method == 'POST':
-        form = ProfileForm(request.POST, request.FILES, instance=profile)
+        form = ProfileForm(request.POST, request.FILES, instance=profile_obj)
         if form.is_valid():
             form.save()
+            messages.success(request, "Profile updated successfully.")
             return redirect('profile')
     else:
-        form = ProfileForm(instance=profile)
+        form = ProfileForm(instance=profile_obj)
+    member = Member.objects.filter(user=request.user).first()
+    return render(request, 'profile.html', {'form': form, 'member': member})
 
-    return render(request, 'profile.html', {'form': form})
-
-User = get_user_model()
-
-
-
-def group_detail(request, pk):
-    group = Group.objects.get(pk=pk)
-    members = group.my_members.all()
-    return render(request, 'group_detail.html', {'group': group, 'embers': members})
-
-def create_group(request):
-    if request.method == 'POST':
-        name = request.POST['name']
-        description = request.POST['description']
-
-        group = Group.objects.create(name=name, description=description)
-        group.save()
-
-        return redirect('group_detail', group_id=group.id)
-    else:
-        return render(request, 'create_group.html')
-
-def join_group(request):
-    if request.method == 'POST':
-        group_id = request.POST['group']
-        user = request.user
-
-        try:
-            group = Group.objects.get(id=group_id)  # Use the custom 'CustomGroup' model
-        except Group.DoesNotExist:
-            group = None
-
-        if group:
-            member, _ = Member.objects.get_or_create(user=user)
-            if not member.group:
-                member.group = group
-                member.save()
-                return redirect('/')
-            else:
-                messages.error(request, "User is already in a group.")
-                return redirect('/')
-        else:
-            messages.error(request, "Group not found.")
-            return redirect('/')
-    else:
-        groups = Group.objects.all()  # Use the custom 'CustomGroup' model
-        return render(request, 'join_group.html', {'groups': groups})
-    
-User = get_user_model()
-
-def get_event_attendees(event_id):
-    event = Events.objects.get(id=event_id)
-    attendees = Attendee.objects.filter(event=event)
-    users = [attendee.user for attendee in attendees]
-    return users
 
 @login_required
-def user_events(request):
-    user = request.user
-    member = Member.objects.get(user=user)
-    events = member.events.all()
-    return render(request, 'user_events.html', {'events': events})
-
-User = get_user_model()
-
-@login_required
-def group_change(request):
-    user = request.user
-    groups = user.groups.all()
+def change_password(request):
     if request.method == 'POST':
-        form = GroupChangeForm(request.POST)
+        form = PasswordChangeForm(user=request.user, data=request.POST)
         if form.is_valid():
-            group = form.cleaned_data['group']
-            user.groups.remove(*user.groups.all())
-            user.groups.add(group)
-            return redirect('group_change')
+            form.save()
+            update_session_auth_hash(request, form.user)
+            messages.success(request, "Password changed successfully!")
+            return redirect('profile')
     else:
-        form = GroupChangeForm(initial={'group': user.groups.first()})
-    return render(request, 'group_change.html', {'groups': groups, 'form': form})
+        form = PasswordChangeForm(user=request.user)
+    return render(request, 'change_password.html', {'form': form})
 
-def group_management(request):
+
+# ─── Index / Home ──────────────────────────────────────────────────────────────
+
+def index(request):
+    announcements = Announcement.objects.filter(is_published=True)[:5]
+    events = Events.objects.filter(date__gte=timezone.now().date()).order_by('date')[:6]
+    images = Images.objects.all().order_by('-uploaded_at')[:8]
+    videos = Video.objects.all().order_by('-uploaded_at')[:3]
     groups = Group.objects.all()
-    members = Member.objects.all()
-    context = {'groups': groups, 'members': members}
-    return render(request, 'groups.html', context)
+    return render(request, 'index.html', {
+        'announcements': announcements,
+        'events': events,
+        'images_list': images,
+        'video_list': videos,
+        'groups': groups,
+    })
+
+
+# ─── Announcements ─────────────────────────────────────────────────────────────
+
+def announcements(request):
+    all_announcements = Announcement.objects.filter(is_published=True)
+    paginator = Paginator(all_announcements, 10)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+    return render(request, 'announcements.html', {'page_obj': page_obj})
+
+
+@login_required
+def add_announcement(request):
+    if not (request.user.is_staff or request.user.is_superuser):
+        messages.error(request, "Permission denied.")
+        return redirect('announcements')
+    if request.method == 'POST':
+        form = AnnouncementForm(request.POST, request.FILES)
+        if form.is_valid():
+            ann = form.save(commit=False)
+            ann.posted_by = request.user
+            ann.save()
+            messages.success(request, "Announcement posted successfully.")
+            return redirect('announcements')
+    else:
+        form = AnnouncementForm()
+    return render(request, 'add_announcement.html', {'form': form})
+
+
+@login_required
+def delete_announcement(request, pk):
+    if not (request.user.is_staff or request.user.is_superuser):
+        messages.error(request, "Permission denied.")
+        return redirect('announcements')
+    ann = get_object_or_404(Announcement, pk=pk)
+    ann.delete()
+    messages.success(request, "Announcement deleted.")
+    return redirect('announcements')
+
+
+# ─── Hymns ─────────────────────────────────────────────────────────────────────
+
+def hymns(request):
+    query = request.GET.get('q', '').strip()
+    hymn_list = Hymn.objects.all()
+    if query:
+        hymn_list = hymn_list.filter(title__icontains=query) | hymn_list.filter(
+            number__icontains=query if query.isdigit() else ''
+        )
+    paginator = Paginator(hymn_list, 20)
+    page_obj = paginator.get_page(request.GET.get('page'))
+    selected_hymn = None
+    hymn_id = request.GET.get('hymn')
+    if hymn_id:
+        selected_hymn = Hymn.objects.filter(pk=hymn_id).first()
+    return render(request, 'hymns.html', {
+        'page_obj': page_obj,
+        'query': query,
+        'selected_hymn': selected_hymn,
+    })
+
+
+def hymns_api(request):
+    """JSON endpoint for hymn search."""
+    query = request.GET.get('q', '')
+    hymns_qs = Hymn.objects.all()
+    if query:
+        hymns_qs = hymns_qs.filter(title__icontains=query)
+    data = [{'id': h.id, 'number': h.number, 'title': h.title, 'author': h.author} for h in hymns_qs[:50]]
+    return JsonResponse({'hymns': data})
+
+
+# ─── Bible ─────────────────────────────────────────────────────────────────────
+
+def bible(request):
+    verse_data = None
+    error = None
+    books = [
+        "Genesis", "Exodus", "Leviticus", "Numbers", "Deuteronomy",
+        "Joshua", "Judges", "Ruth", "1 Samuel", "2 Samuel",
+        "1 Kings", "2 Kings", "1 Chronicles", "2 Chronicles",
+        "Ezra", "Nehemiah", "Esther", "Job", "Psalms", "Proverbs",
+        "Ecclesiastes", "Song of Solomon", "Isaiah", "Jeremiah",
+        "Lamentations", "Ezekiel", "Daniel", "Hosea", "Joel", "Amos",
+        "Obadiah", "Jonah", "Micah", "Nahum", "Habakkuk", "Zephaniah",
+        "Haggai", "Zechariah", "Malachi",
+        "Matthew", "Mark", "Luke", "John", "Acts", "Romans",
+        "1 Corinthians", "2 Corinthians", "Galatians", "Ephesians",
+        "Philippians", "Colossians", "1 Thessalonians", "2 Thessalonians",
+        "1 Timothy", "2 Timothy", "Titus", "Philemon", "Hebrews",
+        "James", "1 Peter", "2 Peter", "1 John", "2 John", "3 John",
+        "Jude", "Revelation"
+    ]
+    reference = request.GET.get('ref', '')
+    if reference:
+        try:
+            url = f"https://bible-api.com/{reference.replace(' ', '%20')}"
+            resp = http_requests.get(url, timeout=10)
+            if resp.status_code == 200:
+                verse_data = resp.json()
+            else:
+                error = "Verse not found. Try: John 3:16 or Psalms 23:1-6"
+        except Exception:
+            error = "Could not connect to Bible API. Please try again."
+    return render(request, 'bible.html', {
+        'verse_data': verse_data,
+        'reference': reference,
+        'books': books,
+        'error': error,
+    })
+
+
+# ─── Events ────────────────────────────────────────────────────────────────────
+
+pass  # event_list defined below with category filter
+
+
+def addevents(request):
+    if not (request.user.is_authenticated and (request.user.is_staff or request.user.is_superuser)):
+        messages.error(request, "Permission denied.")
+        return redirect('events')
+    if request.method == 'POST':
+        form = EventForm(request.POST, request.FILES)
+        if form.is_valid():
+            ev = form.save(commit=False)
+            ev.organizer = request.user
+            ev.save()
+            messages.success(request, "Event added successfully.")
+            return redirect('events')
+    else:
+        form = EventForm()
+    return render(request, 'addevents.html', {'form': form})
+
+
+@login_required
+def register_event(request, event_id):
+    event = get_object_or_404(Events, pk=event_id)
+    phone = request.POST.get('phonenumber', request.user.phone or '')
+    _, created = Attendee.objects.get_or_create(
+        user=request.user, event=event,
+        defaults={'phonenumber': phone}
+    )
+    if created:
+        messages.success(request, f"Registered for {event.title}!")
+    else:
+        messages.info(request, "You are already registered for this event.")
+    return redirect('events')
+
+
+# ─── Groups ────────────────────────────────────────────────────────────────────
 
 def group_list(request):
     groups = Group.objects.all()
     return render(request, 'groups.html', {'groups': groups})
 
-def group_add(request):
+
+def group_detail(request, pk):
+    group = get_object_or_404(Group, pk=pk)
+    members = group.members.all()
+    return render(request, 'group_details.html', {'group': group, 'members': members})
+
+
+def create_group(request):
+    if not request.user.is_authenticated:
+        return redirect('login')
+    if not (request.user.is_staff or request.user.is_superuser or request.user.role in ('admin', 'manager')):
+        messages.error(request, "Only admins and managers can create groups.")
+        return redirect('groups')
     if request.method == 'POST':
-        form = GroupForm(request.POST)
-        if form.is_valid():
-            form.save()
-            return redirect('groups')
-    else:
-        form = GroupForm()
-    return render(request, 'group_form.html', {'form': form})
+        name = request.POST.get('name', '').strip()
+        description = request.POST.get('description', '').strip()
+        category = request.POST.get('category', 'other').strip()
+        if not name:
+            messages.error(request, "Group name is required.")
+        elif not description:
+            messages.error(request, "Description is required.")
+        elif Group.objects.filter(name__iexact=name).exists():
+            messages.error(request, f"A group named '{name}' already exists.")
+        else:
+            group = Group.objects.create(
+                name=name, description=description,
+                category=category, leader=request.user,
+            )
+            messages.success(request, f"Group '{group.name}' created!")
+            return redirect('group_detail', pk=group.id)
+    return render(request, 'create_group.html')
+
+
+@login_required
+def join_group(request):
+    if request.method == 'POST':
+        group_id = request.POST.get('group')
+        group = get_object_or_404(Group, id=group_id)
+        member, created = Member.objects.get_or_create(
+            user=request.user,
+            defaults={'email': request.user.email, 'name': request.user.get_full_name() or request.user.username}
+        )
+        member.group = group
+        member.save()
+        messages.success(request, f"Joined {group.name}!")
+        return redirect('index')
+    groups = Group.objects.all()
+    return render(request, 'join_group.html', {'groups': groups})
+
+
+def group_add(request):
+    return create_group(request)
+
 
 def group_edit(request, pk):
     group = get_object_or_404(Group, pk=pk)
@@ -245,337 +465,391 @@ def group_edit(request, pk):
         form = GroupForm(request.POST, instance=group)
         if form.is_valid():
             form.save()
+            messages.success(request, "Group updated.")
             return redirect('groups')
     else:
         form = GroupForm(instance=group)
-    return render(request, 'group_form.html', {'form': form})
+    return render(request, 'group_form.html', {'form': form, 'group': group})
+
 
 def group_delete(request, pk):
     group = get_object_or_404(Group, pk=pk)
     if request.method == 'POST':
         group.delete()
+        messages.success(request, "Group deleted.")
         return redirect('groups')
     return render(request, 'group_confirm_delete.html', {'group': group})
+
+
+# ─── Media uploads ─────────────────────────────────────────────────────────────
+
+@login_required
+def uploadimages(request):
+    if request.method == 'POST':
+        form = ImagesForm(request.POST, request.FILES)
+        if form.is_valid():
+            img = form.save(commit=False)
+            img.uploaded_by = request.user
+            img.save()
+            messages.success(request, "Image uploaded.")
+            return redirect('gallery')
+    else:
+        form = ImagesForm()
+    return render(request, 'uploadimages.html', {'form': form})
+
+
+@login_required
+def uploadvideos(request):
+    if request.method == 'POST':
+        form = VideoForm(request.POST, request.FILES)
+        if form.is_valid():
+            vid = form.save(commit=False)
+            vid.uploader = request.user
+            vid.save()
+            messages.success(request, "Video uploaded.")
+            return redirect('video')
+    else:
+        form = VideoForm()
+    return render(request, 'uploadvideos.html', {'form': form})
+
 
 @login_required
 def uploadfiles(request):
     if request.method == 'POST':
-        title = request.POST.get['title']
-        description = request.POST.get['description']
-        details = request.POST.get['details']
-        file = request.FILES.get['file']
-
-        if title and description and details and file:
-            media_obj = Media.objects.create(title=title, description=description, details=details, file=file, uploader=request.user)
-            media_obj.save()
-            return redirect('index')
-        else:
-            messages.error(request, "Please make sure to enter a title, description, details and select a file to upload.")
-    return render(request, 'uploadfiles.html')
-
-def uploadvideos(request):
-    if request.method == 'POST':
-        title = request.POST.get('title')
-        description = request.POST.get('description', '')
-        details = request.POST.get('details', '')
-        video = request.FILES.get('video')
-
-        if title and video:
-            video_obj = Video.objects.create(title=title, description=description, details=details, video=video, uploader=request.user)
-            video_obj.save()
-            return redirect('index')
-        else:
-            messages.error(request, "Please make sure to enter a title and select a video to upload.")
-    return render(request, 'uploadvideos.html')
-
-
-def addevents(request):
-    if request.method == 'POST':
-        title = request.POST.get('title')
-        description = request.POST.get('description', '')
-        location = request.POST.get('location', '')
-        date_time_str = request.POST.get('date')
-
-        if title and location and date_time_str:
-            date_time_obj = datetime.strptime(date_time_str, "%Y-%m-%dT%H:%M")
-            date = date_time_obj.date()
-            time = date_time_obj.time()
-
-            event_obj = Events.objects.create(title=title, description=description, date=date, time=time, location=location, organizer=request.user)
-            event_obj.save()
-            return redirect('index')
-        else:
-            messages.error(request, "Please make sure to enter a title, location, and date before submitting.")
-    return render(request, 'addevents.html')
-
-
-@login_required
-def register_event(request):
-    event = get_object_or_404(Events)
-    Attendee.objects.get_or_create(user=request.user, event=event)
-    return redirect('events')
-
-def events(request):
-    event = get_object_or_404(Events)
-    attendees = Attendee.objects.filter(event=event)
-    users = [attendee.user for attendee in attendees]
-    return render(request, 'events.html', {'event': event, 'attendees': attendees, 'users': users})
-
-def event(request):
-    events = Events.objects.all()
-    return render(request, 'events.html', {'events': events})
-
-def uploadimages(request):
-    if request.method == 'POST':
-        title = request.POST.get('title')
-        image = request.FILES.get('image')
-
-        if title and image:
-            image_obj = Images.objects.create(title=title, image=image, uploaded_by=request.user)
-            image_obj.save()
-            return redirect('index')
-        else:
-            messages.error(request, "Please make sure to enter a title and select an image to upload.")
-    return render(request, 'uploadimages.html')
-
-def index(request):
-    media_list = Media.objects.all()
-    images_list = Images.objects.all()
-    video_list = Video.objects.all()
-    event = Events.objects.all()
-    return render(request, 'index.html', {'media_list': media_list, 'video_list':video_list, 'images_list': images_list, 'event':event})
-
-CustomUser = get_user_model()
-def user_report(request):
-    users = CustomUser.objects.all()
-    context =  {'users' : users} 
-    return render(request,'userreports.html',context)
-  
-# def upload_media(request):
-#     if request.method == 'POST':
-#         media_form = MediaForm(request.POST, request.FILES)
-#         images_form = ImagesForm(request.POST, request.FILES)
-#         video_form = VideoForm(request.POST, request.FILES)
-
-#         if media_form.is_valid() and images_form.is_valid() and video_form.is_valid():
-#             media_form.save()
-#             images_form.save()
-#             video_form.save()
-#             return render(request, 'index.html')
-#     else:
-#         media_form = MediaForm()
-#         images_form = ImagesForm()
-#         video_form = VideoForm()
-
-#     return render(request, 'admins.html', {'media_form': media_form, 'images_form': images_form, 'video_form': video_form})
-
-# Create your views here.
-def change_password(request):
-    """View for changing the password of the current logged in user."""
-    user = request.user
-    form = PasswordChangeForm(user=user)  # Create form based on user
-
-    if request.method == 'GET':
-        return render(request, "account/change_password.html", {"form": form})
-
-    elif request.method == 'POST':
-        form = PasswordChangeForm(user=user, data=request.POST)  # Bind submitted data
+        form = MediaForm(request.POST, request.FILES)
         if form.is_valid():
-            form.save()  # Save the updated password
-            logout(request)  # Log the user out for security
-            messages.success(request, 'Your password has been changed successfully!')
-            return redirect('login')  # Redirect to login page after success
-        else:
-            return render(request, "change_password.html", {"form": form})
+            media = form.save(commit=False)
+            media.uploaded_by = request.user
+            media.save()
+            messages.success(request, "File uploaded.")
+            return redirect('index')
+    else:
+        form = MediaForm()
+    return render(request, 'uploadfiles.html', {'form': form})
 
 
-
-    return render(request, 'register.html' )
-
-def base(request):
-    # View for the home page of the website
-    
-    return render(request, 'base.html')
+def images(request):
+    from .models import MEDIA_CATEGORY_CHOICES
+    cat = request.GET.get('cat', '')
+    image_list = Images.objects.all()
+    if cat:
+        image_list = image_list.filter(category=cat)
+    return render(request, 'gallery.html', {
+        'image_list': image_list,
+        'categories': MEDIA_CATEGORY_CHOICES,
+        'active_cat': cat,
+    })
 
 
 def video(request):
-    # View for the home page of the website
-    video = Video.objects.all()
-    return render(request, 'video.html', {'video': video})
+    from .models import MEDIA_CATEGORY_CHOICES
+    cat = request.GET.get('cat', '')
+    video_list = Video.objects.all()
+    if cat:
+        video_list = video_list.filter(category=cat)
+    return render(request, 'video.html', {
+        'video_list': video_list,
+        'categories': MEDIA_CATEGORY_CHOICES,
+        'active_cat': cat,
+    })
 
-def images(request):
-    image = Images.objects.all()
-    return render(request, 'gallery.html', {'image': image})
 
-def adminn(request):
-    # View for the home page of the website
-    event = Events.objects.all()
-    return render(request, 'adminn.html')
+def event_list(request):
+    from .models import EVENT_CATEGORY_CHOICES
+    cat = request.GET.get('cat', '')
+    events = Events.objects.filter(date__gte=timezone.now().date())
+    if cat:
+        events = events.filter(category=cat)
+    return render(request, 'events.html', {
+        'events': events,
+        'categories': EVENT_CATEGORY_CHOICES,
+        'active_cat': cat,
+    })
+
+
+# ─── Contributions / M-Pesa ────────────────────────────────────────────────────
 
 def contribute(request):
-    # View for the home page of the website
-    return render(request, 'contribute.html')
+    if request.method == 'POST':
+        phone = request.POST.get('phonenumber', '').strip()
+        amount = request.POST.get('amount', '').strip()
+        purpose = request.POST.get('purpose', 'offering')
+        name = request.POST.get('name', '').strip()
+
+        if not phone or not amount:
+            messages.error(request, "Please enter phone number and amount.")
+            return render(request, 'contribute.html')
+
+        # Normalize phone to 254XXXXXXXXX
+        phone_clean = phone.lstrip('+').lstrip('0')
+        if not phone_clean.startswith('254'):
+            phone_clean = '254' + phone_clean
+
+        try:
+            amount_val = float(amount)
+        except ValueError:
+            messages.error(request, "Please enter a valid amount.")
+            return render(request, 'contribute.html')
+
+        # Save pending payment
+        payment = Payment.objects.create(
+            user=request.user if request.user.is_authenticated else None,
+            amount=amount_val,
+            phone_number=phone_clean,
+            purpose=purpose,
+        )
+
+        # Try M-Pesa STK Push
+        stk_result = _mpesa_stk_push(phone_clean, amount_val, purpose, payment.id)
+        if stk_result.get('success'):
+            payment.checkout_request_id = stk_result.get('checkout_request_id', '')
+            payment.save()
+            messages.success(request, "STK Push sent! Check your phone to complete payment.")
+        else:
+            messages.warning(request, stk_result.get('error', 'Payment initiation failed. Try again.'))
+
+        return redirect('contribute')
+
+    recent_payments = []
+    if request.user.is_authenticated:
+        recent_payments = Payment.objects.filter(user=request.user).order_by('-created_at')[:5]
+    return render(request, 'contribute.html', {'recent_payments': recent_payments})
 
 
+def _mpesa_stk_push(phone, amount, purpose, payment_id):
+    """Initiate M-Pesa STK Push via Safaricom Daraja API."""
+    import datetime as dt
+
+    if settings.MPESA_ENVIRONMENT == 'sandbox':
+        base_url = 'https://sandbox.safaricom.co.ke'
+    else:
+        base_url = 'https://api.safaricom.co.ke'
+
+    try:
+        # Get access token
+        auth = base64.b64encode(
+            f"{settings.MPESA_CONSUMER_KEY}:{settings.MPESA_CONSUMER_SECRET}".encode()
+        ).decode()
+        token_resp = http_requests.get(
+            f"{base_url}/oauth/v1/generate?grant_type=client_credentials",
+            headers={'Authorization': f'Basic {auth}'}, timeout=15
+        )
+        token = token_resp.json().get('access_token')
+        if not token:
+            return {'success': False, 'error': 'M-Pesa auth failed'}
+
+        # Build STK Push payload
+        timestamp = dt.datetime.now().strftime('%Y%m%d%H%M%S')
+        password_raw = f"{settings.MPESA_SHORTCODE}{settings.MPESA_PASSKEY}{timestamp}"
+        password = base64.b64encode(password_raw.encode()).decode()
+
+        payload = {
+            "BusinessShortCode": settings.MPESA_SHORTCODE,
+            "Password": password,
+            "Timestamp": timestamp,
+            "TransactionType": "CustomerPayBillOnline",
+            "Amount": int(amount),
+            "PartyA": phone,
+            "PartyB": settings.MPESA_SHORTCODE,
+            "PhoneNumber": phone,
+            "CallBackURL": settings.MPESA_CALLBACK_URL,
+            "AccountReference": f"RGC-{payment_id}",
+            "TransactionDesc": f"RGC {purpose.title()}",
+        }
+        stk_resp = http_requests.post(
+            f"{base_url}/mpesa/stkpush/v1/processrequest",
+            json=payload,
+            headers={'Authorization': f'Bearer {token}', 'Content-Type': 'application/json'},
+            timeout=30
+        )
+        data = stk_resp.json()
+        if data.get('ResponseCode') == '0':
+            return {'success': True, 'checkout_request_id': data.get('CheckoutRequestID', '')}
+        return {'success': False, 'error': data.get('errorMessage', 'STK Push failed')}
+    except Exception as e:
+        return {'success': False, 'error': str(e)}
+
+
+def mpesa_callback(request):
+    """Handle M-Pesa payment callback."""
+    import json
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            callback = data.get('Body', {}).get('stkCallback', {})
+            checkout_id = callback.get('CheckoutRequestID', '')
+            result_code = callback.get('ResultCode')
+
+            payment = Payment.objects.filter(checkout_request_id=checkout_id).first()
+            if payment:
+                if result_code == 0:
+                    items = {
+                        item['Name']: item['Value']
+                        for item in callback.get('CallbackMetadata', {}).get('Item', [])
+                        if 'Value' in item
+                    }
+                    payment.status = 'completed'
+                    payment.mpesa_receipt_number = str(items.get('MpesaReceiptNumber', ''))
+                    payment.save()
+                else:
+                    payment.status = 'failed'
+                    payment.save()
+        except Exception:
+            pass
+    return JsonResponse({'ResultCode': 0, 'ResultDesc': 'Accepted'})
+
+
+# ─── Admin views ───────────────────────────────────────────────────────────────
+
+@login_required
+def adminn(request):
+    if not (request.user.is_staff or request.user.is_superuser):
+        messages.error(request, "Admin access required.")
+        return redirect('index')
+    context = {
+        'total_members': Member.objects.count(),
+        'total_events': Events.objects.count(),
+        'total_groups': Group.objects.count(),
+        'total_payments': Payment.objects.filter(status='completed').count(),
+        'recent_payments': Payment.objects.order_by('-created_at')[:5],
+        'recent_events': Events.objects.order_by('-created_at')[:5],
+        'recent_announcements': Announcement.objects.order_by('-date_posted')[:5],
+        'recent_members': Member.objects.order_by('-date_joined')[:10],
+    }
+    return render(request, 'adminn.html', context)
+
+
+@login_required
+def user_report(request):
+    if not (request.user.is_staff or request.user.is_superuser):
+        messages.error(request, "Admin access required.")
+        return redirect('index')
+    users = User.objects.all().order_by('-date_joined')
+    return render(request, 'userreports.html', {'users': users})
+
+
+@login_required
+def user_events(request):
+    member = Member.objects.filter(user=request.user).first()
+    registered = Attendee.objects.filter(user=request.user).select_related('event')
+    return render(request, 'user_events.html', {
+        'registered_events': registered,
+        'member': member,
+    })
+
+
+@login_required
+def group_change(request):
+    if request.method == 'POST':
+        form = GroupChangeForm(request.POST)
+        if form.is_valid():
+            group = form.cleaned_data['group']
+            member, _ = Member.objects.get_or_create(
+                user=request.user,
+                defaults={'email': request.user.email, 'name': request.user.get_full_name() or request.user.username}
+            )
+            member.group = group
+            member.save()
+            messages.success(request, f"Joined group: {group.name}")
+            return redirect('profile')
+    else:
+        form = GroupChangeForm()
+    return render(request, 'group_change.html', {'form': form})
+
+
+# ─── Static pages ──────────────────────────────────────────────────────────────
+
+def base(request):
+    return render(request, 'base.html')
 
 
 def chats(request):
-    return render(request, 'chats.html' )
+    return render(request, 'chats.html')
 
 
+# ─── User Management (Admin only) ─────────────────────────────────────────────
+
+@login_required
+def manage_users(request):
+    if not (request.user.is_superuser or request.user.role == 'admin'):
+        messages.error(request, "Only administrators can manage users.")
+        return redirect('adminn')
+    users = User.objects.all().order_by('-date_joined')
+    pending_requests = RoleRequest.objects.filter(status='pending').select_related('user')
+    return render(request, 'manage_users.html', {
+        'users': users,
+        'pending_requests': pending_requests,
+    })
 
 
+@login_required
+def change_user_role(request, user_id):
+    if not (request.user.is_superuser or request.user.role == 'admin'):
+        messages.error(request, "Permission denied.")
+        return redirect('adminn')
+    target_user = get_object_or_404(User, pk=user_id)
+    if request.method == 'POST':
+        new_role = request.POST.get('role', 'member')
+        is_staff = request.POST.get('is_staff') == 'on'
+        is_superuser_flag = request.POST.get('is_superuser') == 'on'
+        is_active = request.POST.get('is_active', 'on') == 'on'
+        if target_user == request.user and new_role == 'member':
+            messages.error(request, "You cannot remove your own admin role.")
+            return redirect('manage_users')
+        if is_superuser_flag and not request.user.is_superuser:
+            messages.error(request, "Only a superadmin can grant superadmin rights.")
+            is_superuser_flag = False
+        target_user.role = new_role
+        target_user.is_staff = is_staff or new_role in ('admin', 'manager')
+        target_user.is_superuser = is_superuser_flag
+        target_user.is_active = is_active
+        target_user.save()
+        messages.success(request, f"Updated {target_user.username}: role={new_role}.")
+        return redirect('manage_users')
+    return render(request, 'change_user_role.html', {'target_user': target_user})
 
 
-
-# @login_required
-# def register_for_events(request):
-#     events = Events.objects.all()
-#     registered_events = RegisteredEvent.objects.filter(user=request.user)
-#     if request.method == 'POST':
-#         event_ids = request.POST.getlist('events')
-#         for event_id in event_ids:
-#             event = Events.objects.get(id=event_id)
-#             RegisteredEvent.objects.get_or_create(user=request.user, event=event)
-#         return redirect('events')
-#     return render(request, 'events.html', {'events': events, 'registered_events': registered_events})
-
-# def initiate_payment(request):
-#     if request.method == 'POST':
-#         form = PaymentForm(request.POST)
-#         if form.is_valid():
-#             # Initialize IntaSend client
-#             intasend = IntaSend(api_key=os.environ.get('ISSecretKey_live_509fc401-9e36-4d1f-800e-d0df429ba3fa'))
-
-#             # Set payment details
-#             payment_data = {
-#                 "amount": int(form.cleaned_data['amount'] * 100),  # Amount in cents
-#                 "currency": "KES",
-#                 "description": form.cleaned_data['purpose'],
-#                 "callback_url": "https://127.0.0.1:8000/",
-#                 "customer": {
-#                     "first_name": "John",
-#                     "last_name": "Doe",
-#                     "email": "john.doe@example.com",
-#                     "phone": "254712345678",
-#                     "address": "Nairobi, Kenya"
-#                 },
-#                 "metadata": {
-#                     "order_id": "12345",
-#                     "user_id": "67890"
-#                 }
-#             }
-
-#             if form.cleaned_data['payment_method'] == 'mpesa':
-#                 # Add M-Pesa specific details to payment_data
-#                 payment_data['channel'] = 'mpesa'
-#                 payment_data['command'] = 'paybill'
-#                 payment_data['bill_number'] = 'your_bill_number'
-#                 payment_data['account_number'] = 'your_account_number'
-
-#             elif form.cleaned_data['payment_method'] == 'bank':
-#                 # Add bank transfer specific details to payment_data
-#                 payment_data['channel'] = 'bank'
-#                 payment_data['command'] = 'transfer'
-#                 payment_data['account_number'] = 'your_account_number'
-#                 payment_data['bank_code'] = 'your_bank_code'
-
-#             elif form.cleaned_data['payment_method'] == 'bitcoin':
-#                 # Add Bitcoin specific details to payment_data
-#                 payment_data['channel'] = 'bitcoin'
-#                 payment_data['command'] = 'send'
-#                 payment_data['address'] = 'your_bitcoin_address'
-
-#             # Send payment request to IntaSend
-#             response = intasend.payments.create(payment_data)
-
-#             # Redirect user to IntaSend payment page
-#             return redirect(response["payment_url"])
-#     else:
-#         form = PaymentForm()
-
-#     return render(request, 'payment_form.html', {'form': form})
-# def my_view(request):
-#     """
-#     Handles user requests and retrieves user information with Clerk integration.
-#     """
-
-#     if request.method == 'POST':
-#         # Replace with your form processing logic here (if applicable)
-#         # ...
-
-#     # Check if user is authenticated
-#      if not request.user.is_authenticated:
-#         # Redirect to Clerk authentication page using Clerk's recommended API endpoint
-#         clerk_session_url = requests.post(
-#             'https://api.clerk.dev/v1/sessions/start',
-#             json={
-#                 'api_key': 'YOUR_CLERK_API_KEY',  # Replace with your frontend API key
-#                 'redirect_uri': 'https://127.0.0.1:8000/callback',  # Replace with your callback URL
-#             },
-#         ).json()['url']
-#         return redirect(clerk_session_url)
-
-#     # Retrieve user information from Clerk (consider error handling)
-#     try:
-#         clerk_user_url = f'https://api.clerk.dev/v1/users/{request.user.clerk_id}'
-#         clerk_user_response = requests.get(
-#             clerk_user_url,
-#             headers={
-#                 'Authorization': f'Bearer {request.user.clerk_session.token}',
-#             },
-#         ).json()
-#         user_name = clerk_user_response['email']
-#         phonenumber = clerk_user_response['phonenumber']
-#         user_email = clerk_user_response['email']
-#         password = clerk_user_response['password']
-
-#     except requests.exceptions.RequestException as e:
-#         print(f"Error retrieving user information: {e}")
-#         # Consider redirecting to an error page or displaying an error message to the user
-
-#     # Render template with user data (optional)
-#     context = {
-#         'user_name': user_name,
-#         'phonenumber': phonenumber,
-#         'user_email': user_email,
-#         'password': password,
-#                }
-#     # Add other context data as needed
-#     return render(request, 'index.html', context)
+@login_required
+def approve_role_request(request, request_id, action):
+    if not (request.user.is_superuser or request.user.role == 'admin'):
+        messages.error(request, "Permission denied.")
+        return redirect('adminn')
+    role_req = get_object_or_404(RoleRequest, pk=request_id)
+    from django.utils import timezone as tz
+    if action == 'approve':
+        role_req.status = 'approved'
+        role_req.reviewed_by = request.user
+        role_req.review_note = request.POST.get('note', '')
+        role_req.reviewed_at = tz.now()
+        role_req.save()
+        user = role_req.user
+        user.role = role_req.requested_role
+        user.is_staff = True
+        if role_req.requested_role == 'admin' and request.user.is_superuser:
+            user.is_superuser = True
+        user.save()
+        messages.success(request, f"Approved: {user.username} is now {role_req.requested_role}.")
+    elif action == 'reject':
+        role_req.status = 'rejected'
+        role_req.reviewed_by = request.user
+        role_req.review_note = request.POST.get('note', 'Not approved at this time.')
+        role_req.reviewed_at = tz.now()
+        role_req.save()
+        messages.info(request, f"Rejected request from {role_req.user.username}.")
+    return redirect('manage_users')
 
 
-# def my_view(request):
-#     if request.method == 'POST':
-#         # Handle form submission
-#         pass
-
-#     # Check if user is authenticated
-#     if not request.user.is_authenticated:
-#         # Redirect to Clerk authentication page
-#         clerk_session_url = requests.post(
-#             'https://api.clerk.dev/v2/sessions',
-#             json={
-#                 'api_key': 'YOUR_CLERK_API_KEY',
-#                 'strategy': 'session',
-#             },
-#         ).json()['url']
-#         return redirect(clerk_session_url)
-
-#     # Retrieve user information from Clerk
-#     clerk_user_url = f'https://api.clerk.dev/v2/users/{request.user.clerk_id}'
-#     clerk_user_response = requests.get(
-#         clerk_user_url,
-#         headers={
-#             'Authorization': f'Bearer {request.user.clerk_session.token}',
-#         },
-#     ).json()
-#     user_email = clerk_user_response['email']
-#     # ...
-
-#     # Render template
-#     return render(request, 'my_template.html', {
-#         'user_email': user_email,
-#         # ...
-#     })
-
+@login_required
+def request_role_upgrade(request):
+    if request.method == 'POST':
+        requested_role = request.POST.get('requested_role', '').strip()
+        reason = request.POST.get('reason', '').strip()
+        if not requested_role or not reason:
+            messages.error(request, "Please select a role and provide a reason.")
+        elif RoleRequest.objects.filter(user=request.user, status='pending').exists():
+            messages.warning(request, "You already have a pending request. Please wait for a response.")
+        else:
+            RoleRequest.objects.create(user=request.user, requested_role=requested_role, reason=reason)
+            messages.success(request, "Role upgrade request submitted! An admin will review it soon.")
+            return redirect('profile')
+    return render(request, 'request_role.html')

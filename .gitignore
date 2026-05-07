@@ -1,0 +1,51 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+.eggs/
+
+# Django
+db.sqlite3
+db.sqlite3-journal
+*.log
+local_settings.py
+/staticfiles/
+/media/
+
+# Secrets
+.env
+.env.local
+msys/.env
+
+# Virtual environments
+venv/
+env/
+.venv/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Expo / React Native
+rgc-mobile/node_modules/
+rgc-mobile/.expo/
+rgc-mobile/dist/
+rgc-mobile/web-build/
+rgc-mobile/android/
+rgc-mobile/ios/
+
+# Claude
+.claude/

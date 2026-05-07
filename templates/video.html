@@ -1,185 +1,91 @@
+{% extends "base.html" %}
 {% load static %}
 
+{% block title %}Media Library – Redeemed Gospel Church Nyahururu{% endblock %}
 
-<!DOCTYPE html>
-<html lang="en">
+{% block extra_css %}
+<style>
+  .media-hero { background: #1a1a1a; color: #fff; padding: 100px 0 40px; margin-top: 70px; text-align: center; }
+  .media-hero h1 { font-size: 2.4rem; font-weight: 700; color: #c9a227; }
+  .filter-bar { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; padding: 20px 0 10px; }
+  .filter-btn { padding: 7px 16px; border-radius: 50px; border: 2px solid #444; background: #2a2a2a; color: #aaa; font-size: 0.82rem; font-weight: 600; text-decoration: none; transition: all 0.2s; }
+  .filter-btn:hover, .filter-btn.active { background: #8b0000; border-color: #8b0000; color: #fff; text-decoration: none; }
+  .filter-btn.all.active { background: #c9a227; border-color: #c9a227; color: #1a1a1a; }
+  .video-card { background: #1e1e1e; border-radius: 14px; overflow: hidden; transition: transform 0.2s; border: 1px solid #333; }
+  .video-card:hover { transform: translateY(-4px); border-color: #c9a227; }
+  .video-thumb { background: #111; display: flex; align-items: center; justify-content: center; height: 200px; }
+  .video-thumb i { font-size: 3rem; color: #c9a227; }
+  .cat-pill { background: rgba(201,162,39,0.15); color: #c9a227; border: 1px solid rgba(201,162,39,0.3); padding: 3px 10px; border-radius: 20px; font-size: 0.72rem; font-weight: 600; }
+</style>
+{% endblock %}
 
-<head>
-  <meta charset="utf-8">
-  <meta content="width=device-width, initial-scale=1.0" name="viewport">
+{% block content %}
 
-   
-  <title>RGC-Church Management System</title>
-  <meta content="" name="description">
-  <meta content="" name="keywords">
+<section class="media-hero">
+  <div class="container">
+    <h1><i class="ri-video-line me-2"></i>Media Library</h1>
+    <p>Sermons, events, and church life at RGC Nyahururu</p>
+    {% if user.is_staff or user.is_superuser %}
+    <a href="/adminn/uploadvideos" class="btn btn-warning text-dark fw-semibold mt-3 me-2"><i class="bi bi-plus me-1"></i>Upload Video</a>
+    {% endif %}
 
-
-  <!-- Favicons -->
-  <link href="{% static 'assets/img/img/logo.jpg' %}" rel="icon">
-  <!-- <link href="{% static 'assets/img/apple-touch-icon.png' %}" rel="apple-touch-icon"> -->
-  <link rel="stylesheet" href="{% static 'assets/css/remixicon.css' %}">
-  <link
-    href="https://cdn.jsdelivr.net/npm/remixicon@4.1.0/fonts/remixicon.css"
-    rel="stylesheet"
-/>
-  <!-- Google Fonts -->
-  <link href="https://fonts.googleapis.com/css?family=Open+Sans:300,300i,400,400i,600,600i,700,700i|Raleway:300,300i,400,400i,500,500i,600,600i,700,700i|Poppins:300,300i,400,400i,500,500i,600,600i,700,700i" rel="stylesheet">
-   
-    <!--swipper css-->
-  <link rel="stylesheet" href="{% static 'assets/css/swiper-bundle.min.css'%}">
-
-
-  <!-- Vendor CSS Files -->
-  <link href="{% static 'assets/vendor/aos/aos.css' %}" rel="stylesheet">
-  <link href="{% static 'assets/vendor/bootstrap/css/bootstrap.min.css' %}" rel="stylesheet">
-  <link href="{% static 'assets/vendor/bootstrap-icons/bootstrap-icons.css' %}" rel="stylesheet">
-  <link href="{% static 'assets/vendor/boxicons/css/boxicons.min.css' %}" rel="stylesheet">
-  <link href="{% static 'assets/vendor/glightbox/css/glightbox.min.css' %}" rel="stylesheet">
-  <link href="{% static 'assets/vendor/remixicon/remixicon.css' %}" rel="stylesheet">
-  <link href="{% static 'assets/vendor/swiper/swiper-bundle.min.css' %}" rel="stylesheet">
-
-  <link href="https://cdn.jsdelivr.net/npm/aos@2.3.4/dist/aos.css" rel="stylesheet">
-
-  
-  <link href="{% static 'assets/css/style.css' %}" rel="stylesheet">
-
-
-</head>
-
-<body>
-
-
-  <script src="https://cdn.jsdelivr.net/npm/aos@2.3.4/dist/aos.js"></script>
-  <script>
-    AOS.init();
-  </script>
-
-  <!-- ======= Header ======= -->
-  <header id="header" class="fixed-top">
-    <div class="branding">
-    <div class="container d-flex align-items-center justify-content-between">
-
-      <!-- <h1 class="logo"><a href="/">RGC-Church</a></h1> -->
-      <!-- Uncomment below if you prefer to use an image logo -->
-      <a href="/" class="logo"><img src="{% static 'assets/img/img/logo word.png' %}" alt="" class="img-fluid"></a>
-
-      <nav id="navbar" class="navbar">
-        <ul>
-          <li><a class="nav-link scrollto active" href="/">Home</a></li>
-          <li><a class="nav-link scrollto" href="#about">About</a></li>
-          <li><a class="nav-link scrollto" href="#services">Service</a></li>
-          <li><a class="nav-link scrollto" href="/gallery">Gallery</a></li>
-          <!-- <li><a class="nav-link scrollto" href="/chats">Chats</a></li> -->
-          <li><a class="nav-link scrollto" href="#Contributions">Contributions</a></li>
-          <li class="dropdown"><a href="#"><span>Groups</span> <i class="bi bi-chevron-down"></i></a>
-            <ul>
-              <li><a href="#">Groups</a></li>
-              <li class="dropdown"><a href="#"><span>Church fellowships/groups</span> <i class="bi bi-chevron-right"></i></a>
-                <ul>
-                  <li><a href="#">Town</a></li>
-                  <li><a href="#">Runda fellowship</a></li>
-                  <li><a href="#">Beraka</a></li>
-                  <li><a href="#">Cosite fellowship</a></li>
-                  <li><a href="#">etc....</a></li>
-                </ul>
-              </li>
-              <li><a href="#">Men</a></li>
-              <li><a href="#">Women</a></li>
-              <li><a href="#">Youth</a></li>
-              <li><a href="#">Sunday School</a>ha></li>
-            </ul>
-          </li>
-        </ul>
-        <i class="bi bi-list mobile-nav-toggle"></i>
-      </nav><!-- .navbar -->
-
+    <!-- Category Filter -->
+    <div class="filter-bar mt-3">
+      <a href="/video" class="filter-btn all {% if not active_cat %}active{% endif %}">All Videos</a>
+      {% for value, label in categories %}
+      <a href="/video?cat={{ value }}" class="filter-btn {% if active_cat == value %}active{% endif %}">{{ label }}</a>
+      {% endfor %}
     </div>
   </div>
-  </header><!-- End Header -->
+</section>
 
-  
-  
-  <section id="abt-video" class="abt-video">
-    <div class="video-container" data-aos="fade-up">
-      <h2>Preachings, Sermons  and Videos</h2>
-        <p>Watch our latest sermons and preaching videos here. You can also listen to them on the radio or download them for offline viewing</p>
-        
-
-          <div class="row">
-            
-            
-            {% for x in video %}
-                <h1>Videos</h1>
-              <div class="col-lg-6 col-md-8 col-sm-6 video-box align-self-baseline position-relative" data-aos="fade-right" data-aos-delay="100">
-                <h3>{{x.title}}</h3>
-                <video class = "this_video embed-responsive centered-video embed-responsive-16by9" width="360" height="240" controls="controls">
-                    <source src="{{x.video.url}}" type="video/mp4" />
-                </video>
-              </div>    
-                <div class="col-lg-6 pt-3 pt-lg-0 content" data-aos="fade-left" data-aos-delay="100">
-                  <h3>description</h3>
-                    <p class="fst-italic">
-                      {{x.description}}
-                    </p>
-
-                  <h3>details</h3> 
-                    <p class="fst-italic">
-                      {{x.details}}
-                    </p> 
-                </div>
-              
-             
-                {% endfor %}
-                
+<section style="background:#141414; min-height:60vh; padding: 30px 0 60px;">
+  <div class="container">
+    {% if video_list %}
+    <div class="row g-4">
+      {% for vid in video_list %}
+      <div class="col-md-6 col-lg-4" data-aos="fade-up">
+        <div class="video-card">
+          {% if vid.youtube_url %}
+          <div class="ratio ratio-16x9">
+            {% with yt=vid.youtube_url %}
+            {% if 'watch?v=' in yt %}
+            <iframe src="https://www.youtube.com/embed/{{ yt|slice:'31:' }}" allowfullscreen loading="lazy"></iframe>
+            {% elif 'youtu.be/' in yt %}
+            <iframe src="https://www.youtube.com/embed/{{ yt|slice:'17:' }}" allowfullscreen loading="lazy"></iframe>
+            {% else %}
+            <iframe src="{{ yt }}" allowfullscreen loading="lazy"></iframe>
+            {% endif %}
+            {% endwith %}
           </div>
-    
-    </div>
-  </section><!-- End About Video Section -->
-
-  <!-- ======= Footer ======= -->
-  <footer id="footer">
-
-    <div class="footer-top">
-      <div class="container">
-        <div class="row">
-
-          <div class="col-lg-3 col-md-6 footer-contact">
-            <h3>RGC</h3>
-            <p>
-              Nairobi,Kenya <br>
-              <strong>Phone:</strong> +254---------<br>
-              <strong>Email:</strong> frankngugi@gmail.com<br>
-            </p>
+          {% elif vid.video %}
+          <video controls class="w-100" style="max-height:200px; background:#000; display:block;">
+            <source src="{{ vid.video.url }}" type="video/mp4">
+          </video>
+          {% else %}
+          <div class="video-thumb"><i class="bi bi-play-circle-fill"></i></div>
+          {% endif %}
+          <div class="p-3">
+            <div class="d-flex align-items-start justify-content-between gap-2 mb-1">
+              <h5 class="mb-0 fw-bold" style="color:#fff; font-size:0.95rem;">{{ vid.title }}</h5>
+              <span class="cat-pill flex-shrink-0">{{ vid.get_category_display }}</span>
+            </div>
+            {% if vid.description %}<p class="small mb-1" style="color:rgba(255,255,255,0.55);">{{ vid.description|truncatewords:15 }}</p>{% endif %}
+            <small style="color:#555;"><i class="bi bi-calendar me-1"></i>{{ vid.uploaded_at|date:"M d, Y" }}</small>
           </div>
-
-        
+        </div>
       </div>
-      <div class="social-links text-center text-md-right pt-3 pt-md-0">
-        <a href="#" class="twitter"><i class="bx bxl-twitter"></i></a>
-        <a href="#" class="facebook"><i class="bx bxl-facebook"></i></a>
-        <a href="#" class="instagram"><i class="bx bxl-instagram"></i></a>
-        <a href="#" class="google-plus"><i class="bx bxl-skype"></i></a>
-        <a href="#" class="linkedin"><i class="bx bxl-linkedin"></i></a>
-      </div>
+      {% endfor %}
     </div>
-  </footer><!-- End Footer -->
+    {% else %}
+    <div class="text-center py-5">
+      <i class="ri-video-line" style="font-size:4rem; color:#c9a227;"></i>
+      <h5 class="mt-3" style="color:#fff;">No videos {% if active_cat %}in this category{% endif %} yet</h5>
+      {% if active_cat %}<a href="/video" class="btn btn-outline-warning btn-sm mt-2">Show all videos</a>{% endif %}
+      {% if user.is_staff %}<a href="/adminn/uploadvideos" class="btn btn-warning text-dark btn-sm mt-2 ms-2">Upload Video</a>{% endif %}
+    </div>
+    {% endif %}
+  </div>
+</section>
 
-  <div id="preloader"></div>
-  <a href="#" class="back-to-top d-flex align-items-center justify-content-center"><i class="bi bi-arrow-up-short"></i></a>
-
-  <!-- Vendor JS Files -->
-  
-  <script src="{% static 'assets/vendor/aos/aos.js' %}"></script>
-  <script src="{% static 'assets/vendor/scrollreveal.min.js' %}"></script>
-  <script src="{% static 'assets/vendor/bootstrap/js/bootstrap.bundle.min.js' %}"></script>
-  <script src="{% static 'assets/vendor/glightbox/js/glightbox.min.js' %}"></script>
-  <script src="{% static 'assets/vendor/isotope-layout/isotope.pkgd.min.js' %}"></script>
-  <script src="{% static 'assets/vendor/swiper/swiper-bundle.min.js' %}"></script>
-  <script src="{% static 'assets/vendor/php-email-form/validate.js' %}"></script>
-
-  <!-- Template Main JS File -->
-  <script src="{% static 'assets/js/main.js' %}"></script>
-
-</body>
-
-</html>
+{% endblock %}

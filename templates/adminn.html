@@ -1,302 +1,352 @@
-
+{% extends "base.html" %}
 {% load static %}
 
-{% block content %}
-<!DOCTYPE html>
-<html lang="en">
+{% block title %}Admin Dashboard – Redeemed Gospel Church Nyahururu{% endblock %}
+{% block body_class %}admin-portal{% endblock %}
 
-<head>
-  <meta charset="utf-8">
-  <meta content="width=device-width, initial-scale=1.0" name="viewport">
-
-   
-  <title>RGC-Church Management System</title>
-  <meta content="" name="description">
-  <meta content="" name="keywords">
-
-
-  <!-- Favicons -->
-  <link href="{% static 'assets/img/img/logo.jpg' %}" rel="icon">
-  <!-- <link href="{% static 'assets/img/apple-touch-icon.png' %}" rel="apple-touch-icon"> -->
-  <link rel="stylesheet" href="{% static 'assets/css/remixicon.css' %}">
-  <link
-    href="https://cdn.jsdelivr.net/npm/remixicon@4.1.0/fonts/remixicon.css"
-    rel="stylesheet"
-/>
-  <!-- Google Fonts -->
-  <link href="https://fonts.googleapis.com/css?family=Open+Sans:300,300i,400,400i,600,600i,700,700i|Raleway:300,300i,400,400i,500,500i,600,600i,700,700i|Poppins:300,300i,400,400i,500,500i,600,600i,700,700i" rel="stylesheet">
-   
-    <!--swipper css-->
-  <link rel="stylesheet" href="{% static 'assets/css/swiper-bundle.min.css'%}">
-
-
-  <!-- Vendor CSS Files -->
-  <link href="{% static 'assets/vendor/aos/aos.css' %}" rel="stylesheet">
-  <link href="{% static 'assets/vendor/bootstrap/css/bootstrap.min.css' %}" rel="stylesheet">
-  <link href="{% static 'assets/vendor/bootstrap-icons/bootstrap-icons.css' %}" rel="stylesheet">
-  <link href="{% static 'assets/vendor/boxicons/css/boxicons.min.css' %}" rel="stylesheet">
-  <link href="{% static 'assets/vendor/glightbox/css/glightbox.min.css' %}" rel="stylesheet">
-  <link href="{% static 'assets/vendor/remixicon/remixicon.css' %}" rel="stylesheet">
-  <link href="{% static 'assets/vendor/swiper/swiper-bundle.min.css' %}" rel="stylesheet">
-  <link href="https://cdn.jsdelivr.net/npm/aos@2.3.4/dist/aos.css" rel="stylesheet">
-
-
-  <link href="{% static 'assets/css/style.css' %}" rel="stylesheet">
-
-
-</head>
+{% block extra_css %}
 <style>
-  .sidebar {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 250px;
-  height: 100%;
-  background-color: #333;
-  color: #fff;
-  transition: all 0.3s ease-in-out;
-}
+  /* Admin portal uses the same header as the public site via base.html */
+  .admin-layout { display: flex; min-height: calc(100vh - 70px); margin-top: 70px; }
 
-.sidebar.closed {
-  width: 60px;
-}
+  /* Admin Sidebar */
+  .admin-sidebar {
+    width: 240px;
+    flex-shrink: 0;
+    background: linear-gradient(180deg, #1a1a1a 0%, #2d0000 100%);
+    position: sticky;
+    top: 70px;
+    height: calc(100vh - 70px);
+    overflow-y: auto;
+    z-index: 900;
+    transition: transform 0.3s;
+  }
+  .admin-sidebar::-webkit-scrollbar { width: 4px; }
+  .admin-sidebar::-webkit-scrollbar-thumb { background: rgba(201,162,39,0.3); }
 
-.sidebar-nav {
-  list-style-type: none;
-  margin: 0;
-  padding: 0;
-}
+  .sidebar-brand-small { padding: 18px 16px; border-bottom: 1px solid rgba(255,255,255,0.08); display: flex; align-items: center; gap: 10px; }
+  .sidebar-brand-small span { color: #c9a227; font-weight: 700; font-size: 0.9rem; }
+  .sidebar-brand-small i { font-size: 1.3rem; color: #c9a227; }
 
-.sidebar-nav .nav-item {
-  padding: 10px 15px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-}
+  .sidebar-section { padding: 10px 0 4px; font-size: 0.68rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.12em; color: rgba(255,255,255,0.35); padding-left: 16px; }
+  .sidebar-link { display: flex; align-items: center; gap: 9px; padding: 10px 16px; color: rgba(255,255,255,0.75); font-size: 0.84rem; text-decoration: none; transition: all 0.2s; }
+  .sidebar-link i { width: 18px; font-size: 1rem; flex-shrink: 0; }
+  .sidebar-link:hover, .sidebar-link.active { background: rgba(201,162,39,0.13); color: #c9a227; border-right: 3px solid #c9a227; text-decoration: none; }
+  .sidebar-link.danger:hover { background: rgba(139,0,0,0.2); color: #ff6b6b; border-right-color: #ff6b6b; }
+  .sidebar-divider { border-color: rgba(255,255,255,0.08); margin: 6px 16px; }
 
-.sidebar-nav .nav-item:last-child {
-  border-bottom: none;
-}
+  /* Admin main area */
+  .admin-main { flex: 1; background: #f0f2f5; overflow: hidden; }
 
-.sidebar-nav .nav-item a {
-  color: #fff;
-  text-decoration: none;
-  display: block;
-}
+  /* Page header bar inside admin */
+  .admin-topbar { background: #fff; border-bottom: 1px solid #eee; padding: 14px 24px; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+  .admin-topbar h5 { font-weight: 700; color: #1a1a1a; margin: 0; font-size: 1rem; }
+  .admin-topbar .breadcrumb { font-size: 0.8rem; margin: 0; background: none; padding: 0; }
 
-.sidebar-nav .nav-item a:hover {
-  background-color: rgba(255, 255, 255, 0.1);
-}
+  /* Sidebar toggle button */
+  .sidebar-toggle-btn { display: none; background: none; border: 1px solid #ddd; border-radius: 6px; padding: 6px 10px; cursor: pointer; }
+  @media (max-width: 900px) {
+    .admin-sidebar { position: fixed; top: 70px; left: -240px; height: 100%; z-index: 1050; }
+    .admin-sidebar.open { left: 0; }
+    .sidebar-toggle-btn { display: inline-flex; }
+  }
 
-.sidebar-nav .nav-item .dropdown {
-  position: relative;
-}
+  /* Stat cards */
+  .stat-card { background: #fff; border-radius: 12px; padding: 20px; display: flex; align-items: center; gap: 14px; box-shadow: 0 2px 12px rgba(0,0,0,0.06); transition: transform 0.15s; }
+  .stat-card:hover { transform: translateY(-2px); }
+  .stat-icon { width: 52px; height: 52px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1.4rem; flex-shrink: 0; }
+  .stat-label { font-size: 0.75rem; color: #888; text-transform: uppercase; letter-spacing: 0.05em; }
+  .stat-value { font-size: 1.7rem; font-weight: 700; color: #1a1a1a; line-height: 1.1; }
+  .stat-icon.red { background: #fff0f0; color: #8b0000; }
+  .stat-icon.gold { background: #fffbea; color: #c9a227; }
+  .stat-icon.dark { background: #f0f0f0; color: #1a1a1a; }
+  .stat-icon.green { background: #f0fff4; color: #27ae60; }
 
-.sidebar-nav .nav-item .dropdown span {
-  display: block;
-  padding: 10px 15px;
-}
+  /* Data cards */
+  .data-card { background: #fff; border-radius: 12px; box-shadow: 0 2px 12px rgba(0,0,0,0.06); overflow: hidden; }
+  .data-card-header { padding: 14px 20px; border-bottom: 1px solid #f0f0f0; display: flex; align-items: center; justify-content: space-between; }
+  .data-card-header h6 { font-weight: 700; margin: 0; color: #1a1a1a; }
+  .table th { font-size: 0.74rem; text-transform: uppercase; letter-spacing: 0.06em; color: #888; border-top: none; font-weight: 600; }
+  .table td { font-size: 0.87rem; vertical-align: middle; }
 
-.sidebar-nav .nav-item .dropdown i {
-  float: right;
-  transition: all 0.3s ease-in-out;
-}
+  /* Quick action buttons */
+  .qa-btn { display: flex; align-items: center; gap: 8px; padding: 11px 18px; border-radius: 9px; font-weight: 600; font-size: 0.85rem; text-decoration: none; transition: all 0.2s; border: 2px solid transparent; }
+  .qa-btn:hover { transform: translateY(-1px); text-decoration: none; }
+  .qa-btn.red { background: #8b0000; color: #fff; }
+  .qa-btn.gold { background: #c9a227; color: #1a1a1a; }
+  .qa-btn.dark { background: #1a1a1a; color: #fff; }
+  .qa-btn.outline { border-color: #8b0000; color: #8b0000; background: #fff; }
+  .qa-btn.outline:hover { background: #8b0000; color: #fff; }
 
-.sidebar-nav .nav-item .dropdown ul {
-  position: absolute;
-  top: 100%;
-  left: 0;
-  width: 100%;
-  display: none;
-  background-color: #333;
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-.sidebar-nav .nav-item .dropdown ul li {
-  padding: 10px 15px;
-}
-
-.sidebar-nav .nav-item .dropdown ul li a {
-  color: #fff;
-}
-
-.sidebar-nav .nav-item .dropdown ul li a:hover {
-  background-color: rgba(255, 255, 255, 0.1);
-}
-
-.sidebar-nav .nav-item .dropdown:hover ul {
-  display: block;
-}
-
-.sidebar-nav .nav-item .dropdown i.bi-chevron-down {
-  transform: rotate(180deg);
-}
-
-.sidebar-nav .nav-item.active {
-  background-color: rgba(255, 255, 255, 0.1);
-}
-
-.sidebar-nav .nav-item.active a {
-  color: #ddd;
-}
+  /* Sidebar overlay on mobile */
+  .sidebar-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 1049; }
+  .sidebar-overlay.show { display: block; }
 </style>
-<body class="admin">
-  
-  
+{% endblock %}
 
-  <script src="https://cdn.jsdelivr.net/npm/aos@2.3.4/dist/aos.js"></script>
-  <script>
-    AOS.init();
-  </script>
+{% block content %}
+<div class="admin-layout">
 
-  <!-- ======= Header ======= -->
-  <header id="header" class="fixed-top">
-    <div class="branding">
-    <div class="container d-flex align-items-center justify-content-between">
-
-      <!-- <h1 class="logo"><a href="/">RGC-Church</a></h1> -->
-      <a href="/" class="logo"><img src="{% static 'assets/img/img/logo word.png' %}" alt="" class="img-fluid"></a>
-
-      <nav id="navbar" class="navbar">
-        <ul>
-          <li><a class="nav-link scrollto active" href="/">Home</a></li>
-          
-          <li><a class="nav-link scrollto" href="/chats">Chats</a></li>
-          <li><a class="nav-link scrollto" href="/contribute">Contributions</a></li>
-
-
-          <li><a class="nav-link scrollto" href="#contact">Contact</a></li>
-          {% if user.is_authenticated %}
-          <li><a class="login scrollto" href="logout">Logout</a></li>
-          {% else %}
-          <li><a class="login scrollto" href="login">Login or Sign Up</a></li>
-          {% endif %}
-       
-        </ul>
-        <i class="bi bi-list mobile-nav-toggle"></i>
-      </nav><!-- .navbar -->
-      
+  <!-- Admin Sidebar -->
+  <aside class="admin-sidebar" id="adminSidebar">
+    <div class="sidebar-brand-small">
+      <i class="bi bi-shield-fill-check"></i>
+      <span>RGC Admin</span>
     </div>
-  </div>
-</header><!-- End Header --> 
 
-<div class="sidebar-toggel">
-<input type="checkbox" id="check">
-<label for="check">
-  <i class="ri-sidebar-fold-line" id="cancel"></i>
-  <i class="ri-sidebar-unfold-line" id="btn"></i>
-</label>
-</div>
+    <div class="sidebar-section">Main</div>
+    <a href="/adminn/" class="sidebar-link active"><i class="bi bi-speedometer2"></i>Dashboard</a>
+    <a href="/" class="sidebar-link"><i class="bi bi-house"></i>View Site</a>
 
+    <div class="sidebar-section">Church</div>
+    <a href="/announcements/add/" class="sidebar-link"><i class="bi bi-megaphone"></i>Post Announcement</a>
+    <a href="/announcements/" class="sidebar-link"><i class="bi bi-chat-left-text"></i>All Announcements</a>
+    <a href="/adminn/addevents" class="sidebar-link"><i class="bi bi-calendar-plus"></i>Add Event</a>
+    <a href="/events" class="sidebar-link"><i class="bi bi-calendar-event"></i>Events</a>
 
-  <sidebar id="sidebar" class="sidebar">
-    <ul class="sidebar-nav" id="sidebar-nav">
-      <li class="nav-item">
-            <ul>
-              <li><a class="nav-link scrollto active" href="/">Dashboard</a></li>
-              
-              <li><a class="nav-link scrollto" href="/chats">Documents</a></li>
-              <li><a class="nav-link scrollto" href="/contribute">Contributions</a></li>
-              <li class="dropdown"><a href="#"><span>Reports</span> <i class="bi bi-chevron-down"></i></a>
-                <ul>
-                  <li><a href="#">Members</a></li>
-                  
-                <li><a href="userreports">Users</a></li>
-                <li><a href="#">Events and Activities</a></li>
-                <li><a href="#">Finances</a></li>
-                <!-- <li><a href="#"></a>ha></li> -->
-              </ul>
-              </li>
-              <li class="dropdown"><a href="#"><span>videos</span> <i class="bi bi-chevron-down"></i></a>
-                <ul>
-                <li><a href="video">Videos</a></li>
-                <li><a href="uploadvideos">Upload Videos</a></li>
+    <div class="sidebar-section">Members</div>
+    <a href="/adminn/manage-users/" class="sidebar-link"><i class="bi bi-shield-person"></i>Manage Roles</a>
+    <a href="/adminn/userreports" class="sidebar-link"><i class="bi bi-people"></i>All Members</a>
+    <a href="/groups/" class="sidebar-link"><i class="bi bi-collection"></i>Groups</a>
+    <a href="/create-group/" class="sidebar-link"><i class="bi bi-plus-circle"></i>Create Group</a>
 
-              </ul>
-              <li class="dropdown"><a href="#"><span>Groups</span> <i class="bi bi-chevron-down"></i></a>
-                <ul>
-                  <li><a href="{% url 'create_group' %}">Create Group</a></li>
-                  <li><a href="{% url 'join_group' %}">Join Group</a></li>
-                </ul>
-              </li>
-              <li class="dropdown"><a href="#"><span>Events</span> <i class="bi bi-chevron-down"></i></a>
-                <ul>
-                <li><a href="events">Events</a></li>
-                <li><a href="addevents">Add Events</a></li>
+    <div class="sidebar-section">Media</div>
+    <a href="/adminn/uploadimages" class="sidebar-link"><i class="bi bi-image"></i>Upload Images</a>
+    <a href="/adminn/uploadvideos" class="sidebar-link"><i class="bi bi-camera-video"></i>Upload Videos</a>
+    <a href="/gallery" class="sidebar-link"><i class="bi bi-images"></i>Gallery</a>
+    <a href="/video" class="sidebar-link"><i class="bi bi-play-circle"></i>Videos</a>
 
-              </ul>
-            </li>
-              <li class="dropdown"><a href="#"><span>gallery</span> <i class="bi bi-chevron-down"></i></a>
-                <ul>
-                <li><a href="/gallery">gallery</a></li>
-                <li><a href="uploadimages">Upload Images</a></li>
-              </ul>
-            </li>
+    <div class="sidebar-section">Finance</div>
+    <a href="/contribute" class="sidebar-link"><i class="bi bi-credit-card"></i>Contributions</a>
 
-        </ul>
-      </li>
-    </ul>
-  </sidebar>
+    <div class="sidebar-section">System</div>
+    <a href="/admin/" class="sidebar-link"><i class="bi bi-gear"></i>Django Admin</a>
+    <hr class="sidebar-divider">
+    <a href="/switch-portal/member/" class="sidebar-link"><i class="bi bi-person-fill"></i>Switch to Member View</a>
+    <a href="/logout" class="sidebar-link danger"><i class="bi bi-box-arrow-right"></i>Logout</a>
+  </aside>
+  <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
 
-  
-    <footer class="admin" id="footer">
-    
-      
+  <!-- Main Content -->
+  <main class="admin-main">
+    <!-- Top bar -->
+    <div class="admin-topbar">
+      <div class="d-flex align-items-center gap-3">
+        <button class="sidebar-toggle-btn" onclick="toggleSidebar()"><i class="bi bi-list fs-5"></i></button>
+        <div>
+          <h5>Dashboard</h5>
+          <nav aria-label="breadcrumb">
+            <ol class="breadcrumb mb-0">
+              <li class="breadcrumb-item"><a href="/">Home</a></li>
+              <li class="breadcrumb-item active">Admin Dashboard</li>
+            </ol>
+          </nav>
+        </div>
+      </div>
+      <div class="d-flex align-items-center gap-2">
+        <div class="me-2 text-end d-none d-md-block">
+          <div class="fw-semibold small">{{ user.get_full_name|default:user.username }}</div>
+          <div class="text-muted" style="font-size:0.75rem;">{{ user.get_role_display_label|default:"Admin" }}</div>
+        </div>
+        {% if user.is_staff or user.is_superuser or user.role in 'admin,manager' %}
+        <a href="/switch-portal/member/" class="btn btn-sm btn-outline-secondary"><i class="bi bi-person me-1"></i>Member View</a>
+        {% endif %}
+        <a href="/logout" class="btn btn-sm btn-outline-danger"><i class="bi bi-box-arrow-right me-1"></i>Logout</a>
+      </div>
+    </div>
 
-    <div class="footer-top">
-      <div class="container">
-        <div class="row">
+    <div class="p-4">
 
-          <div class="col-lg-3 col-md-6 footer-contact">
-            <h3>RGC</h3>
-            <p>
-              Nairobi,Kenya <br>
-              <strong>Phone:</strong> +254---------<br>
-              <strong>Email:</strong> frankngugi@gmail.com<br>
-            </p>
+      {% if messages %}
+        {% for message in messages %}
+        <div class="alert alert-{% if message.tags == 'error' %}danger{% else %}{{ message.tags }}{% endif %} alert-dismissible fade show mb-4">
+          {{ message }}<button class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+        {% endfor %}
+      {% endif %}
+
+      <!-- Welcome banner -->
+      <div class="p-4 mb-4 rounded-3" style="background:linear-gradient(135deg,#1a1a1a,#8b0000); color:#fff;">
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+          <div>
+            <h5 class="mb-1" style="color:#c9a227;">Welcome, {{ user.first_name|default:user.username }}</h5>
+            <p class="mb-0 opacity-75 small">Redeemed Gospel Church Nyahururu — Admin Dashboard</p>
           </div>
-
-        
+          <div class="d-flex gap-2 flex-wrap">
+            <a href="/announcements/add/" class="qa-btn gold"><i class="bi bi-megaphone"></i>Post Announcement</a>
+            <a href="/adminn/addevents" class="qa-btn outline" style="border-color:#c9a227;color:#c9a227;"><i class="bi bi-calendar-plus"></i>Add Event</a>
+          </div>
+        </div>
       </div>
-      <div class="social-links text-center text-md-right pt-3 pt-md-0">
-        <a href="https://www.facebook.com/" class="twitter"><i class="ri-facebook-box-fill"></i></a>
-        <a href="https://twitter.com/?lang=en" class="facebook"><i class="ri-twitter-x-fill"></i></a>
-        <a href="https://www.instagram.com/" class="instagram"><i class="ri-instagram-fill"></i></a>
-        
-        <a href="https://ke.linkedin.com/" class="linkedin"><i class="ri-linkedin-fill"></i></i></a>
+
+      <!-- Stats -->
+      <div class="row g-3 mb-4">
+        <div class="col-6 col-xl-3">
+          <div class="stat-card">
+            <div class="stat-icon red"><i class="bi bi-people-fill"></i></div>
+            <div><div class="stat-label">Members</div><div class="stat-value">{{ total_members }}</div></div>
+          </div>
+        </div>
+        <div class="col-6 col-xl-3">
+          <div class="stat-card">
+            <div class="stat-icon gold"><i class="bi bi-calendar-event-fill"></i></div>
+            <div><div class="stat-label">Events</div><div class="stat-value">{{ total_events }}</div></div>
+          </div>
+        </div>
+        <div class="col-6 col-xl-3">
+          <div class="stat-card">
+            <div class="stat-icon dark"><i class="bi bi-collection-fill"></i></div>
+            <div><div class="stat-label">Groups</div><div class="stat-value">{{ total_groups }}</div></div>
+          </div>
+        </div>
+        <div class="col-6 col-xl-3">
+          <div class="stat-card">
+            <div class="stat-icon green"><i class="bi bi-credit-card-fill"></i></div>
+            <div><div class="stat-label">Payments</div><div class="stat-value">{{ total_payments }}</div></div>
+          </div>
+        </div>
       </div>
-    </div>
-  </footer>
-  <!-- End Footer -->
 
-  <div id="preloader"></div>
-  <a href="#" class="back-to-top d-flex align-items-center justify-content-center"><i class="bi bi-arrow-up-short"></i></a>
+      <!-- Quick Actions -->
+      <div class="data-card mb-4">
+        <div class="data-card-header"><h6><i class="bi bi-lightning-charge me-2 text-warning"></i>Quick Actions</h6></div>
+        <div class="p-3 d-flex flex-wrap gap-2">
+          <a href="/adminn/addevents" class="qa-btn red"><i class="bi bi-calendar-plus"></i>Add Event</a>
+          <a href="/announcements/add/" class="qa-btn gold"><i class="bi bi-megaphone"></i>Announcement</a>
+          <a href="/create-group/" class="qa-btn dark"><i class="bi bi-plus-circle"></i>Create Group</a>
+          <a href="/adminn/uploadimages" class="qa-btn outline"><i class="bi bi-image"></i>Upload Image</a>
+          <a href="/adminn/uploadvideos" class="qa-btn outline"><i class="bi bi-camera-video"></i>Upload Video</a>
+          <a href="/adminn/userreports" class="qa-btn outline"><i class="bi bi-people"></i>View Members</a>
+          <a href="/adminn/manage-users/" class="qa-btn outline"><i class="bi bi-shield-person"></i>Manage Roles</a>
+          <a href="/admin/" class="qa-btn outline"><i class="bi bi-gear"></i>Django Admin</a>
+        </div>
+      </div>
 
-  <!-- Vendor JS Files -->
-  <script>
-    const cancel = document.getElementById('cancel');
-    const btn = document.getElementById('btn');
-    const sidebar = document.getElementById('sidebar');
+      <!-- Data Tables Row -->
+      <div class="row g-4">
+        <!-- Recent Members -->
+        <div class="col-lg-6">
+          <div class="data-card">
+            <div class="data-card-header">
+              <h6><i class="bi bi-people me-2" style="color:#8b0000;"></i>Recent Members</h6>
+              <a href="/adminn/userreports" class="btn btn-sm btn-outline-danger">View All</a>
+            </div>
+            <div class="table-responsive">
+              <table class="table table-hover mb-0">
+                <thead class="table-light"><tr><th>Name</th><th>Email</th><th>Group</th><th>Joined</th></tr></thead>
+                <tbody>
+                  {% for member in recent_members %}
+                  <tr>
+                    <td class="fw-semibold">{{ member.name|default:"—" }}</td>
+                    <td><small class="text-muted">{{ member.email }}</small></td>
+                    <td><small>{{ member.group.name|default:"—" }}</small></td>
+                    <td><small>{{ member.date_joined|date:"M d" }}</small></td>
+                  </tr>
+                  {% empty %}
+                  <tr><td colspan="4" class="text-center text-muted py-3"><i class="bi bi-inbox me-2"></i>No members yet</td></tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
 
-    cancel.addEventListener('click', () => {
-      sidebar.classList.add('hidden');
-    });
+        <!-- Recent Events -->
+        <div class="col-lg-6">
+          <div class="data-card">
+            <div class="data-card-header">
+              <h6><i class="bi bi-calendar-event me-2" style="color:#c9a227;"></i>Recent Events</h6>
+              <a href="/events" class="btn btn-sm btn-outline-warning">View All</a>
+            </div>
+            <div class="table-responsive">
+              <table class="table table-hover mb-0">
+                <thead class="table-light"><tr><th>Title</th><th>Date</th><th>Location</th></tr></thead>
+                <tbody>
+                  {% for event in recent_events %}
+                  <tr>
+                    <td class="fw-semibold">{{ event.title }}</td>
+                    <td><small>{{ event.date }}</small></td>
+                    <td><small class="text-muted">{{ event.location }}</small></td>
+                  </tr>
+                  {% empty %}
+                  <tr><td colspan="3" class="text-center text-muted py-3"><i class="bi bi-inbox me-2"></i>No events yet</td></tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
 
-    btn.addEventListener('click', () => {
-      sidebar.classList.remove('hidden');
-    });
-  </script>
+        <!-- Recent Payments -->
+        <div class="col-lg-6">
+          <div class="data-card">
+            <div class="data-card-header">
+              <h6><i class="bi bi-credit-card me-2" style="color:#27ae60;"></i>Recent Contributions</h6>
+              <a href="/contribute" class="btn btn-sm btn-outline-success">View All</a>
+            </div>
+            <div class="table-responsive">
+              <table class="table table-hover mb-0">
+                <thead class="table-light"><tr><th>Phone</th><th>Amount</th><th>Purpose</th><th>Status</th></tr></thead>
+                <tbody>
+                  {% for pay in recent_payments %}
+                  <tr>
+                    <td><small>{{ pay.phone_number }}</small></td>
+                    <td><strong>KES {{ pay.amount }}</strong></td>
+                    <td><small>{{ pay.get_purpose_display }}</small></td>
+                    <td>
+                      <span class="badge {% if pay.status == 'completed' %}bg-success{% elif pay.status == 'pending' %}bg-warning text-dark{% else %}bg-danger{% endif %}">{{ pay.status }}</span>
+                    </td>
+                  </tr>
+                  {% empty %}
+                  <tr><td colspan="4" class="text-center text-muted py-3"><i class="bi bi-inbox me-2"></i>No payments yet</td></tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
 
-  <script src="{% static 'assets/vendor/aos/aos.js' %}"></script>
-  <script src="{% static 'assets/vendor/scrollreveal.min.js' %}"></script>
-  <script src="{% static 'assets/vendor/bootstrap/js/bootstrap.bundle.min.js' %}"></script>
-  <script src="{% static 'assets/vendor/glightbox/js/glightbox.min.js' %}"></script>
-  <script src="{% static 'assets/vendor/isotope-layout/isotope.pkgd.min.js' %}"></script>
-  <script src="{% static 'assets/vendor/swiper/swiper-bundle.min.js' %}"></script>
-  <script src="{% static 'assets/vendor/php-email-form/validate.js' %}"></script>
+        <!-- Recent Announcements -->
+        <div class="col-lg-6">
+          <div class="data-card">
+            <div class="data-card-header">
+              <h6><i class="bi bi-megaphone me-2" style="color:#8b0000;"></i>Recent Announcements</h6>
+              <a href="/announcements/add/" class="btn btn-sm btn-outline-danger">+ Add</a>
+            </div>
+            <div class="table-responsive">
+              <table class="table table-hover mb-0">
+                <thead class="table-light"><tr><th>Title</th><th>Date</th><th>Urgent</th><th>Action</th></tr></thead>
+                <tbody>
+                  {% for ann in recent_announcements %}
+                  <tr>
+                    <td class="fw-semibold">{{ ann.title }}</td>
+                    <td><small>{{ ann.date_posted|date:"M d" }}</small></td>
+                    <td>{% if ann.is_urgent %}<span class="badge bg-warning text-dark">Yes</span>{% else %}<span class="badge bg-light text-muted border">No</span>{% endif %}</td>
+                    <td><a href="/announcements/{{ ann.pk }}/delete/" class="btn btn-xs btn-outline-danger btn-sm py-0 px-1" onclick="return confirm('Delete?')"><i class="bi bi-trash"></i></a></td>
+                  </tr>
+                  {% empty %}
+                  <tr><td colspan="4" class="text-center text-muted py-3"><i class="bi bi-inbox me-2"></i>No announcements</td></tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div><!-- /p-4 -->
+  </main>
+</div>
+{% endblock %}
 
-  <!-- Template Main JS File -->
-  <script src="{% static '/assets/js/main.js' %}" ></script>
-  
-</body>
-
-</html>
+{% block extra_js %}
+<script>
+  function toggleSidebar() {
+    document.getElementById('adminSidebar').classList.toggle('open');
+    document.getElementById('sidebarOverlay').classList.toggle('show');
+  }
+  function closeSidebar() {
+    document.getElementById('adminSidebar').classList.remove('open');
+    document.getElementById('sidebarOverlay').classList.remove('show');
+  }
+</script>
 {% endblock %}

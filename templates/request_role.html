@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Request Role Upgrade – RGC{% endblock %}
+
+{% block content %}
+<div style="margin-top:80px; background:#f5f5f5; min-height:calc(100vh - 70px);" class="py-5">
+  <div class="container">
+    <div class="row justify-content-center">
+      <div class="col-lg-6">
+        <div class="card border-0 shadow-sm rounded-4 p-4">
+          <h4 class="fw-bold mb-1" style="color:#8b0000;"><i class="bi bi-shield-plus me-2"></i>Request Role Upgrade</h4>
+          <p class="text-muted mb-4">Submit a request to be promoted to Manager or Admin. An administrator will review your request.</p>
+
+          {% if messages %}{% for m in messages %}<div class="alert alert-{% if m.tags == 'error' %}danger{% elif m.tags == 'warning' %}warning{% else %}{{ m.tags }}{% endif %}">{{ m }}</div>{% endfor %}{% endif %}
+
+          <form method="POST">
+            {% csrf_token %}
+            <div class="mb-4">
+              <label class="form-label fw-semibold">Requested Role</label>
+              <div class="row g-2">
+                <div class="col-6">
+                  <div class="p-3 border border-2 rounded-3 text-center" style="cursor:pointer; border-color:#c9a227 !important; background:#fffbea;">
+                    <input type="radio" name="requested_role" value="manager" id="req-manager" class="d-none" required>
+                    <label for="req-manager" style="cursor:pointer;">
+                      <i class="bi bi-briefcase-fill d-block mb-1" style="font-size:2rem; color:#c9a227;"></i>
+                      <strong>Manager</strong>
+                      <div class="text-muted small">Staff access + dashboard</div>
+                    </label>
+                  </div>
+                </div>
+                <div class="col-6">
+                  <div class="p-3 border border-2 rounded-3 text-center" style="cursor:pointer; border-color:#8b0000 !important; background:#fff5f5;">
+                    <input type="radio" name="requested_role" value="admin" id="req-admin" class="d-none">
+                    <label for="req-admin" style="cursor:pointer;">
+                      <i class="bi bi-shield-fill d-block mb-1" style="font-size:2rem; color:#8b0000;"></i>
+                      <strong>Admin</strong>
+                      <div class="text-muted small">Full admin access</div>
+                    </label>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="mb-4">
+              <label class="form-label fw-semibold" for="reason">Reason for Request</label>
+              <textarea name="reason" id="reason" rows="4" class="form-control" placeholder="Explain why you need this access level and how you will use it in the church..." required></textarea>
+              <small class="text-muted">Be specific — e.g., "I am the Sunday School coordinator and need to post announcements."</small>
+            </div>
+            <button type="submit" class="btn btn-danger w-100 fw-bold"><i class="bi bi-send me-2"></i>Submit Request</button>
+            <a href="/profile/" class="btn btn-outline-secondary w-100 mt-2">Cancel</a>
+          </form>
+        </div>
+
+        <div class="card border-0 shadow-sm rounded-4 p-3 mt-3">
+          <h6 class="fw-bold mb-2"><i class="bi bi-info-circle me-2 text-warning"></i>What each role can do</h6>
+          <table class="table table-sm mb-0">
+            <thead class="table-light"><tr><th>Capability</th><th class="text-center">Member</th><th class="text-center">Manager</th><th class="text-center">Admin</th></tr></thead>
+            <tbody>
+              <tr><td>View content</td><td class="text-center">✓</td><td class="text-center">✓</td><td class="text-center">✓</td></tr>
+              <tr><td>Join groups/events</td><td class="text-center">✓</td><td class="text-center">✓</td><td class="text-center">✓</td></tr>
+              <tr><td>Post announcements</td><td class="text-center">—</td><td class="text-center">✓</td><td class="text-center">✓</td></tr>
+              <tr><td>Manage events</td><td class="text-center">—</td><td class="text-center">✓</td><td class="text-center">✓</td></tr>
+              <tr><td>Upload media</td><td class="text-center">—</td><td class="text-center">✓</td><td class="text-center">✓</td></tr>
+              <tr><td>Manage members</td><td class="text-center">—</td><td class="text-center">✓</td><td class="text-center">✓</td></tr>
+              <tr><td>Promote/approve users</td><td class="text-center">—</td><td class="text-center">—</td><td class="text-center">✓</td></tr>
+              <tr><td>System settings</td><td class="text-center">—</td><td class="text-center">—</td><td class="text-center">✓</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

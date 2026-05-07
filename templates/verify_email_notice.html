@@ -1,0 +1,28 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Verify Email – RGC Nyahururu</title>
+  <link href="{% static 'assets/vendor/bootstrap/css/bootstrap.min.css' %}" rel="stylesheet">
+  <style>
+    body { background: #1a1a1a; min-height: 100vh; display: flex; align-items: center; justify-content: center; }
+    .card { border-radius: 16px; border: none; box-shadow: 0 20px 60px rgba(0,0,0,0.3); max-width: 500px; }
+    .icon-circle { width: 80px; height: 80px; border-radius: 50%; background: linear-gradient(135deg, #8b0000, #c9a227); display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="card p-5 text-center mx-auto">
+      <div class="icon-circle"><i class="bi bi-envelope-check text-white fs-1"></i></div>
+      <h4 class="fw-bold mb-2">Check Your Email</h4>
+      <p class="text-muted mb-4">We sent a 6-digit verification code to your email address. Enter it below to activate your account.</p>
+      <a href="/verify-email/" class="btn btn-danger btn-lg w-100 mb-3">Enter Verification Code</a>
+      <a href="/" class="text-muted small">Back to Home</a>
+    </div>
+  </div>
+  <link href="{% static 'assets/vendor/bootstrap-icons/bootstrap-icons.css' %}" rel="stylesheet">
+  <script src="{% static 'assets/vendor/bootstrap/js/bootstrap.bundle.min.js' %}"></script>
+</body>
+</html>

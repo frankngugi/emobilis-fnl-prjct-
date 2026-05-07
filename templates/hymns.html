@@ -1,0 +1,138 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Hymns – Redeemed Gospel Church Nyahururu{% endblock %}
+
+{% block extra_css %}
+<style>
+  .hymns-hero { background: linear-gradient(135deg, #1a1a1a 0%, #8b0000 100%); color: #fff; padding: 100px 0 60px; text-align: center; margin-top: 70px; }
+  .hymns-hero h1 { font-size: 2.5rem; font-weight: 700; color: #c9a227; }
+  .hymns-hero p { opacity: 0.9; font-size: 1.1rem; }
+  .search-box { background: #fff; border-radius: 50px; padding: 8px 20px; display: flex; align-items: center; max-width: 500px; margin: 25px auto 0; box-shadow: 0 5px 20px rgba(0,0,0,0.3); }
+  .search-box input { border: none; outline: none; flex: 1; font-size: 1rem; }
+  .search-box button { background: #8b0000; color: #fff; border: none; border-radius: 50px; padding: 8px 20px; font-weight: 600; }
+  .hymn-list-card { border-radius: 10px; border: none; box-shadow: 0 2px 10px rgba(0,0,0,0.07); transition: transform 0.2s; cursor: pointer; }
+  .hymn-list-card:hover { transform: translateY(-2px); border-left: 4px solid #c9a227 !important; }
+  .hymn-list-card.active { border-left: 4px solid #8b0000 !important; background: #fff8f0; }
+  .hymn-number { font-size: 1.2rem; font-weight: 700; color: #8b0000; min-width: 45px; }
+  .hymn-title { font-weight: 600; color: #1a1a1a; }
+  .hymn-author { font-size: 0.8rem; color: #888; }
+  .hymn-display { background: #fff; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); padding: 35px; position: sticky; top: 90px; }
+  .hymn-display h2 { color: #8b0000; font-weight: 700; border-bottom: 3px solid #c9a227; padding-bottom: 12px; }
+  .hymn-lyrics { white-space: pre-wrap; line-height: 2; font-size: 1rem; color: #333; }
+  .hymn-verse { background: #f9f9f9; border-radius: 8px; padding: 15px 20px; margin-bottom: 15px; border-left: 3px solid #c9a227; }
+  .no-hymn-selected { text-align: center; padding: 60px 20px; color: #888; }
+  .no-hymn-selected i { font-size: 4rem; color: #c9a227; display: block; margin-bottom: 15px; }
+  .pagination .page-link { color: #8b0000; }
+  .pagination .page-item.active .page-link { background: #8b0000; border-color: #8b0000; }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<section class="hymns-hero">
+  <div class="container">
+    <h1><i class="ri-music-2-line me-2"></i>Hymns & Worship Songs</h1>
+    <p>Search, read, and sing along to our collection of Christian hymns</p>
+    <form method="GET" action="/hymns/">
+      <div class="search-box">
+        <i class="bi bi-search text-muted me-2"></i>
+        <input type="text" name="q" value="{{ query }}" placeholder="Search hymns by title or number...">
+        <button type="submit">Search</button>
+      </div>
+    </form>
+  </div>
+</section>
+
+<section class="py-5" style="background:#f5f5f5;">
+  <div class="container">
+    <div class="row g-4">
+      <!-- Hymn List -->
+      <div class="col-lg-5">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h5 class="fw-bold mb-0">
+            {% if query %}
+              Results for "{{ query }}"
+            {% else %}
+              All Hymns ({{ page_obj.paginator.count }})
+            {% endif %}
+          </h5>
+          {% if query %}<a href="/hymns/" class="btn btn-sm btn-outline-secondary">Clear</a>{% endif %}
+        </div>
+
+        {% if page_obj.object_list %}
+        <div class="d-flex flex-column gap-2">
+          {% for hymn in page_obj %}
+          <a href="/hymns/?hymn={{ hymn.id }}{% if query %}&q={{ query }}{% endif %}" class="text-decoration-none">
+            <div class="hymn-list-card card p-3 {% if selected_hymn and selected_hymn.id == hymn.id %}active{% endif %}">
+              <div class="d-flex align-items-center gap-3">
+                <span class="hymn-number">#{{ hymn.number }}</span>
+                <div class="flex-grow-1">
+                  <div class="hymn-title">{{ hymn.title }}</div>
+                  {% if hymn.author %}<div class="hymn-author">{{ hymn.author }}</div>{% endif %}
+                </div>
+                <i class="bi bi-chevron-right text-muted"></i>
+              </div>
+            </div>
+          </a>
+          {% endfor %}
+        </div>
+
+        <!-- Pagination -->
+        {% if page_obj.has_other_pages %}
+        <nav class="mt-4">
+          <ul class="pagination justify-content-center pagination-sm">
+            {% if page_obj.has_previous %}
+            <li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if query %}&q={{ query }}{% endif %}">«</a></li>
+            {% endif %}
+            <li class="page-item disabled"><span class="page-link">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span></li>
+            {% if page_obj.has_next %}
+            <li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}{% if query %}&q={{ query }}{% endif %}">»</a></li>
+            {% endif %}
+          </ul>
+        </nav>
+        {% endif %}
+
+        {% else %}
+        <div class="text-center py-5">
+          <i class="ri-music-line" style="font-size:3rem; color:#c9a227;"></i>
+          <p class="text-muted mt-3">No hymns found{% if query %} for "{{ query }}"{% endif %}</p>
+          {% if query %}<a href="/hymns/" class="btn btn-outline-danger btn-sm">Show all hymns</a>{% endif %}
+        </div>
+        {% endif %}
+      </div>
+
+      <!-- Hymn Display -->
+      <div class="col-lg-7">
+        <div class="hymn-display">
+          {% if selected_hymn %}
+          <div class="d-flex justify-content-between align-items-start mb-3">
+            <div>
+              <span class="badge bg-danger me-2"># {{ selected_hymn.number }}</span>
+              {% if selected_hymn.category %}<span class="badge bg-warning text-dark">{{ selected_hymn.category }}</span>{% endif %}
+            </div>
+            <button onclick="window.print()" class="btn btn-sm btn-outline-secondary"><i class="bi bi-printer me-1"></i>Print</button>
+          </div>
+          <h2>{{ selected_hymn.title }}</h2>
+          {% if selected_hymn.author %}<p class="text-muted mb-4"><i class="bi bi-person me-1"></i>{{ selected_hymn.author }}</p>{% endif %}
+          <div class="hymn-lyrics">{{ selected_hymn.lyrics }}</div>
+          {% else %}
+          <div class="no-hymn-selected">
+            <i class="ri-music-2-line"></i>
+            <h5>Select a Hymn</h5>
+            <p>Choose a hymn from the list to view its full lyrics here.</p>
+            {% if not page_obj.object_list %}
+            <div class="alert alert-info mt-3">
+              <i class="bi bi-info-circle me-2"></i>
+              No hymns are loaded yet. Ask your admin to add hymns via the Django admin panel or use the management command: <code>python manage.py load_hymns</code>
+            </div>
+            {% endif %}
+          </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+{% endblock %}

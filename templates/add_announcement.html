@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Post Announcement – RGC Nyahururu{% endblock %}
+
+{% block content %}
+<div style="margin-top:80px;" class="py-5" style="background:#f5f5f5;">
+  <div class="container">
+    <div class="row justify-content-center">
+      <div class="col-lg-7">
+        <div class="card border-0 shadow-sm rounded-4 p-4">
+          <h4 class="fw-bold mb-1" style="color:#8b0000;"><i class="ri-megaphone-line me-2"></i>Post Announcement</h4>
+          <p class="text-muted mb-4">This will be visible to all members on the announcements page.</p>
+          <form method="POST" enctype="multipart/form-data">
+            {% csrf_token %}
+            {% for field in form %}
+            <div class="mb-3">
+              <label class="form-label fw-semibold">{{ field.label }}</label>
+              {{ field }}
+              {% if field.errors %}
+                {% for error in field.errors %}
+                <div class="text-danger small">{{ error }}</div>
+                {% endfor %}
+              {% endif %}
+            </div>
+            {% endfor %}
+            <button type="submit" class="btn btn-danger w-100"><i class="bi bi-send me-2"></i>Post Announcement</button>
+            <a href="/announcements/" class="btn btn-outline-secondary w-100 mt-2">Cancel</a>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

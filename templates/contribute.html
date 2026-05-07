@@ -1,176 +1,177 @@
-
-
+{% extends "base.html" %}
 {% load static %}
 
-<!DOCTYPE html>
-<html lang="en">
+{% block title %}Give & Contribute – Redeemed Gospel Church Nyahururu{% endblock %}
 
-<head>
-  <meta charset="utf-8">
-  <meta content="width=device-width, initial-scale=1.0" name="viewport">
+{% block extra_css %}
+<style>
+  .give-hero { background: linear-gradient(135deg, #1a1a1a 0%, #8b0000 100%); color: #fff; padding: 100px 0 50px; margin-top: 70px; text-align: center; }
+  .give-hero h1 { font-size: 2.4rem; font-weight: 700; color: #c9a227; }
+  .give-card { background: #fff; border-radius: 16px; box-shadow: 0 8px 30px rgba(0,0,0,0.1); padding: 35px; }
+  .give-card h4 { font-weight: 700; color: #1a1a1a; border-bottom: 3px solid #c9a227; padding-bottom: 12px; margin-bottom: 20px; }
+  .form-control { border-radius: 10px; border: 1.5px solid #e0e0e0; padding: 12px 15px; }
+  .form-control:focus { border-color: #8b0000; box-shadow: 0 0 0 3px rgba(139,0,0,0.12); }
+  .purpose-option { cursor: pointer; }
+  .purpose-option input[type=radio] { display: none; }
+  .purpose-option label { display: flex; align-items: center; gap: 10px; padding: 12px 18px; border: 2px solid #e0e0e0; border-radius: 10px; cursor: pointer; transition: all 0.2s; font-weight: 500; }
+  .purpose-option input:checked + label { border-color: #8b0000; background: #fff8f8; color: #8b0000; }
+  .purpose-option label i { font-size: 1.2rem; }
+  .btn-mpesa { background: linear-gradient(135deg, #27ae60, #1e8449); color: #fff; border: none; border-radius: 12px; padding: 15px; font-weight: 700; font-size: 1.1rem; width: 100%; }
+  .btn-mpesa:hover { opacity: 0.9; color: #fff; }
+  .mpesa-logo { font-size: 2.5rem; color: #27ae60; }
+  .bank-card { background: #f9f9f9; border-radius: 12px; padding: 20px; border: 1.5px solid #e0e0e0; }
+  .bank-detail { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #eee; font-size: 0.9rem; }
+  .bank-detail:last-child { border-bottom: none; }
+  .amount-presets { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
+  .preset-btn { border: 2px solid #8b0000; color: #8b0000; background: #fff; border-radius: 8px; padding: 7px 16px; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+  .preset-btn:hover { background: #8b0000; color: #fff; }
+  .payment-history { background: #fff; border-radius: 12px; padding: 20px; box-shadow: 0 3px 15px rgba(0,0,0,0.07); }
+  .scripture-card { background: linear-gradient(135deg, #1a1a1a, #4a0000); color: #fff; border-radius: 14px; padding: 25px; margin-bottom: 20px; }
+  .scripture-card blockquote { font-style: italic; font-size: 1.05rem; border-left: 3px solid #c9a227; padding-left: 15px; color: rgba(255,255,255,0.9); }
+</style>
+{% endblock %}
 
-   
-  <title>RGC-Church Management System</title>
-  <meta content="" name="description">
-  <meta content="" name="keywords">
+{% block content %}
 
-
-  <!-- Favicons -->
-  <link href="{% static 'assets/img/img/logo.jpg' %}" rel="icon">
-  <!-- <link href="{% static 'assets/img/apple-touch-icon.png' %}" rel="apple-touch-icon"> -->
-  <link rel="stylesheet" href="{% static 'assets/css/remixicon.css' %}">
-  <link
-    href="https://cdn.jsdelivr.net/npm/remixicon@4.1.0/fonts/remixicon.css"
-    rel="stylesheet"
-/>
-  <!-- Google Fonts -->
-  <link href="https://fonts.googleapis.com/css?family=Open+Sans:300,300i,400,400i,600,600i,700,700i|Raleway:300,300i,400,400i,500,500i,600,600i,700,700i|Poppins:300,300i,400,400i,500,500i,600,600i,700,700i" rel="stylesheet">
-   
-    <!--swipper css-->
-  <link rel="stylesheet" href="{% static 'assets/css/swiper-bundle.min.css'%}">
-
-
-  <!-- Vendor CSS Files -->
-  <link href="{% static 'assets/vendor/aos/aos.css' %}" rel="stylesheet">
-  <link href="{% static 'assets/vendor/bootstrap/css/bootstrap.min.css' %}" rel="stylesheet">
-  <link href="{% static 'assets/vendor/bootstrap-icons/bootstrap-icons.css' %}" rel="stylesheet">
-  <link href="{% static 'assets/vendor/boxicons/css/boxicons.min.css' %}" rel="stylesheet">
-  <link href="{% static 'assets/vendor/glightbox/css/glightbox.min.css' %}" rel="stylesheet">
-  <link href="{% static 'assets/vendor/remixicon/remixicon.css' %}" rel="stylesheet">
-  <link href="{% static 'assets/vendor/swiper/swiper-bundle.min.css' %}" rel="stylesheet">
-  <link href="https://cdn.jsdelivr.net/npm/aos@2.3.4/dist/aos.css" rel="stylesheet">
-
-
-  <link href="{% static 'assets/css/style.css' %}" rel="stylesheet">
-
-
-</head>
-
-<body>
-  
-
-  <script src="https://cdn.jsdelivr.net/npm/aos@2.3.4/dist/aos.js"></script>
-  <script>
-    AOS.init();
-  </script>
-
-  <!-- ======= Header ======= -->
-  <header id="header" class="fixed-top">
-    <div class="branding">
-    <div class="container d-flex align-items-center justify-content-between">
-
-      <!-- <h1 class="logo"><a href="/">RGC-Church</a></h1> -->
-      <a href="/" class="logo"><img src="{% static 'assets/img/img/logo word.png' %}" alt="" class="img-fluid"></a>
-
-      <nav id="navbar" class="navbar">
-        <ul>
-          <li><a class="nav-link scrollto active" href="/">Home</a></li>
-          <li><a class="nav-link scrollto" href="#about">About</a></li>
-          <li><a class="nav-link scrollto" href="/events">Events</a></li>
-          <li><a class="nav-link scrollto" href="/gallery">Gallery</a></li>
-          <li><a class="nav-link scrollto" href="/chats">Chats</a></li>
-          <li><a class="nav-link scrollto" href="/contribute">Contributions</a></li>
-          <li><a class="nav-link scrollto" href="/video">videos</a></li>
-          <li class="dropdown"><a href="#"><span>Groups</span> <i class="bi bi-chevron-down"></i></a>
-            <ul>
-              <li><a href="#">Groups</a></li>
-              <li class="dropdown"><a href="#"><span>Church fellowships/groups</span> <i class="bi bi-chevron-right"></i></a>
-                <ul>
-                  <li><a href="#">Town</a></li>
-                  <li><a href="#">Runda fellowship</a></li>
-                  <li><a href="#">Beraka</a></li>
-                  <li><a href="#">Cosite fellowship</a></li>
-                  <li><a href="#">etc....</a></li>
-                </ul>
-              </li>
-              <li><a href="#">Men</a></li>
-              <li><a href="#">Women</a></li>
-              <li><a href="#">Youth</a></li>
-              <li><a href="#">Sunday School</a>ha></li>
-            </ul>
-          </li>
-          <li><a class="nav-link scrollto" href="#contact">Contact</a></li>
-          {% if user.is_authenticated %}
-          <li><a class="login scrollto" href="logout">Logout</a></li>
-          {% else %}
-          <li><a class="login scrollto" href="login">Login or Sign Up</a></li>
-          {% endif %}
-       
-        </ul>
-        <i class="bi bi-list mobile-nav-toggle"></i>
-      </nav><!-- .navbar -->
-
-    </div>
+<section class="give-hero">
+  <div class="container">
+    <h1><i class="ri-heart-line me-2"></i>Give & Contribute</h1>
+    <p>Support God's work at Redeemed Gospel Church Nyahururu</p>
+    <p class="small opacity-75 mt-2">"Each of you should give what you have decided in your heart to give, not reluctantly or under compulsion, for God loves a cheerful giver." — 2 Corinthians 9:7</p>
   </div>
-  </header><!-- End Header -->
+</section>
 
-  
-  <section id="mpesa" class="mpesa">
-    <div class="container" data-aos="fade-up">
+<section class="py-5" style="background:#f5f5f5;">
+  <div class="container">
 
-      <div class="section-title">
-        <h2>Contributions</h2>
-        <p>Give with an open Heart and Mind.</p>
+    {% if messages %}
+      {% for message in messages %}
+      <div class="alert alert-{% if message.tags == 'error' %}danger{% elif message.tags == 'success' %}success{% else %}{{ message.tags }}{% endif %} alert-dismissible fade show mb-4">
+        {{ message }}<button class="btn-close" data-bs-dismiss="alert"></button>
       </div>
+      {% endfor %}
+    {% endif %}
 
-      <div class="row">
+    <div class="row g-4">
+      <!-- M-Pesa Form -->
+      <div class="col-lg-7">
+        <div class="give-card">
+          <h4><span class="mpesa-logo me-2">M</span>Pay via M-Pesa STK Push</h4>
+          <p class="text-muted small mb-4">Enter your details below. You'll receive a prompt on your phone to complete the payment.</p>
 
-        <div class="col-lg-4 col-md-6" data-aos="zoom-im" data-aos-delay="100" data-aos-duration="600">
-          <div class="box">
-            <h3> M-Pesa </h3>
-            
-            <ul>
-              <form action="contribute" method="POST">
-                <div class="col-md-6 ">
-                  <input type="name" class="form-control" name="name" placeholder="name" required=""><br>
-                  <input type="phonenumber" class="form-control" name="phonenumber" placeholder="phonenumber" required=""><br>
-                  <input type="phonenumber" class="amount" name="amount" placeholder="amount" required=""><br>
-                  <label for="tithe">Tithe</label>
-                  <input type="radio" id="tithe" name="contributions" value="tithe">
-                  <br>
-                  <label for="">Offering</label>
-                  <input type="radio" id="offering" name="contribution" value="offering">
-                  <label for="">Projects</label>
-                  <input type="radio" id="projects" name="contribution" value="projects"><br>
-                  <label for="">Others</label>
-                  <input type="radio" id="others" name="contribution" value="others">
-
-                
-              </form>
-            </ul>
-            <div class="btn-submit">
-              <a href="mpesa.html" class="btn-submit">Submit</a>
+          <form method="POST" action="/contribute" id="mpesaForm">
+            {% csrf_token %}
+            <div class="mb-3">
+              <label class="form-label fw-semibold">Your Name</label>
+              <input type="text" name="name" class="form-control" placeholder="Full Name" {% if user.is_authenticated %}value="{{ user.get_full_name|default:user.username }}"{% endif %} required>
             </div>
-          </div>
+            <div class="mb-3">
+              <label class="form-label fw-semibold">M-Pesa Phone Number</label>
+              <div class="input-group">
+                <span class="input-group-text bg-white" style="border-radius:10px 0 0 10px;">+254</span>
+                <input type="tel" name="phonenumber" id="phoneInput" class="form-control" placeholder="712 345 678" {% if user.is_authenticated and user.phone %}value="{{ user.phone }}"{% endif %} required style="border-radius:0 10px 10px 0;">
+              </div>
+              <small class="text-muted">Enter your Safaricom M-Pesa number</small>
+            </div>
+            <div class="mb-3">
+              <label class="form-label fw-semibold">Amount (KES)</label>
+              <div class="amount-presets">
+                <button type="button" class="preset-btn" onclick="setAmount(100)">100</button>
+                <button type="button" class="preset-btn" onclick="setAmount(500)">500</button>
+                <button type="button" class="preset-btn" onclick="setAmount(1000)">1,000</button>
+                <button type="button" class="preset-btn" onclick="setAmount(2000)">2,000</button>
+                <button type="button" class="preset-btn" onclick="setAmount(5000)">5,000</button>
+              </div>
+              <input type="number" name="amount" id="amountInput" class="form-control" placeholder="Enter amount" min="10" required>
+            </div>
+            <div class="mb-4">
+              <label class="form-label fw-semibold">Type of Giving</label>
+              <div class="row g-2">
+                <div class="col-6 col-md-3 purpose-option">
+                  <input type="radio" name="purpose" id="tithe" value="tithe">
+                  <label for="tithe"><i class="ri-hand-coin-line"></i>Tithe</label>
+                </div>
+                <div class="col-6 col-md-3 purpose-option">
+                  <input type="radio" name="purpose" id="offering" value="offering" checked>
+                  <label for="offering"><i class="ri-gift-line"></i>Offering</label>
+                </div>
+                <div class="col-6 col-md-3 purpose-option">
+                  <input type="radio" name="purpose" id="project" value="project">
+                  <label for="project"><i class="ri-building-line"></i>Project</label>
+                </div>
+                <div class="col-6 col-md-3 purpose-option">
+                  <input type="radio" name="purpose" id="other" value="other">
+                  <label for="other"><i class="ri-more-line"></i>Other</label>
+                </div>
+              </div>
+            </div>
+            <button type="submit" class="btn-mpesa">
+              <i class="bi bi-phone me-2"></i>Send STK Push to My Phone
+            </button>
+            <p class="text-muted text-center small mt-3">
+              <i class="bi bi-shield-check text-success me-1"></i>
+              Secure payment via Safaricom Daraja API
+            </p>
+          </form>
         </div>
       </div>
-    </section>
-    <div class="social-links text-center text-md-right pt-3 pt-md-0">
-      <a href="https://www.facebook.com/" class="twitter"><i class="ri-facebook-box-fill"></i></a>
-      <a href="https://twitter.com/?lang=en" class="facebook"><i class="ri-twitter-x-fill"></i></a>
-      <a href="https://www.instagram.com/" class="instagram"><i class="ri-instagram-fill"></i></a>
-      <a href="google.com" class="google-plus"><i class="bx bxl-skype"></i></a>
-      <a href="https://ke.linkedin.com/" class="linkedin"><i class="ri-linkedin-fill"></i></i></a>
+
+      <!-- Side info -->
+      <div class="col-lg-5">
+        <!-- Scripture -->
+        <div class="scripture-card">
+          <blockquote>"Bring the whole tithe into the storehouse, that there may be food in my house. Test me in this, says the LORD Almighty, and see if I will not throw open the floodgates of heaven and pour out so much blessing that there will not be room enough to store it."</blockquote>
+          <cite class="small" style="color:#c9a227;">— Malachi 3:10</cite>
+        </div>
+
+        <!-- Bank Transfer -->
+        <div class="give-card mb-4">
+          <h4><i class="bi bi-bank me-2 text-dark"></i>Bank Transfer</h4>
+          <p class="text-muted small mb-3">You can also give directly to our church bank account:</p>
+          <div class="bank-card">
+            <div class="bank-detail"><span>Bank Name</span><strong>Co-operative Bank</strong></div>
+            <div class="bank-detail"><span>Account Name</span><strong>Redeemed Gospel Church</strong></div>
+            <div class="bank-detail"><span>Account Number</span><strong>01129xxxxxxx</strong></div>
+            <div class="bank-detail"><span>Branch</span><strong>Nyahururu Branch</strong></div>
+            <div class="bank-detail"><span>Swift Code</span><strong>KCOOKENA</strong></div>
+          </div>
+          <p class="text-muted small mt-2">After transfer, please notify the church treasurer.</p>
+        </div>
+
+        <!-- Payment History -->
+        {% if recent_payments %}
+        <div class="payment-history">
+          <h6 class="fw-bold mb-3"><i class="bi bi-clock-history me-1 text-danger"></i>My Recent Contributions</h6>
+          {% for p in recent_payments %}
+          <div class="d-flex justify-content-between align-items-center py-2 border-bottom">
+            <div>
+              <strong class="small">KES {{ p.amount }}</strong>
+              <span class="text-muted small ms-2">{{ p.get_purpose_display }}</span>
+            </div>
+            <div class="text-end">
+              <span class="badge {% if p.status == 'completed' %}bg-success{% elif p.status == 'pending' %}bg-warning text-dark{% else %}bg-danger{% endif %} small">{{ p.status }}</span>
+              <div class="text-muted" style="font-size:0.75rem;">{{ p.created_at|date:"M d" }}</div>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+        {% endif %}
+      </div>
     </div>
   </div>
-</footer><!-- End Footer -->
+</section>
 
-<div id="preloader"></div>
-<a href="#" class="back-to-top d-flex align-items-center justify-content-center"><i class="bi bi-arrow-up-short"></i></a>
+{% endblock %}
 
-<!-- Vendor JS Files -->
-
-<script src="{% static 'assets/vendor/aos/aos.js' %}"></script>
-<script src="{% static 'assets/vendor/scrollreveal.min.js' %}"></script>
-<script src="{% static 'assets/vendor/bootstrap/js/bootstrap.bundle.min.js' %}"></script>
-<script src="{% static 'assets/vendor/glightbox/js/glightbox.min.js' %}"></script>
-<script src="{% static 'assets/vendor/isotope-layout/isotope.pkgd.min.js' %}"></script>
-<script src="{% static 'assets/vendor/swiper/swiper-bundle.min.js' %}"></script>
-<script src="{% static 'assets/vendor/php-email-form/validate.js' %}"></script>
-
-<!-- Template Main JS File -->
-<script src="{% static '/assets/js/main.js' %}" ></script>
-
-</body>
-
-</html>
+{% block extra_js %}
+<script>
+  function setAmount(val) {
+    document.getElementById('amountInput').value = val;
+  }
+  document.getElementById('mpesaForm').addEventListener('submit', function(e) {
+    const btn = this.querySelector('button[type=submit]');
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Sending STK Push...';
+    btn.disabled = true;
+  });
+</script>
+{% endblock %}

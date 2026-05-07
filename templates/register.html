@@ -1,89 +1,183 @@
-
 {% load static %}
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
   <meta charset="utf-8">
-  <meta content="width=device-width, initial-scale=1.0" name="viewport">
-  <title>RGC-Church Management System</title>
-  <meta content="" name="description">
-  <meta content="" name="keywords">
-  <!-- Favicons -->
-  <!-- Google Fonts -->
-  <link href="https://fonts.googleapis.com/css?family=Open+Sans:300,300i,400,400i,600,600i,700,700i|Raleway:300,300i,400,400i,500,500i,600,600i,700,700i|Poppins:300,300i,400,400i,500,500i,600,600i,700,700i" rel="stylesheet">
-  <!-- Vendor CSS Files -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Register – Redeemed Gospel Church Nyahururu</title>
+  <link href="{% static 'assets/img/img/logo.jpg' %}" rel="icon">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&family=Raleway:wght@400;600;700&display=swap" rel="stylesheet">
   <link href="{% static 'assets/vendor/bootstrap/css/bootstrap.min.css' %}" rel="stylesheet">
-  <link href="{% static 'assets/vendor/remixicon/remixicon.css' %}" rel="stylesheet">
-  <!-- Template Main CSS File -->
+  <link href="{% static 'assets/vendor/bootstrap-icons/bootstrap-icons.css' %}" rel="stylesheet">
   <link href="{% static 'assets/css/style.css' %}" rel="stylesheet">
   <style>
-    .messages {
-      color: red;
-    }
+    body { background: #1a1a1a; min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px 0; }
+    .auth-card { background: #fff; border-radius: 12px; overflow: hidden; box-shadow: 0 20px 60px rgba(0,0,0,0.4); max-width: 900px; width: 100%; }
+    .auth-brand { background: linear-gradient(135deg, #1a1a1a 0%, #8b0000 60%, #c9a227 100%); color: #fff; padding: 40px 30px; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
+    .auth-brand img { max-width: 110px; margin-bottom: 18px; filter: brightness(0) invert(1); }
+    .auth-brand h2 { font-family: 'Raleway', sans-serif; font-weight: 700; color: #c9a227; margin-bottom: 8px; }
+    .auth-form-area { padding: 35px 35px; }
+    .auth-form-area h3 { font-family: 'Raleway', sans-serif; font-weight: 700; color: #1a1a1a; margin-bottom: 5px; }
+    .auth-form-area p.subtitle { color: #888; font-size: 0.9rem; margin-bottom: 20px; }
+    .form-control, .form-select { border-radius: 8px; border: 1.5px solid #ddd; padding: 11px 14px; font-size: 0.9rem; }
+    .form-control:focus, .form-select:focus { border-color: #8b0000; box-shadow: 0 0 0 3px rgba(139,0,0,0.12); }
+    .input-group-text { background: #f8f8f8; border-radius: 8px 0 0 8px; color: #666; }
+    .btn-church { background: linear-gradient(135deg, #8b0000, #c9a227); border: none; color: #fff; padding: 13px; border-radius: 8px; font-weight: 600; font-size: 1rem; width: 100%; transition: opacity 0.3s; }
+    .btn-church:hover { opacity: 0.9; color: #fff; }
+    .step-indicator { display: flex; gap: 8px; margin-bottom: 20px; }
+    .step { flex: 1; height: 4px; border-radius: 2px; background: #e5e5e5; }
+    .step.active { background: #8b0000; }
+    .step.done { background: #c9a227; }
+    .password-strength { height: 5px; border-radius: 3px; margin-top: 6px; transition: all 0.3s; }
+    .alert { border-radius: 8px; }
   </style>
 </head>
-
 <body>
-  {% for message in messages %}
-  <h5 class="messages">{{message}}</h5><br />
-  {% endfor %}
-  <section id="loginpage" class="d-flex align-items-center">
-    <img src="{% static 'assets/img/img/leaf.jpg' %}" alt="" data-aos="fade-in">
-    <div class="container position-relative" data-aos="fade-up" data-aos-delay="100">
-      <div class="login-form justify-content-center">
-        <div class="col-xl-7 col-lg-9 text-center">
-          <h1>Register Now</h1>
-          <form id="signup-form" method="POST" action="register">
+  <div class="container py-3">
+    <div class="auth-card mx-auto">
+      <div class="row g-0">
+        <div class="col-md-4 auth-brand">
+          <img src="{% static 'assets/img/img/logo word.png' %}" alt="RGC Logo" onerror="this.style.display='none'">
+          <h2>Join RGC</h2>
+          <p class="mt-2 opacity-90">Create your account and become part of our growing family.</p>
+          <hr class="border-light w-75 my-3">
+          <div class="text-start small mt-2">
+            <p><i class="bi bi-check-circle-fill text-warning me-2"></i>Access all church resources</p>
+            <p><i class="bi bi-check-circle-fill text-warning me-2"></i>Join groups & ministries</p>
+            <p><i class="bi bi-check-circle-fill text-warning me-2"></i>Register for events</p>
+            <p><i class="bi bi-check-circle-fill text-warning me-2"></i>Give via M-Pesa</p>
+          </div>
+        </div>
+        <div class="col-md-8 auth-form-area">
+          <h3>Create Account</h3>
+          <p class="subtitle">Fill in your details to get started</p>
+
+          {% if messages %}
+            {% for message in messages %}
+            <div class="alert alert-{% if message.tags == 'error' %}danger{% else %}{{ message.tags }}{% endif %} alert-dismissible fade show">
+              {{ message }}<button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+            {% endfor %}
+          {% endif %}
+
+          <form method="POST" action="/register" id="registerForm">
             {% csrf_token %}
-            <p>Username:</p>
-            <input type="text" name="username" />
-            <p>Phone Number:</p>
-            <input type="text" name="phone" />
-            <p>Email:</p>
-            <input type="email" name="email" />
-            <p>Password:</p>
-            <input type="password" name="password" />
-            <p>Confirm Password:</p>
-            <input type="password" name="confirm_password" /><br>
-            <p>Select Group:</p>
-            <select name="group">
-                <option value="">-- Select Group --</option>
-                {% for group in groups %}
-                    <option value="{{ group.id }}">{{ group.name }}</option>
-                {% endfor %}
-            </select>
-            <br><br>
-            <input type="submit" />
-            <!-- <div id="otp-form" style="display: none;">
-              <p>Enter OTP:</p>
-              <input type="text" id="otp" required>
-              <button onclick="validateOTP()">Submit</button>
-          </div> -->
-            <br><br>
-            <span class="login__signup">
-              You already have an account? <br><a href="login" class="signup">Login</a>
-            </span>
+            <div class="row g-3">
+              <div class="col-6">
+                <label class="form-label fw-semibold small">First Name *</label>
+                <input type="text" name="first_name" class="form-control" placeholder="First Name" required>
+              </div>
+              <div class="col-6">
+                <label class="form-label fw-semibold small">Last Name *</label>
+                <input type="text" name="last_name" class="form-control" placeholder="Last Name" required>
+              </div>
+              <div class="col-12">
+                <label class="form-label fw-semibold small">Username *</label>
+                <div class="input-group">
+                  <span class="input-group-text"><i class="bi bi-person"></i></span>
+                  <input type="text" name="username" class="form-control" placeholder="Choose a username (min 4 chars)" required minlength="4">
+                </div>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label fw-semibold small">Email Address *</label>
+                <div class="input-group">
+                  <span class="input-group-text"><i class="bi bi-envelope"></i></span>
+                  <input type="email" name="email" class="form-control" placeholder="your@email.com" required>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label fw-semibold small">Phone Number</label>
+                <div class="input-group">
+                  <span class="input-group-text"><i class="bi bi-telephone"></i></span>
+                  <input type="tel" name="phone" class="form-control" placeholder="0712 345 678">
+                </div>
+                <small class="text-muted">For M-Pesa contributions & OTP</small>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label fw-semibold small">Password *</label>
+                <div class="input-group">
+                  <span class="input-group-text"><i class="bi bi-lock"></i></span>
+                  <input type="password" name="password" id="pass1" class="form-control" placeholder="Min 8 characters" required minlength="8" oninput="checkStrength(this.value)">
+                  <button class="btn btn-outline-secondary" type="button" onclick="togglePass('pass1','eye1')"><i class="bi bi-eye" id="eye1"></i></button>
+                </div>
+                <div class="password-strength mt-1" id="strengthBar"></div>
+                <small id="strengthText" class="text-muted"></small>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label fw-semibold small">Confirm Password *</label>
+                <div class="input-group">
+                  <span class="input-group-text"><i class="bi bi-lock-fill"></i></span>
+                  <input type="password" name="confirm_password" id="pass2" class="form-control" placeholder="Repeat password" required oninput="checkMatch()">
+                  <button class="btn btn-outline-secondary" type="button" onclick="togglePass('pass2','eye2')"><i class="bi bi-eye" id="eye2"></i></button>
+                </div>
+                <small id="matchMsg" class="text-muted"></small>
+              </div>
+              <div class="col-12">
+                <label class="form-label fw-semibold small">Select Ministry / Group (optional)</label>
+                <select name="group" class="form-select">
+                  <option value="">-- No group yet --</option>
+                  {% for group in groups %}
+                    <option value="{{ group.id }}">{{ group.name }} ({{ group.get_category_display }})</option>
+                  {% endfor %}
+                </select>
+              </div>
+              <div class="col-12">
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" id="terms" required>
+                  <label class="form-check-label small" for="terms">
+                    I agree to the church's terms and community guidelines
+                  </label>
+                </div>
+              </div>
+              <div class="col-12">
+                <button type="submit" class="btn-church">
+                  <i class="bi bi-person-plus me-2"></i>Create Account
+                </button>
+              </div>
+            </div>
           </form>
+
+          <div class="text-center mt-3">
+            <p class="mb-0">Already have an account? <a href="/login" class="text-danger fw-semibold">Sign In</a></p>
+            <a href="/" class="text-muted small"><i class="bi bi-house me-1"></i>Back to Home</a>
+          </div>
         </div>
       </div>
     </div>
-  </section>
+  </div>
 
-  <!-- Vendor JS Files -->
   <script src="{% static 'assets/vendor/bootstrap/js/bootstrap.bundle.min.js' %}"></script>
-  <script src="{% static 'assets/vendor/php-email-form/validate.js' %}"></script>
-
-  <!-- Clerk SDK and OTP Handling -->
-  <script src="https://cdn.jsdelivr.net/npm/@clerk/clerk-sdk-js"></script>
-
-
-<div id="message"></div>
-
-<script src="https://cdn.jsdelivr.net/npm/@clerk/clerk-sdk-js"></script>
-  <!-- Template Main JS File -->
-  <script src="{% static 'assets/js/main.js' %}"></script>
-
+  <script>
+    function togglePass(id, iconId) {
+      const p = document.getElementById(id);
+      const icon = document.getElementById(iconId);
+      p.type = p.type === 'password' ? 'text' : 'password';
+      icon.className = p.type === 'password' ? 'bi bi-eye' : 'bi bi-eye-slash';
+    }
+    function checkStrength(val) {
+      const bar = document.getElementById('strengthBar');
+      const txt = document.getElementById('strengthText');
+      let score = 0;
+      if (val.length >= 8) score++;
+      if (/[A-Z]/.test(val)) score++;
+      if (/[0-9]/.test(val)) score++;
+      if (/[^A-Za-z0-9]/.test(val)) score++;
+      const colors = ['#e74c3c','#e67e22','#f1c40f','#2ecc71'];
+      const labels = ['Weak','Fair','Good','Strong'];
+      const widths = ['25%','50%','75%','100%'];
+      bar.style.width = widths[score-1] || '0';
+      bar.style.background = colors[score-1] || '#eee';
+      txt.textContent = score > 0 ? labels[score-1] : '';
+      txt.style.color = colors[score-1] || '#aaa';
+    }
+    function checkMatch() {
+      const p1 = document.getElementById('pass1').value;
+      const p2 = document.getElementById('pass2').value;
+      const msg = document.getElementById('matchMsg');
+      if (p2 && p1 !== p2) { msg.textContent = 'Passwords do not match'; msg.style.color = '#e74c3c'; }
+      else if (p2) { msg.textContent = 'Passwords match ✓'; msg.style.color = '#2ecc71'; }
+      else { msg.textContent = ''; }
+    }
+  </script>
 </body>
-
 </html>
