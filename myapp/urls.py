@@ -64,6 +64,11 @@ urlpatterns = [
     path('adminn/groups/<int:pk>/delete/', views.group_delete, name='group_delete'),
     path('adminn/userreports', views.user_report, name='user_report'),
 
+    # Community Chat
+    path('chats', views.chat_view, name='chats'),
+    path('chats/send/<int:room_id>/', views.send_chat_message, name='send_chat_message'),
+    path('chats/messages/<int:room_id>/', views.get_chat_messages, name='get_chat_messages'),
+
     # User role management (admin only)
     path('adminn/manage-users/', views.manage_users, name='manage_users'),
     path('adminn/manage-users/<int:user_id>/change-role/', views.change_user_role, name='change_user_role'),

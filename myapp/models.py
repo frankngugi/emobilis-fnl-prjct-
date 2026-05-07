@@ -172,6 +172,41 @@ class Hymn(models.Model):
         return f"#{self.number} - {self.title}"
 
 
+class ChatRoom(models.Model):
+    ROOM_TYPES = [
+        ('general', 'General Chat'),
+        ('prayer', 'Prayer Requests'),
+        ('announcements', 'Announcements'),
+        ('group', 'Group Chat'),
+    ]
+    name = models.CharField(max_length=100)
+    room_type = models.CharField(max_length=20, choices=ROOM_TYPES, default='general')
+    description = models.CharField(max_length=200, blank=True)
+    group = models.ForeignKey('Group', on_delete=models.CASCADE, null=True, blank=True)
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.name
+
+    def latest_messages(self, n=50):
+        return self.messages.order_by('-created_at')[:n]
+
+
+class ChatMessage(models.Model):
+    room = models.ForeignKey(ChatRoom, on_delete=models.CASCADE, related_name='messages')
+    sender = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    message = models.TextField(max_length=1000)
+    created_at = models.DateTimeField(auto_now_add=True)
+    is_deleted = models.BooleanField(default=False)
+
+    class Meta:
+        ordering = ['created_at']
+
+    def __str__(self):
+        return f"{self.sender.username}: {self.message[:50]}"
+
+
 class PushToken(models.Model):
     """Expo push notification token for mobile app users."""
     PLATFORM_CHOICES = [('android', 'Android'), ('ios', 'iOS')]

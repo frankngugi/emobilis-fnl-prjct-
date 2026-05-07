@@ -125,6 +125,137 @@ def send_announcement_email(announcement, recipient_emails: list[str]) -> bool:
     return send_email(subject, message, recipient_emails)
 
 
+# ── WhatsApp Business Cloud API (Meta — 1000 free conversations/month) ───────
+
+WA_API_URL = 'https://graph.facebook.com/v19.0'
+
+
+def _wa_headers():
+    token = settings.WHATSAPP_ACCESS_TOKEN if hasattr(settings, 'WHATSAPP_ACCESS_TOKEN') else ''
+    return {'Authorization': f'Bearer {token}', 'Content-Type': 'application/json'}
+
+
+def _wa_configured():
+    return (
+        hasattr(settings, 'WHATSAPP_ACCESS_TOKEN') and settings.WHATSAPP_ACCESS_TOKEN
+        and hasattr(settings, 'WHATSAPP_PHONE_NUMBER_ID') and settings.WHATSAPP_PHONE_NUMBER_ID
+        and getattr(settings, 'WHATSAPP_ACCESS_TOKEN', '') not in ('', 'YOUR_WA_ACCESS_TOKEN')
+    )
+
+
+def send_whatsapp_otp(phone: str, code: str, name: str = 'there') -> dict:
+    """
+    Send OTP via WhatsApp using Meta's built-in authentication template.
+    Phone must be in E.164 format (e.g. +254712345678).
+    Returns {'success': True} or {'success': False, 'error': '...'}
+    """
+    if not _wa_configured():
+        logger.info('WhatsApp not configured — falling back to email OTP')
+        return {'success': False, 'error': 'WhatsApp not configured', 'fallback': 'email'}
+
+    import requests as _req
+    phone_e164 = _normalize_phone(phone)
+    pid = settings.WHATSAPP_PHONE_NUMBER_ID
+    url = f"{WA_API_URL}/{pid}/messages"
+
+    payload = {
+        "messaging_product": "whatsapp",
+        "to": phone_e164,
+        "type": "template",
+        "template": {
+            "name": "rgc_otp",          # Template you create in Meta dashboard
+            "language": {"code": "en"},
+            "components": [{
+                "type": "body",
+                "parameters": [
+                    {"type": "text", "text": code},
+                    {"type": "text", "text": "10 minutes"},
+                ]
+            }, {
+                "type": "button",
+                "sub_type": "url",
+                "index": "0",
+                "parameters": [{"type": "text", "text": code}]
+            }]
+        }
+    }
+
+    try:
+        resp = _req.post(url, json=payload, headers=_wa_headers(), timeout=10)
+        data = resp.json()
+        if resp.status_code == 200:
+            logger.info(f'WhatsApp OTP sent to {phone_e164}')
+            return {'success': True}
+        logger.error(f'WhatsApp OTP failed: {data}')
+        return {'success': False, 'error': data.get('error', {}).get('message', 'Unknown error')}
+    except Exception as e:
+        logger.error(f'WhatsApp OTP error: {e}')
+        return {'success': False, 'error': str(e)}
+
+
+def send_whatsapp_text(phone: str, message: str) -> dict:
+    """
+    Send a plain text WhatsApp message.
+    Only works within 24h window of user messaging you first (or use templates).
+    """
+    if not _wa_configured():
+        return {'success': False, 'error': 'WhatsApp not configured'}
+
+    import requests as _req
+    phone_e164 = _normalize_phone(phone)
+    pid = settings.WHATSAPP_PHONE_NUMBER_ID
+    payload = {
+        "messaging_product": "whatsapp",
+        "to": phone_e164,
+        "type": "text",
+        "text": {"body": message, "preview_url": False}
+    }
+    try:
+        resp = _req.post(f"{WA_API_URL}/{pid}/messages", json=payload, headers=_wa_headers(), timeout=10)
+        ok = resp.status_code == 200
+        if not ok:
+            logger.error(f'WhatsApp text failed: {resp.json()}')
+        return {'success': ok}
+    except Exception as e:
+        return {'success': False, 'error': str(e)}
+
+
+def send_whatsapp_payment_confirmation(phone: str, amount, purpose: str, receipt: str = '') -> dict:
+    """Send payment confirmation via WhatsApp."""
+    msg = (
+        f"*RGC Nyahururu — Payment Confirmed*\n\n"
+        f"Amount: *KES {amount}*\n"
+        f"Purpose: {purpose}\n"
+        f"{f'Receipt: {receipt}' if receipt else ''}\n\n"
+        f"_God bless your giving!_\n"
+        f'"Each of you should give what you have decided in your heart." — 2 Cor 9:7'
+    )
+    return send_whatsapp_text(phone, msg)
+
+
+def send_whatsapp_event_reminder(phone: str, event_title: str, event_date, event_time, location: str) -> dict:
+    """Send event reminder via WhatsApp."""
+    msg = (
+        f"*RGC Nyahururu — Event Reminder*\n\n"
+        f"*{event_title}*\n"
+        f"Date: {event_date}\n"
+        f"Time: {str(event_time)[:5]}\n"
+        f"Venue: {location}\n\n"
+        f"We look forward to seeing you!"
+    )
+    return send_whatsapp_text(phone, msg)
+
+
+def send_whatsapp_announcement(phone: str, title: str, content: str) -> dict:
+    """Send church announcement via WhatsApp."""
+    msg = (
+        f"*RGC Nyahururu — Announcement*\n\n"
+        f"*{title}*\n\n"
+        f"{content[:1000]}"
+    )
+    return send_whatsapp_text(phone, msg)
+
+
 # ── Expo Push Notifications (FREE) ───────────────────────────────────────────
 
 EXPO_PUSH_URL = 'https://exp.host/--/api/v2/push/send'

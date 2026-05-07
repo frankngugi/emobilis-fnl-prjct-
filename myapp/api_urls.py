@@ -53,4 +53,12 @@ urlpatterns = [
     # Push notifications (Expo — free)
     path('notifications/register/', api_views.register_push_token, name='api_push_register'),
     path('notifications/unregister/', api_views.unregister_push_token, name='api_push_unregister'),
+
+    # Community Chat
+    path('chat/rooms/', api_views.chat_rooms, name='api_chat_rooms'),
+    path('chat/rooms/<int:room_id>/messages/', api_views.chat_messages, name='api_chat_messages'),
+    path('chat/rooms/<int:room_id>/send/', api_views.send_chat_api, name='api_send_chat'),
+
+    # WhatsApp webhook (for receiving WhatsApp messages)
+    path('whatsapp/webhook/', api_views.whatsapp_webhook, name='api_whatsapp_webhook'),
 ]

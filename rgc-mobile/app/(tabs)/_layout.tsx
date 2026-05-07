@@ -31,6 +31,7 @@ export default function TabLayout() {
       <Tabs.Screen name="bible" options={{ title: 'Bible', tabBarIcon: ({ color, focused }) => <TabIcon name="book" color={color} focused={focused} /> }} />
       <Tabs.Screen name="hymns" options={{ title: 'Hymns', tabBarIcon: ({ color, focused }) => <TabIcon name="musical-notes" color={color} focused={focused} /> }} />
       <Tabs.Screen name="events" options={{ title: 'Events', tabBarIcon: ({ color, focused }) => <TabIcon name="calendar" color={color} focused={focused} /> }} />
+      <Tabs.Screen name="chat" options={{ title: 'Chat', tabBarIcon: ({ color, focused }) => <TabIcon name="chatbubbles" color={color} focused={focused} /> }} />
       <Tabs.Screen name="give" options={{ title: 'Give', tabBarIcon: ({ color, focused }) => <TabIcon name="heart" color={color} focused={focused} /> }} />
       <Tabs.Screen name="more" options={{ title: 'More', tabBarIcon: ({ color, focused }) => <TabIcon name="grid" color={color} focused={focused} /> }} />
     </Tabs>

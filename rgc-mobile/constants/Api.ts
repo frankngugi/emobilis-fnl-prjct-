@@ -5,6 +5,19 @@
 export const BASE_URL = 'http://192.168.88.47:8000';
 export const API_URL = `${BASE_URL}/api`;
 
+// Church WhatsApp number for direct contact
+export const CHURCH_WHATSAPP = '+254712760740';
+export const CHURCH_WA_LINK = `https://wa.me/254712760740?text=Hello%20RGC%20Nyahururu`;
+
+// Social media links (update with real handles)
+export const SOCIAL = {
+  facebook: 'https://www.facebook.com/YOUR_CHURCH_PAGE',
+  instagram: 'https://www.instagram.com/YOUR_CHURCH_PAGE',
+  youtube: 'https://www.youtube.com/@YOUR_CHANNEL',
+  linkedin: 'https://www.linkedin.com/company/YOUR_PAGE',
+  twitter: 'https://twitter.com/YOUR_PAGE',
+};
+
 export const ENDPOINTS = {
   // Auth
   LOGIN: `${API_URL}/auth/login/`,
@@ -29,4 +42,13 @@ export const ENDPOINTS = {
   DASHBOARD: `${API_URL}/admin/dashboard/`,
   ALL_MEMBERS: `${API_URL}/admin/members/`,
   CATEGORIES: `${API_URL}/categories/`,
+
+  // Chat
+  CHAT_ROOMS: `${API_URL}/chat/rooms/`,
+  CHAT_MESSAGES: (id: number) => `${API_URL}/chat/rooms/${id}/messages/`,
+  CHAT_SEND: (id: number) => `${API_URL}/chat/rooms/${id}/send/`,
+
+  // Push notifications
+  PUSH_REGISTER: `${API_URL}/notifications/register/`,
+  PUSH_UNREGISTER: `${API_URL}/notifications/unregister/`,
 };

@@ -13,6 +13,7 @@ from django.conf import settings
 from .models import (
     Events, Attendee, Announcement, Hymn, Group, Member,
     Images, Video, Payment, RoleRequest, CustomUser, PushToken,
+    ChatRoom, ChatMessage,
     MEDIA_CATEGORY_CHOICES, EVENT_CATEGORY_CHOICES
 )
 from .serializers import (
@@ -441,3 +442,98 @@ def unregister_push_token(request):
     token = request.data.get('token', '').strip()
     deleted, _ = PushToken.objects.filter(user=request.user, token=token).delete()
     return Response({'removed': deleted > 0})
+
+
+# ── Community Chat API ──────────────────────────────────────────────────────────
+
+@api_view(['GET'])
+@permission_classes([permissions.IsAuthenticated])
+def chat_rooms(request):
+    rooms = ChatRoom.objects.filter(is_active=True)
+    data = [{
+        'id': r.id, 'name': r.name, 'room_type': r.room_type,
+        'description': r.description,
+        'last_message': (lambda m: {'text': m.message[:60], 'sender': m.sender.username, 'time': m.created_at.isoformat()} if m else None)(r.messages.filter(is_deleted=False).order_by('-created_at').first()),
+    } for r in rooms]
+    return Response(data)
+
+
+@api_view(['GET'])
+@permission_classes([permissions.IsAuthenticated])
+def chat_messages(request, room_id):
+    room = get_object_or_404(ChatRoom, id=room_id, is_active=True)
+    since_id = int(request.query_params.get('since', 0))
+    msgs = ChatMessage.objects.filter(room=room, id__gt=since_id, is_deleted=False).order_by('created_at').select_related('sender')[:80]
+    data = [{
+        'id': m.id,
+        'sender': m.sender.get_full_name() or m.sender.username,
+        'username': m.sender.username,
+        'avatar_letter': (m.sender.first_name or m.sender.username)[0].upper(),
+        'message': m.message,
+        'time': m.created_at.isoformat(),
+        'mine': m.sender == request.user,
+    } for m in msgs]
+    return Response({'messages': data, 'room': {'id': room.id, 'name': room.name}})
+
+
+@api_view(['POST'])
+@permission_classes([permissions.IsAuthenticated])
+def send_chat_api(request, room_id):
+    room = get_object_or_404(ChatRoom, id=room_id, is_active=True)
+    text = request.data.get('message', '').strip()
+    if not text:
+        return Response({'error': 'message is required'}, status=400)
+    if len(text) > 1000:
+        return Response({'error': 'Message too long (max 1000 characters)'}, status=400)
+    msg = ChatMessage.objects.create(room=room, sender=request.user, message=text)
+    return Response({
+        'id': msg.id,
+        'sender': msg.sender.get_full_name() or msg.sender.username,
+        'username': msg.sender.username,
+        'avatar_letter': (msg.sender.first_name or msg.sender.username)[0].upper(),
+        'message': msg.message,
+        'time': msg.created_at.isoformat(),
+        'mine': True,
+    }, status=201)
+
+
+# ── WhatsApp Webhook ──────────────────────────────────────────────────────────
+
+@api_view(['GET', 'POST'])
+@permission_classes([permissions.AllowAny])
+def whatsapp_webhook(request):
+    """Meta WhatsApp webhook — verify token and receive messages."""
+    from django.conf import settings
+    if request.method == 'GET':
+        # Meta webhook verification
+        mode = request.query_params.get('hub.mode')
+        token = request.query_params.get('hub.verify_token')
+        challenge = request.query_params.get('hub.challenge')
+        if mode == 'subscribe' and token == settings.WHATSAPP_VERIFY_TOKEN:
+            return Response(int(challenge))
+        return Response({'error': 'Invalid token'}, status=403)
+
+    # Incoming WhatsApp message
+    data = request.data
+    try:
+        entry = data.get('entry', [{}])[0]
+        changes = entry.get('changes', [{}])[0]
+        value = changes.get('value', {})
+        messages_list = value.get('messages', [])
+        for wa_msg in messages_list:
+            phone = wa_msg.get('from', '')
+            msg_type = wa_msg.get('type', '')
+            if msg_type == 'text':
+                text = wa_msg.get('text', {}).get('body', '')
+                # Find user by phone and post to General chat
+                try:
+                    user = User.objects.get(phone__endswith=phone[-9:])
+                    room, _ = ChatRoom.objects.get_or_create(
+                        name='General', defaults={'room_type': 'general', 'description': 'General church chat'}
+                    )
+                    ChatMessage.objects.create(room=room, sender=user, message=f'[via WhatsApp] {text}')
+                except User.DoesNotExist:
+                    pass
+    except Exception as e:
+        pass
+    return Response({'status': 'ok'})

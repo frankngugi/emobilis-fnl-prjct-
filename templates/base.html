@@ -24,8 +24,22 @@
 
   <div id="preloader"></div>
 
-  <!-- Header -->
-  <header id="header" class="fixed-top">
+  <!-- ── Social Strip (top bar, always visible) ── -->
+  <div class="social-strip" style="position:fixed;top:0;left:0;right:0;z-index:998;background:#1a1a1a;padding:5px 20px;display:flex;align-items:center;justify-content:space-between;">
+    <span style="color:rgba(255,255,255,0.5);font-size:0.75rem;">Redeemed Gospel Church Nyahururu</span>
+    <div style="display:flex;gap:14px;align-items:center;">
+      <a href="https://www.facebook.com/YOUR_CHURCH_PAGE" target="_blank" class="facebook" title="Facebook"><i class="ri-facebook-fill" style="font-size:1rem;color:#1877F2;"></i></a>
+      <a href="https://www.instagram.com/YOUR_CHURCH_PAGE" target="_blank" class="instagram" title="Instagram"><i class="ri-instagram-fill" style="font-size:1rem;color:#E1306C;"></i></a>
+      <a href="https://www.youtube.com/@YOUR_CHANNEL" target="_blank" class="youtube" title="YouTube"><i class="ri-youtube-fill" style="font-size:1rem;color:#FF0000;"></i></a>
+      <a href="https://www.linkedin.com/company/YOUR_PAGE" target="_blank" class="linkedin" title="LinkedIn"><i class="ri-linkedin-fill" style="font-size:1rem;color:#0A66C2;"></i></a>
+      <a href="https://wa.me/254712760740" target="_blank" class="whatsapp" title="WhatsApp us" style="display:flex;align-items:center;gap:4px;background:#25D366;color:#fff;border-radius:4px;padding:2px 8px;text-decoration:none;font-size:0.72rem;font-weight:700;">
+        <i class="ri-whatsapp-fill" style="font-size:0.9rem;"></i> Chat
+      </a>
+    </div>
+  </div>
+
+  <!-- ── Header (sits below social strip) ── -->
+  <header id="header" class="fixed-top" style="top:30px;">
     <div class="branding">
       <div class="container d-flex align-items-center justify-content-between">
         <a href="/" class="logo d-flex align-items-center">
@@ -47,6 +61,7 @@
               </ul>
             </li>
             <li><a class="nav-link" href="/contribute">Give</a></li>
+            <li><a class="nav-link" href="/chats">Chat</a></li>
             {% if user.is_authenticated %}
               {% if user.is_staff or user.is_superuser or user.role == 'admin' or user.role == 'manager' %}
               <li class="dropdown dropdown-end">
@@ -84,7 +99,7 @@
 
   <!-- Flash messages -->
   {% if messages %}
-  <div style="position:fixed;top:75px;left:50%;transform:translateX(-50%);z-index:9999;width:90%;max-width:600px;">
+  <div style="position:fixed;top:108px;left:50%;transform:translateX(-50%);z-index:9999;width:90%;max-width:600px;">
     {% for message in messages %}
     <div class="alert alert-{% if message.tags == 'error' %}danger{% elif message.tags == 'success' %}success{% elif message.tags == 'warning' %}warning{% else %}info{% endif %} alert-dismissible fade show shadow">
       {{ message }}
@@ -96,20 +111,46 @@
 
   {% block content %}{% endblock %}
 
-  <!-- Footer -->
+  <!-- ── Footer ── -->
   <footer id="footer">
     <div class="footer-top">
       <div class="container">
         <div class="row">
-          <div class="col-lg-4 col-md-6 footer-contact">
+
+          <!-- Contact -->
+          <div class="col-lg-3 col-md-6 footer-contact">
             <h3>Redeemed Gospel Church</h3>
             <p>
               Nyahururu, Laikipia County, Kenya<br><br>
-              <strong><i class="bi bi-telephone"></i></strong> +254 712 760 740<br>
-              <strong><i class="bi bi-envelope"></i></strong> info@redeemedgospelchurch.org
+              <i class="bi bi-telephone me-2" style="color:#c9a227;"></i>+254 712 760 740<br>
+              <i class="bi bi-envelope me-2" style="color:#c9a227;"></i>info@redeemedgospelchurch.org<br>
+              <i class="bi bi-whatsapp me-2" style="color:#25D366;"></i><a href="https://wa.me/254712760740" target="_blank" style="color:#25D366;">Chat on WhatsApp</a>
             </p>
+            <!-- Social icons — full brand colors, visible -->
+            <div class="social-links mt-3">
+              <a href="https://www.facebook.com/YOUR_CHURCH_PAGE" target="_blank" class="facebook" title="Facebook on Facebook">
+                <i class="ri-facebook-fill"></i>
+              </a>
+              <a href="https://www.instagram.com/YOUR_CHURCH_PAGE" target="_blank" class="instagram" title="Follow on Instagram">
+                <i class="ri-instagram-fill"></i>
+              </a>
+              <a href="https://www.youtube.com/@YOUR_CHANNEL" target="_blank" class="youtube" title="Watch on YouTube">
+                <i class="ri-youtube-fill"></i>
+              </a>
+              <a href="https://twitter.com/YOUR_PAGE" target="_blank" class="twitter" title="Follow on X/Twitter">
+                <i class="ri-twitter-x-fill"></i>
+              </a>
+              <a href="https://www.linkedin.com/company/YOUR_PAGE" target="_blank" class="linkedin" title="Connect on LinkedIn">
+                <i class="ri-linkedin-fill"></i>
+              </a>
+              <a href="https://wa.me/254712760740" target="_blank" class="whatsapp" title="Chat on WhatsApp">
+                <i class="ri-whatsapp-fill"></i>
+              </a>
+            </div>
           </div>
-          <div class="col-lg-4 col-md-6 footer-links">
+
+          <!-- Quick Links -->
+          <div class="col-lg-3 col-md-6 footer-links">
             <h4>Quick Links</h4>
             <ul>
               <li><i class="bx bx-chevron-right"></i><a href="/">Home</a></li>
@@ -118,9 +159,12 @@
               <li><i class="bx bx-chevron-right"></i><a href="/bible/">Bible</a></li>
               <li><i class="bx bx-chevron-right"></i><a href="/contribute">Give / Contribute</a></li>
               <li><i class="bx bx-chevron-right"></i><a href="/register">Register</a></li>
+              <li><i class="bx bx-chevron-right"></i><a href="/chats">Community Chat</a></li>
             </ul>
           </div>
-          <div class="col-lg-4 col-md-6 footer-links">
+
+          <!-- Service Times -->
+          <div class="col-lg-3 col-md-6 footer-links">
             <h4>Service Times</h4>
             <ul>
               <li><i class="bx bx-chevron-right"></i>Sunday Service: 9:00 AM</li>
@@ -128,16 +172,39 @@
               <li><i class="bx bx-chevron-right"></i>Wednesday Bible Study: 6:00 PM</li>
               <li><i class="bx bx-chevron-right"></i>Friday Prayer: 6:00 PM</li>
             </ul>
-            <div class="social-links mt-3">
-              <a href="#" class="facebook"><i class="ri-facebook-box-fill"></i></a>
-              <a href="#" class="twitter"><i class="ri-twitter-x-fill"></i></a>
-              <a href="#" class="instagram"><i class="ri-instagram-fill"></i></a>
-              <a href="#" class="youtube"><i class="ri-youtube-fill"></i></a>
-            </div>
           </div>
+
+          <!-- Connect / App -->
+          <div class="col-lg-3 col-md-6 footer-links">
+            <h4>Connect With Us</h4>
+            <ul>
+              <li>
+                <a href="https://wa.me/254712760740?text=Hello%20RGC%20Nyahururu" target="_blank" style="display:flex;align-items:center;gap:8px;color:#25D366;font-weight:600;">
+                  <i class="ri-whatsapp-fill" style="font-size:1.2rem;"></i> WhatsApp Chat
+                </a>
+              </li>
+              <li style="margin-top:8px;">
+                <a href="https://www.facebook.com/YOUR_CHURCH_PAGE" target="_blank" style="display:flex;align-items:center;gap:8px;color:#1877F2;font-weight:600;">
+                  <i class="ri-facebook-fill" style="font-size:1.2rem;"></i> Facebook Page
+                </a>
+              </li>
+              <li style="margin-top:8px;">
+                <a href="https://www.youtube.com/@YOUR_CHANNEL" target="_blank" style="display:flex;align-items:center;gap:8px;color:#FF0000;font-weight:600;">
+                  <i class="ri-youtube-fill" style="font-size:1.2rem;"></i> YouTube Channel
+                </a>
+              </li>
+              <li style="margin-top:8px;">
+                <a href="https://www.instagram.com/YOUR_CHURCH_PAGE" target="_blank" style="display:flex;align-items:center;gap:8px;color:#E1306C;font-weight:600;">
+                  <i class="ri-instagram-fill" style="font-size:1.2rem;"></i> Instagram
+                </a>
+              </li>
+            </ul>
+          </div>
+
         </div>
       </div>
     </div>
+
     <div class="container footer-bottom clearfix">
       <div class="copyright">
         &copy; {% now "Y" %} <strong>Redeemed Gospel Church Nyahururu</strong>. All Rights Reserved.
@@ -145,6 +212,20 @@
       <div class="credits">Where everybody is somebody</div>
     </div>
   </footer>
+
+  <!-- ── WhatsApp Floating Button ── -->
+  <a href="https://wa.me/254712760740?text=Hello%20RGC%20Nyahururu%2C%20I%20would%20like%20to%20inquire%20about%20the%20church."
+     target="_blank"
+     title="Chat with us on WhatsApp"
+     style="position:fixed;bottom:80px;right:20px;z-index:9000;
+            width:56px;height:56px;border-radius:50%;
+            background:#25D366;color:#fff;
+            display:flex;align-items:center;justify-content:center;
+            box-shadow:0 4px 20px rgba(37,211,102,0.5);
+            text-decoration:none;font-size:1.8rem;
+            animation:wapulse 2s infinite;">
+    <i class="ri-whatsapp-fill"></i>
+  </a>
 
   <a href="#" class="back-to-top d-flex align-items-center justify-content-center"><i class="bi bi-arrow-up-short"></i></a>
 
@@ -154,6 +235,16 @@
   <script src="{% static 'assets/vendor/swiper/swiper-bundle.min.js' %}"></script>
   <script src="{% static 'assets/js/main.js' %}"></script>
   <script>AOS.init({ duration: 700, easing: 'ease-in-out', once: true });</script>
+
+  <!-- WhatsApp button pulse animation -->
+  <style>
+    @keyframes wapulse {
+      0%   { box-shadow: 0 0 0 0 rgba(37,211,102,0.5); }
+      70%  { box-shadow: 0 0 0 14px rgba(37,211,102,0); }
+      100% { box-shadow: 0 0 0 0 rgba(37,211,102,0); }
+    }
+  </style>
+
   {% block extra_js %}{% endblock %}
 </body>
 </html>

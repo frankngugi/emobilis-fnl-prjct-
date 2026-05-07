@@ -865,3 +865,57 @@ def request_role_upgrade(request):
             messages.success(request, "Role upgrade request submitted! An admin will review it soon.")
             return redirect('profile')
     return render(request, 'request_role.html')
+
+
+# ─── Community Chat ────────────────────────────────────────────────────────────
+
+from .models import ChatRoom, ChatMessage
+
+@login_required
+def chat_view(request):
+    rooms = ChatRoom.objects.filter(is_active=True)
+    room_id = request.GET.get('room')
+    active_room = None
+    messages_list = []
+    if room_id:
+        active_room = get_object_or_404(ChatRoom, id=room_id, is_active=True)
+        messages_list = active_room.messages.filter(is_deleted=False).order_by('created_at').select_related('sender')[:100]
+    elif rooms.exists():
+        active_room = rooms.first()
+        messages_list = active_room.messages.filter(is_deleted=False).order_by('created_at').select_related('sender')[:100]
+    return render(request, 'chat.html', {'rooms': rooms, 'active_room': active_room, 'messages_list': messages_list})
+
+@login_required
+def send_chat_message(request, room_id):
+    if request.method == 'POST':
+        import json
+        room = get_object_or_404(ChatRoom, id=room_id, is_active=True)
+        text = request.POST.get('message', '').strip()
+        if text and len(text) <= 1000:
+            msg = ChatMessage.objects.create(room=room, sender=request.user, message=text)
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                from django.http import JsonResponse
+                return JsonResponse({
+                    'id': msg.id,
+                    'sender': msg.sender.get_full_name() or msg.sender.username,
+                    'message': msg.message,
+                    'time': msg.created_at.strftime('%H:%M'),
+                    'mine': True,
+                })
+        return redirect(f'/chats?room={room_id}')
+    return redirect('chats')
+
+def get_chat_messages(request, room_id):
+    """Polling endpoint — returns latest messages as JSON."""
+    from django.http import JsonResponse
+    room = get_object_or_404(ChatRoom, id=room_id, is_active=True)
+    since_id = request.GET.get('since', 0)
+    msgs = ChatMessage.objects.filter(room=room, id__gt=since_id, is_deleted=False).order_by('created_at').select_related('sender')[:50]
+    return JsonResponse({'messages': [{
+        'id': m.id,
+        'sender': m.sender.get_full_name() or m.sender.username,
+        'avatar': m.sender.username[0].upper(),
+        'message': m.message,
+        'time': m.created_at.strftime('%H:%M'),
+        'mine': m.sender == request.user,
+    } for m in msgs]})
