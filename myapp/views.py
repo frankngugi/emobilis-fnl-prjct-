@@ -94,8 +94,12 @@ def register_view(request):
                 email=user.email,
                 defaults={'user': user, 'name': f"{user.first_name} {user.last_name}".strip() or user.username}
             )
-            # Send email verification
+            # Send email verification OTP
             _send_email_otp(request, user)
+            # Send welcome SMS if phone provided
+            if user.phone:
+                from .services import send_welcome_sms
+                send_welcome_sms(user.phone, user.first_name or user.username)
             messages.success(request, "Account created! Check your email to verify your account.")
             return redirect('verify_email_notice')
         else:
@@ -109,6 +113,7 @@ def register_view(request):
 
 
 def _send_email_otp(request, user):
+    from .services import send_email
     code = OTPCode.generate_code()
     OTPCode.objects.create(user=user, email=user.email, code=code, purpose='email')
     subject = f"Email Verification – {settings.CHURCH_NAME}"
@@ -118,10 +123,7 @@ def _send_email_otp(request, user):
         f"This code expires in 10 minutes.\n\n"
         f"God bless you!\n{settings.CHURCH_NAME}"
     )
-    try:
-        send_mail(subject, message, settings.DEFAULT_FROM_EMAIL, [user.email])
-    except Exception:
-        pass  # Console backend will print it
+    send_email(subject, message, [user.email])
 
 
 def verify_email_notice(request):
@@ -155,45 +157,36 @@ def verify_email(request):
 def send_phone_otp(request):
     """Send OTP via Twilio Verify to a phone number."""
     if request.method == 'POST':
+        from .services import send_phone_otp as _send_otp, _normalize_phone
         phone = request.POST.get('phone', '').strip()
-        if not phone.startswith('+'):
-            phone = '+254' + phone.lstrip('0')
-        try:
-            from twilio.rest import Client
-            client = Client(settings.TWILIO_ACCOUNT_SID, settings.TWILIO_AUTH_TOKEN)
-            client.verify.v2.services(settings.TWILIO_VERIFY_SERVICE_SID) \
-                .verifications.create(to=phone, channel='sms')
-            request.session['otp_phone'] = phone
-            messages.success(request, f"OTP sent to {phone}")
+        phone_e164 = _normalize_phone(phone)
+        result = _send_otp(phone_e164)
+        if result.get('success'):
+            request.session['otp_phone'] = phone_e164
+            messages.success(request, f"OTP sent to {phone_e164}")
             return redirect('verify_phone')
-        except Exception as e:
-            messages.error(request, f"Could not send OTP: {e}")
+        else:
+            messages.error(request, f"Could not send OTP: {result.get('error', 'Unknown error')}")
     return render(request, 'send_phone_otp.html')
 
 
 def verify_phone(request):
     """Verify phone OTP via Twilio Verify."""
     if request.method == 'POST':
+        from .services import verify_phone_otp as _verify_otp
         phone = request.session.get('otp_phone', '')
         code = request.POST.get('code', '').strip()
-        try:
-            from twilio.rest import Client
-            client = Client(settings.TWILIO_ACCOUNT_SID, settings.TWILIO_AUTH_TOKEN)
-            result = client.verify.v2.services(settings.TWILIO_VERIFY_SERVICE_SID) \
-                .verification_checks.create(to=phone, code=code)
-            if result.status == 'approved':
-                if request.user.is_authenticated:
-                    request.user.is_phone_verified = True
-                    request.user.phone = phone
-                    request.user.save()
-                    # Update member phone
-                    Member.objects.filter(user=request.user).update(phonenumber=phone)
-                messages.success(request, "Phone number verified!")
-                return redirect('profile')
-            else:
-                messages.error(request, "Invalid or expired OTP.")
-        except Exception as e:
-            messages.error(request, f"Verification failed: {e}")
+        result = _verify_otp(phone, code)
+        if result.get('success'):
+            if request.user.is_authenticated:
+                request.user.is_phone_verified = True
+                request.user.phone = phone
+                request.user.save()
+                Member.objects.filter(user=request.user).update(phonenumber=phone)
+            messages.success(request, "Phone number verified!")
+            return redirect('profile')
+        else:
+            messages.error(request, result.get('error', 'Invalid or expired OTP.'))
     return render(request, 'verify_phone.html')
 
 
@@ -617,8 +610,13 @@ def contribute(request):
 
 
 def _mpesa_stk_push(phone, amount, purpose, payment_id):
-    """Initiate M-Pesa STK Push via Safaricom Daraja API."""
+    """Initiate M-Pesa STK Push via Safaricom Daraja API — Buy Goods (Till Number)."""
     import datetime as dt
+
+    consumer_key = settings.MPESA_CONSUMER_KEY
+    consumer_secret = settings.MPESA_CONSUMER_SECRET
+    if not consumer_key or consumer_key in ('', 'PASTE_YOUR_CONSUMER_KEY', 'your_consumer_key'):
+        return {'success': False, 'error': 'M-Pesa not configured. Add credentials to msys/.env'}
 
     if settings.MPESA_ENVIRONMENT == 'sandbox':
         base_url = 'https://sandbox.safaricom.co.ke'
@@ -627,30 +625,29 @@ def _mpesa_stk_push(phone, amount, purpose, payment_id):
 
     try:
         # Get access token
-        auth = base64.b64encode(
-            f"{settings.MPESA_CONSUMER_KEY}:{settings.MPESA_CONSUMER_SECRET}".encode()
-        ).decode()
+        auth = base64.b64encode(f"{consumer_key}:{consumer_secret}".encode()).decode()
         token_resp = http_requests.get(
             f"{base_url}/oauth/v1/generate?grant_type=client_credentials",
             headers={'Authorization': f'Basic {auth}'}, timeout=15
         )
         token = token_resp.json().get('access_token')
         if not token:
-            return {'success': False, 'error': 'M-Pesa auth failed'}
+            return {'success': False, 'error': 'M-Pesa auth failed — check consumer key/secret'}
 
-        # Build STK Push payload
+        # Build STK Push payload for Buy Goods (Till Number)
+        till = settings.MPESA_TILL_NUMBER
         timestamp = dt.datetime.now().strftime('%Y%m%d%H%M%S')
-        password_raw = f"{settings.MPESA_SHORTCODE}{settings.MPESA_PASSKEY}{timestamp}"
+        password_raw = f"{till}{settings.MPESA_PASSKEY}{timestamp}"
         password = base64.b64encode(password_raw.encode()).decode()
 
         payload = {
-            "BusinessShortCode": settings.MPESA_SHORTCODE,
+            "BusinessShortCode": till,          # Your Till Number
             "Password": password,
             "Timestamp": timestamp,
-            "TransactionType": "CustomerPayBillOnline",
+            "TransactionType": "CustomerBuyGoodsOnline",  # Buy Goods uses this
             "Amount": int(amount),
-            "PartyA": phone,
-            "PartyB": settings.MPESA_SHORTCODE,
+            "PartyA": phone,                    # Customer's phone
+            "PartyB": till,                     # Your Till Number (not shortcode)
             "PhoneNumber": phone,
             "CallBackURL": settings.MPESA_CALLBACK_URL,
             "AccountReference": f"RGC-{payment_id}",
@@ -691,6 +688,18 @@ def mpesa_callback(request):
                     payment.status = 'completed'
                     payment.mpesa_receipt_number = str(items.get('MpesaReceiptNumber', ''))
                     payment.save()
+                    # Send SMS confirmation
+                    from .services import send_payment_sms
+                    send_payment_sms(
+                        payment.phone_number,
+                        payment.amount,
+                        payment.get_purpose_display(),
+                        payment.mpesa_receipt_number,
+                    )
+                    # Send email confirmation if user linked
+                    if payment.user and payment.user.email:
+                        from .services import send_payment_confirmation_email
+                        send_payment_confirmation_email(payment.user, payment)
                 else:
                     payment.status = 'failed'
                     payment.save()

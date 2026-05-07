@@ -146,29 +146,39 @@ MEDIA_ROOT = BASE_DIR / 'media'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-# Twilio — for phone OTP verification
+# ── Twilio — Phone OTP ────────────────────────────────────────────────────
 TWILIO_ACCOUNT_SID = os.environ.get('TWILIO_ACCOUNT_SID', '')
 TWILIO_AUTH_TOKEN = os.environ.get('TWILIO_AUTH_TOKEN', '')
 TWILIO_VERIFY_SERVICE_SID = os.environ.get('TWILIO_VERIFY_SERVICE_SID', '')
 
-# Email — use console backend in dev; switch to SMTP for production
-EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
-DEFAULT_FROM_EMAIL = 'noreply@redeemedgospelchurch.org'
+# ── Email — Gmail SMTP ────────────────────────────────────────────────────
+_email_password = os.environ.get('EMAIL_HOST_PASSWORD', '')
+if _email_password and _email_password != 'PASTE_YOUR_16_CHAR_APP_PASSWORD_HERE':
+    # Real Gmail credentials found → use SMTP
+    EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+    EMAIL_HOST = 'smtp.gmail.com'
+    EMAIL_PORT = 587
+    EMAIL_USE_TLS = True
+    EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER', 'frneltp@gmail.com')
+    EMAIL_HOST_PASSWORD = _email_password
+    DEFAULT_FROM_EMAIL = f"Redeemed Gospel Church <{EMAIL_HOST_USER}>"
+else:
+    # No credentials yet → print emails to terminal (safe for development)
+    EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+    EMAIL_HOST_USER = 'frneltp@gmail.com'
+    DEFAULT_FROM_EMAIL = 'Redeemed Gospel Church <frneltp@gmail.com>'
 
-# For production SMTP (Gmail example):
-# EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-# EMAIL_HOST = 'smtp.gmail.com'
-# EMAIL_PORT = 587
-# EMAIL_USE_TLS = True
-# EMAIL_HOST_USER = 'your@gmail.com'
-# EMAIL_HOST_PASSWORD = 'your_app_password'
+# ── Africa's Talking — SMS Kenya ─────────────────────────────────────────
+AT_USERNAME = os.environ.get('AT_USERNAME', 'sandbox')
+AT_API_KEY = os.environ.get('AT_API_KEY', '')
+AT_SENDER_ID = 'RGC'   # Requires AT approval for custom sender ID; leave blank to use default
 
-# M-Pesa Daraja API (replace with real credentials from Safaricom Developer Portal)
-MPESA_ENVIRONMENT = 'sandbox'   # Change to 'production' for live
-MPESA_CONSUMER_KEY = os.environ.get('MPESA_CONSUMER_KEY', 'your_consumer_key')
-MPESA_CONSUMER_SECRET = os.environ.get('MPESA_CONSUMER_SECRET', 'your_consumer_secret')
-MPESA_SHORTCODE = os.environ.get('MPESA_SHORTCODE', '174379')
-MPESA_PASSKEY = os.environ.get('MPESA_PASSKEY', 'your_passkey')
+# ── M-Pesa Daraja — Buy Goods (Till Number) ───────────────────────────────
+MPESA_ENVIRONMENT = os.environ.get('MPESA_ENVIRONMENT', 'sandbox')
+MPESA_CONSUMER_KEY = os.environ.get('MPESA_CONSUMER_KEY', '')
+MPESA_CONSUMER_SECRET = os.environ.get('MPESA_CONSUMER_SECRET', '')
+MPESA_TILL_NUMBER = os.environ.get('MPESA_TILL_NUMBER', '174379')   # Sandbox till
+MPESA_PASSKEY = os.environ.get('MPESA_PASSKEY', 'bfb279f9aa9bdbcf158e97dd71a467cd2e0c893059b10f78e6b72ada1ed2c919')
 MPESA_CALLBACK_URL = os.environ.get('MPESA_CALLBACK_URL', 'https://yourdomain.com/mpesa/callback/')
 
 # Church info

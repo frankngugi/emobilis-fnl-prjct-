@@ -329,6 +329,7 @@ def initiate_payment(request):
         purpose=data['purpose'],
     )
     result = _mpesa_stk_push(phone, float(data['amount']), data['purpose'], payment.id)
+    # Also send SMS confirmation if payment succeeded
     if result.get('success'):
         payment.checkout_request_id = result.get('checkout_request_id', '')
         payment.save()
