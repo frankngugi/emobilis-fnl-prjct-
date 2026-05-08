@@ -613,18 +613,36 @@ def contribute(request):
 
 
 def _mpesa_stk_push(phone, amount, purpose, payment_id):
-    """Initiate M-Pesa STK Push via Safaricom Daraja API — Buy Goods (Till Number)."""
+    """
+    Initiate M-Pesa STK Push via Safaricom Daraja API.
+
+    SANDBOX: uses shortcode 174379 + CustomerPayBillOnline (Safaricom sandbox limitation)
+    PRODUCTION: uses your real Till + CustomerBuyGoodsOnline
+    """
     import datetime as dt
 
     consumer_key = settings.MPESA_CONSUMER_KEY
     consumer_secret = settings.MPESA_CONSUMER_SECRET
     if not consumer_key or consumer_key in ('', 'PASTE_YOUR_CONSUMER_KEY', 'your_consumer_key'):
-        return {'success': False, 'error': 'M-Pesa not configured. Add credentials to msys/.env'}
+        return {'success': False, 'error': 'M-Pesa not configured. Add MPESA_CONSUMER_KEY to msys/.env'}
 
-    if settings.MPESA_ENVIRONMENT == 'sandbox':
-        base_url = 'https://sandbox.safaricom.co.ke'
+    is_sandbox = settings.MPESA_ENVIRONMENT == 'sandbox'
+    base_url = 'https://sandbox.safaricom.co.ke' if is_sandbox else 'https://api.safaricom.co.ke'
+
+    # Safaricom sandbox ONLY supports Paybill (174379) + CustomerPayBillOnline.
+    # Your real Till (CustomerBuyGoodsOnline) is used in production only.
+    if is_sandbox:
+        shortcode = '174379'
+        transaction_type = 'CustomerPayBillOnline'
+        passkey = 'bfb279f9aa9bdbcf158e97dd71a467cd2e0c893059b10f78e6b72ada1ed2c919'
+        party_b = shortcode
+        account_ref = f'RGC-{payment_id}'
     else:
-        base_url = 'https://api.safaricom.co.ke'
+        shortcode = settings.MPESA_TILL_NUMBER
+        transaction_type = 'CustomerBuyGoodsOnline'
+        passkey = settings.MPESA_PASSKEY
+        party_b = shortcode
+        account_ref = f'RGC-{payment_id}'
 
     try:
         # Get access token
@@ -633,27 +651,25 @@ def _mpesa_stk_push(phone, amount, purpose, payment_id):
             f"{base_url}/oauth/v1/generate?grant_type=client_credentials",
             headers={'Authorization': f'Basic {auth}'}, timeout=15
         )
-        token = token_resp.json().get('access_token')
+        token_data = token_resp.json()
+        token = token_data.get('access_token')
         if not token:
-            return {'success': False, 'error': 'M-Pesa auth failed — check consumer key/secret'}
+            return {'success': False, 'error': f'M-Pesa auth failed: {token_data.get("error_description", "check consumer key/secret")}'}
 
-        # Build STK Push payload for Buy Goods (Till Number)
-        till = settings.MPESA_TILL_NUMBER
         timestamp = dt.datetime.now().strftime('%Y%m%d%H%M%S')
-        password_raw = f"{till}{settings.MPESA_PASSKEY}{timestamp}"
-        password = base64.b64encode(password_raw.encode()).decode()
+        password = base64.b64encode(f"{shortcode}{passkey}{timestamp}".encode()).decode()
 
         payload = {
-            "BusinessShortCode": till,          # Your Till Number
+            "BusinessShortCode": shortcode,
             "Password": password,
             "Timestamp": timestamp,
-            "TransactionType": "CustomerBuyGoodsOnline",  # Buy Goods uses this
-            "Amount": int(amount),
-            "PartyA": phone,                    # Customer's phone
-            "PartyB": till,                     # Your Till Number (not shortcode)
+            "TransactionType": transaction_type,
+            "Amount": max(1, int(amount)),
+            "PartyA": phone,
+            "PartyB": party_b,
             "PhoneNumber": phone,
             "CallBackURL": settings.MPESA_CALLBACK_URL,
-            "AccountReference": f"RGC-{payment_id}",
+            "AccountReference": account_ref,
             "TransactionDesc": f"RGC {purpose.title()}",
         }
         stk_resp = http_requests.post(
@@ -665,7 +681,8 @@ def _mpesa_stk_push(phone, amount, purpose, payment_id):
         data = stk_resp.json()
         if data.get('ResponseCode') == '0':
             return {'success': True, 'checkout_request_id': data.get('CheckoutRequestID', '')}
-        return {'success': False, 'error': data.get('errorMessage', 'STK Push failed')}
+        err = data.get('errorMessage') or data.get('ResultDesc') or str(data)
+        return {'success': False, 'error': err}
     except Exception as e:
         return {'success': False, 'error': str(e)}
 

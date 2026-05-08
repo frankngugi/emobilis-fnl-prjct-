@@ -1,7 +1,4 @@
-// Change this to your server's IP when testing on a physical device
-// Use your computer's local IP (not localhost) e.g. http://192.168.1.100:8000
-// For production, change to your deployed URL
-// Your computer's WiFi IP — phone uses this to reach Django
+// WiFi mode: phone and laptop must be on the same WiFi network
 export const BASE_URL = 'http://192.168.88.47:8000';
 export const API_URL = `${BASE_URL}/api`;
 

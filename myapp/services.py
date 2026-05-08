@@ -423,6 +423,9 @@ def verify_phone_otp(phone: str, code: str) -> dict:
 # ── Africa's Talking SMS ──────────────────────────────────────────────────────
 
 def send_sms(phone: str, message: str) -> dict:
+    # Suppress Africa's Talking WhatsApp sandbox warning (unrelated to SMS)
+    import warnings as _w
+    _w.filterwarnings('ignore', category=UserWarning, module='africastalking')
     """
     Send SMS via Africa's Talking.
     Phone: '0712345678' or '+254712345678'
