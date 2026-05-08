@@ -83,7 +83,7 @@
   <div class="container">
     <i class="ri-book-open-line" style="font-size:2.5rem;color:#c9a227;"></i>
     <h1>Holy Bible</h1>
-    <p style="color:rgba(255,255,255,.7);">World English Bible — Read, Search, and Project</p>
+    <p style="color:rgba(255,255,255,.7);">KJV · WEB · ASV · BBE · Darby · DRA · YLT · Weymouth — Read, Search, Project</p>
   </div>
 </section>
 
@@ -116,6 +116,19 @@
           <button type="submit" class="btn-fetch"><i class="bi bi-book me-1"></i>Read</button>
         </div>
       </form>
+
+      <!-- Translation selector -->
+      <div class="mb-3 mt-2">
+        <div class="d-flex align-items-center gap-2 flex-wrap">
+          <span class="text-muted small fw-semibold">Translation:</span>
+          {% for code,label in translations %}
+          <a href="javascript:void(0)" class="quick-chip {% if translation == code %}active{% endif %}"
+             style="{% if translation == code %}background:#8b0000;color:#fff;border-color:#8b0000;{% endif %}"
+             onclick="setTranslation('{{ code }}')">{{ code|upper }}</a>
+          {% endfor %}
+        </div>
+        <input type="hidden" id="translationInput" value="{{ translation }}">
+      </div>
 
       <!-- Free-text search -->
       <div class="quick-search">
@@ -261,6 +274,21 @@ function quickLoad(ref) {
   fetchVerseByRef(ref);
 }
 
+let currentTranslation = document.getElementById('translationInput') ? document.getElementById('translationInput').value : 'kjv';
+
+function setTranslation(code) {
+  currentTranslation = code;
+  document.getElementById('translationInput').value = code;
+  // Update button styles
+  document.querySelectorAll('[onclick^="setTranslation"]').forEach(el => {
+    el.style.cssText = '';
+    el.classList.remove('active');
+  });
+  event.target.style.cssText = 'background:#8b0000;color:#fff;border-color:#8b0000;';
+  // Re-fetch if there's a current reference
+  if (currentRef) fetchVerseByRef(currentRef);
+}
+
 async function fetchVerseByRef(ref) {
   showLoading(true);
   hideError();
@@ -272,7 +300,8 @@ async function fetchVerseByRef(ref) {
 
   try {
     const enc = encodeURIComponent(ref.replace(/ /g, '+'));
-    const resp = await fetch(`https://bible-api.com/${enc}`);
+    const trans = currentTranslation || 'kjv';
+    const resp = await fetch(`https://bible-api.com/${enc}?translation=${trans}`);
     if (!resp.ok) throw new Error('Verse not found');
     const data = await resp.json();
     if (data.error) throw new Error(data.error);

@@ -1,0 +1,194 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}{{ church.name }} – RGC Central Rift{% endblock %}
+
+{% block extra_css %}
+<style>
+  .church-hero { background:linear-gradient(135deg,#1a1a1a,#8b0000); color:#fff; padding:100px 0 40px; margin-top:70px; text-align:center; }
+  .church-hero h1 { font-size:2rem; font-weight:700; color:#c9a227; }
+  .detail-card { background:#fff; border-radius:14px; padding:26px; box-shadow:0 3px 18px rgba(0,0,0,.08); margin-bottom:24px; }
+  .leader-item { display:flex; align-items:center; gap:14px; padding:12px 0; border-bottom:1px solid #f0f0f0; }
+  .leader-item:last-child { border-bottom:none; }
+  .leader-avatar { width:44px; height:44px; border-radius:50%; background:linear-gradient(135deg,#8b0000,#c9a227); display:flex; align-items:center; justify-content:center; color:#fff; font-weight:700; font-size:1rem; flex-shrink:0; }
+  .status-pill { border-radius:20px; padding:3px 12px; font-size:0.72rem; font-weight:700; }
+  .status-active { background:#e8f5e9; color:#27ae60; }
+  .status-new { background:#fff3e0; color:#f57c00; }
+  .status-inactive { background:#f5f5f5; color:#888; }
+  #churchMap { height:280px; border-radius:12px; overflow:hidden; box-shadow:0 3px 14px rgba(0,0,0,.1); }
+</style>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+{% endblock %}
+
+{% block content %}
+<section class="church-hero">
+  <div class="container">
+    <i class="bi bi-building-check" style="font-size:2.5rem;color:#c9a227;display:block;margin-bottom:10px;"></i>
+    <h1>{{ church.name }}</h1>
+    <p style="color:rgba(255,255,255,.75);">{{ church.get_region_display }} · {{ church.location }}</p>
+    <div class="mt-2">
+      <span class="status-pill {% if church.status == 'active' %}status-active{% elif church.status == 'new' %}status-new{% else %}status-inactive{% endif %}">
+        {{ church.get_status_display }}
+      </span>
+    </div>
+    <div class="mt-3 d-flex gap-2 justify-content-center flex-wrap">
+      <a href="/regional/" class="btn btn-outline-light btn-sm"><i class="bi bi-arrow-left me-1"></i>All Churches</a>
+      {% if user.is_staff or user.is_superuser %}
+      <a href="/admin/myapp/branchchurch/{{ church.id }}/change/" target="_blank" class="btn btn-warning text-dark btn-sm"><i class="bi bi-pencil me-1"></i>Edit</a>
+      {% endif %}
+    </div>
+  </div>
+</section>
+
+<section style="background:#f5f5f5;padding:40px 0 60px;">
+  <div class="container">
+    <div class="row g-4">
+
+      <!-- Left column: Details + Map -->
+      <div class="col-lg-5">
+        <div class="detail-card">
+          <h6 class="fw-bold mb-3 text-uppercase" style="font-size:0.72rem;letter-spacing:0.12em;color:#888;">Church Information</h6>
+          <table class="table table-sm table-borderless mb-0">
+            <tr>
+              <td class="text-muted small" style="width:40%;">Region</td>
+              <td class="fw-semibold small">{{ church.get_region_display }}</td>
+            </tr>
+            <tr>
+              <td class="text-muted small">Location</td>
+              <td class="fw-semibold small">{{ church.location }}</td>
+            </tr>
+            {% if church.address %}
+            <tr>
+              <td class="text-muted small">Address</td>
+              <td class="fw-semibold small">{{ church.address }}</td>
+            </tr>
+            {% endif %}
+            {% if church.phone %}
+            <tr>
+              <td class="text-muted small">Phone</td>
+              <td class="fw-semibold small">
+                <a href="tel:{{ church.phone }}" class="text-danger">{{ church.phone }}</a>
+                <a href="https://wa.me/254{{ church.phone|slice:'1:' }}" target="_blank" class="ms-2 text-success small"><i class="ri-whatsapp-fill"></i> WhatsApp</a>
+              </td>
+            </tr>
+            {% endif %}
+            {% if church.email %}
+            <tr>
+              <td class="text-muted small">Email</td>
+              <td class="fw-semibold small"><a href="mailto:{{ church.email }}" class="text-danger">{{ church.email }}</a></td>
+            </tr>
+            {% endif %}
+            {% if church.established_date %}
+            <tr>
+              <td class="text-muted small">Established</td>
+              <td class="fw-semibold small">{{ church.established_date|date:"F Y" }}</td>
+            </tr>
+            {% endif %}
+            {% if church.notes %}
+            <tr>
+              <td class="text-muted small">Notes</td>
+              <td class="small">{{ church.notes }}</td>
+            </tr>
+            {% endif %}
+          </table>
+        </div>
+
+        {% if church.latitude and church.longitude %}
+        <div class="detail-card">
+          <h6 class="fw-bold mb-3 text-uppercase" style="font-size:0.72rem;letter-spacing:0.12em;color:#888;">Location Map</h6>
+          <div id="churchMap"></div>
+          <a href="https://www.openstreetmap.org/?mlat={{ church.latitude }}&mlon={{ church.longitude }}&zoom=15" target="_blank" class="btn btn-sm btn-outline-secondary mt-2 w-100">
+            <i class="bi bi-map me-1"></i>Open in Maps
+          </a>
+        </div>
+        {% endif %}
+      </div>
+
+      <!-- Right column: Leaders + Members -->
+      <div class="col-lg-7">
+        <div class="detail-card">
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <h6 class="fw-bold mb-0 text-uppercase" style="font-size:0.72rem;letter-spacing:0.12em;color:#888;">Church Leaders ({{ leaders.count }})</h6>
+            {% if user.is_staff or user.is_superuser %}
+            <a href="/admin/myapp/churchleader/add/" target="_blank" class="btn btn-sm btn-outline-danger"><i class="bi bi-plus me-1"></i>Add Leader</a>
+            {% endif %}
+          </div>
+          {% if leaders %}
+            {% for leader in leaders %}
+            <div class="leader-item">
+              {% if leader.photo %}
+              <img src="{{ leader.photo.url }}" class="leader-avatar" style="object-fit:cover;" alt="">
+              {% else %}
+              <div class="leader-avatar">{{ leader.user.first_name|slice:':1'|default:leader.user.username|slice:':1'|upper }}</div>
+              {% endif %}
+              <div class="flex-grow-1">
+                <div class="fw-semibold small">{{ leader.user.get_full_name|default:leader.user.username }}</div>
+                <div class="text-muted" style="font-size:0.78rem;">{{ leader.get_position_display }}</div>
+                {% if leader.bio %}<div class="text-muted small mt-1">{{ leader.bio|truncatewords:10 }}</div>{% endif %}
+              </div>
+              {% if leader.user.phone or leader.user.email %}
+              <div class="text-end">
+                {% if leader.user.phone %}
+                <a href="tel:{{ leader.user.phone }}" class="btn btn-sm btn-outline-danger" title="{{ leader.user.phone }}"><i class="bi bi-telephone"></i></a>
+                {% endif %}
+              </div>
+              {% endif %}
+            </div>
+            {% endfor %}
+          {% else %}
+          <div class="text-center text-muted py-3">
+            <i class="bi bi-person-x" style="font-size:2rem;color:#c9a227;display:block;"></i>
+            <small>No leaders recorded yet.</small>
+          </div>
+          {% endif %}
+        </div>
+
+        {% if members %}
+        <div class="detail-card">
+          <h6 class="fw-bold mb-3 text-uppercase" style="font-size:0.72rem;letter-spacing:0.12em;color:#888;">Members ({{ members.count }})</h6>
+          <div class="table-responsive">
+            <table class="table table-sm table-hover mb-0">
+              <thead><tr>
+                <th style="font-size:0.7rem;color:#888;">Name</th>
+                <th style="font-size:0.7rem;color:#888;">Role</th>
+                <th style="font-size:0.7rem;color:#888;">Joined</th>
+              </tr></thead>
+              <tbody>
+                {% for m in members %}
+                <tr>
+                  <td class="small fw-semibold">{{ m.user.get_full_name|default:m.user.username }}</td>
+                  <td class="small text-muted">{{ m.user.get_role_display_label }}</td>
+                  <td class="small text-muted">{{ m.joined_date|date:"M Y"|default:"—" }}</td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+        {% endif %}
+      </div>
+
+    </div>
+  </div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+{% if church.latitude and church.longitude %}
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+const map = L.map('churchMap').setView([{{ church.latitude }}, {{ church.longitude }}], 15);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  attribution:'© OpenStreetMap', maxZoom:19
+}).addTo(map);
+const icon = L.divIcon({
+  className:'',
+  html:`<div style="background:#8b0000;color:#fff;border-radius:50% 50% 50% 0;width:36px;height:36px;display:flex;align-items:center;justify-content:center;font-size:1rem;box-shadow:0 2px 8px rgba(0,0,0,.3);transform:rotate(-45deg);"><span style="transform:rotate(45deg);">✝</span></div>`,
+  iconSize:[36,36], iconAnchor:[18,36], popupAnchor:[0,-40]
+});
+L.marker([{{ church.latitude }}, {{ church.longitude }}], {icon})
+ .addTo(map)
+ .bindPopup(`<strong>{{ church.name|escapejs }}</strong><br><small>{{ church.location|escapejs }}</small>`)
+ .openPopup();
+</script>
+{% endif %}
+{% endblock %}

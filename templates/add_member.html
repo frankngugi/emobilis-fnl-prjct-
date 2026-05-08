@@ -1,0 +1,153 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}{% if edit_user %}Edit{% else %}Add{% endif %} Member – RGC Admin{% endblock %}
+{% block body_class %}admin-portal{% endblock %}
+
+{% block extra_css %}
+<style>
+  .admin-layout { display:flex; min-height:calc(100vh - 70px); margin-top:70px; }
+  .admin-sidebar { width:240px; flex-shrink:0; background:linear-gradient(180deg,#1a1a1a 0%,#2d0000 100%); position:sticky; top:70px; height:calc(100vh - 70px); overflow-y:auto; }
+  .sidebar-link { display:flex; align-items:center; gap:9px; padding:10px 16px; color:rgba(255,255,255,0.75); font-size:0.84rem; text-decoration:none; transition:all 0.2s; }
+  .sidebar-link:hover, .sidebar-link.active { background:rgba(201,162,39,0.13); color:#c9a227; border-right:3px solid #c9a227; text-decoration:none; }
+  .sidebar-brand-small { padding:18px 16px; border-bottom:1px solid rgba(255,255,255,0.08); display:flex; align-items:center; gap:10px; }
+  .sidebar-brand-small span { color:#c9a227; font-weight:700; font-size:0.9rem; }
+  .admin-main { flex:1; background:#f0f2f5; padding:24px; }
+  .form-card { background:#fff; border-radius:14px; box-shadow:0 4px 20px rgba(0,0,0,0.08); padding:30px; max-width:720px; }
+  .role-grid { display:grid; grid-template-columns:repeat(5,1fr); gap:8px; }
+  .role-opt { border:2px solid #e0e0e0; border-radius:10px; padding:10px 6px; text-align:center; cursor:pointer; transition:all 0.2s; }
+  .role-opt:hover { border-color:#8b0000; background:#fff8f8; }
+  .role-opt input { display:none; }
+  .role-opt.sel { border-color:#8b0000; background:#fff0f0; }
+  @media (max-width:900px) { .admin-sidebar { display:none; } .role-grid { grid-template-columns:repeat(3,1fr); } }
+  @media (max-width:480px) { .role-grid { grid-template-columns:repeat(2,1fr); } }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="admin-layout">
+  <aside class="admin-sidebar">
+    <div class="sidebar-brand-small"><i class="bi bi-shield-fill-check" style="color:#c9a227;font-size:1.3rem;"></i><span>RGC Admin</span></div>
+    <a href="/adminn/" class="sidebar-link"><i class="bi bi-speedometer2"></i>Dashboard</a>
+    <a href="/adminn/members/" class="sidebar-link active"><i class="bi bi-person-plus"></i>Members</a>
+    <a href="/adminn/manage-users/" class="sidebar-link"><i class="bi bi-shield-person"></i>Manage Roles</a>
+    <a href="/logout" class="sidebar-link" style="color:#ff6b6b;"><i class="bi bi-box-arrow-right"></i>Logout</a>
+  </aside>
+
+  <main class="admin-main">
+    {% if messages %}{% for m in messages %}<div class="alert alert-{% if m.tags == 'error' %}danger{% else %}{{ m.tags }}{% endif %} alert-dismissible fade show mb-3">{{ m }}<button class="btn-close" data-bs-dismiss="alert"></button></div>{% endfor %}{% endif %}
+
+    <div class="form-card">
+      <div class="d-flex align-items-center gap-3 mb-4 pb-3" style="border-bottom:2px solid #f0f0f0;">
+        {% if edit_user %}
+        <div style="width:50px;height:50px;border-radius:50%;background:linear-gradient(135deg,#8b0000,#c9a227);display:flex;align-items:center;justify-content:center;color:#fff;font-size:1.4rem;">
+          <i class="bi bi-person-fill"></i>
+        </div>
+        <div>
+          <h5 class="mb-0 fw-bold">Edit Member</h5>
+          <p class="text-muted mb-0 small">{{ edit_user.get_full_name|default:edit_user.username }} · @{{ edit_user.username }}</p>
+        </div>
+        {% else %}
+        <div style="width:50px;height:50px;border-radius:50%;background:linear-gradient(135deg,#8b0000,#c9a227);display:flex;align-items:center;justify-content:center;color:#fff;font-size:1.4rem;">
+          <i class="bi bi-person-plus-fill"></i>
+        </div>
+        <div>
+          <h5 class="mb-0 fw-bold">Add Member / Guest</h5>
+          <p class="text-muted mb-0 small">Create a new account manually</p>
+        </div>
+        {% endif %}
+      </div>
+
+      <form method="POST">
+        {% csrf_token %}
+
+        <div class="row g-3 mb-4">
+          <div class="col-md-6">
+            <label class="form-label fw-semibold small">First Name</label>
+            <input type="text" name="first_name" class="form-control" value="{{ edit_user.first_name|default:'' }}" placeholder="e.g. John">
+          </div>
+          <div class="col-md-6">
+            <label class="form-label fw-semibold small">Last Name</label>
+            <input type="text" name="last_name" class="form-control" value="{{ edit_user.last_name|default:'' }}" placeholder="e.g. Kamau">
+          </div>
+          {% if not edit_user %}
+          <div class="col-md-6">
+            <label class="form-label fw-semibold small">Username <span class="text-danger">*</span></label>
+            <input type="text" name="username" class="form-control" required placeholder="Unique username">
+          </div>
+          {% endif %}
+          <div class="col-md-6">
+            <label class="form-label fw-semibold small">Email Address</label>
+            <input type="email" name="email" class="form-control" value="{{ edit_user.email|default:'' }}" placeholder="email@example.com">
+          </div>
+          <div class="col-md-6">
+            <label class="form-label fw-semibold small">Phone Number</label>
+            <input type="text" name="phone" class="form-control" value="{{ edit_user.phone|default:'' }}" placeholder="e.g. 0712345678">
+          </div>
+          <div class="col-md-6">
+            <label class="form-label fw-semibold small">Fellowship Group</label>
+            <select name="group" class="form-select">
+              <option value="">— No Group —</option>
+              {% for g in groups %}
+              <option value="{{ g.id }}" {% if member.group.id == g.id %}selected{% endif %}>{{ g.name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label fw-semibold small">{% if edit_user %}New {% endif %}Password {% if not edit_user %}<span class="text-muted small">(leave blank = no login)</span>{% else %}<span class="text-muted small">(leave blank = keep current)</span>{% endif %}</label>
+            <input type="password" name="password" class="form-control" placeholder="Minimum 6 characters">
+          </div>
+        </div>
+
+        <div class="mb-4">
+          <label class="form-label fw-semibold small">Role <span class="text-danger">*</span></label>
+          <div class="role-grid" id="roleGrid">
+            {% for val,label in role_choices %}
+            <label class="role-opt {% if edit_user.role == val or not edit_user and val == 'member' %}sel{% endif %}" id="role-opt-{{ val }}">
+              <input type="radio" name="role" value="{{ val }}" {% if edit_user.role == val or not edit_user and val == 'member' %}checked{% endif %}>
+              <div style="font-size:0.78rem;font-weight:700;color:#1a1a1a;">{{ label }}</div>
+            </label>
+            {% endfor %}
+          </div>
+        </div>
+
+        <div class="mb-4">
+          <label class="form-label fw-semibold small">Access Level</label>
+          <div class="row g-2">
+            <div class="col-auto">
+              <div class="form-check">
+                <input class="form-check-input" type="checkbox" name="is_staff" id="is_staff" {% if edit_user.is_staff %}checked{% endif %}>
+                <label class="form-check-label small" for="is_staff">Staff (can access admin dashboard)</label>
+              </div>
+            </div>
+            {% if edit_user %}
+            <div class="col-auto">
+              <div class="form-check">
+                <input class="form-check-input" type="checkbox" name="is_active" id="is_active" {% if edit_user.is_active %}checked{% endif %}>
+                <label class="form-check-label small" for="is_active">Account Active</label>
+              </div>
+            </div>
+            {% endif %}
+          </div>
+        </div>
+
+        <div class="d-flex gap-2">
+          <button type="submit" class="btn btn-danger px-4 fw-bold"><i class="bi bi-save me-2"></i>{% if edit_user %}Save Changes{% else %}Add Member{% endif %}</button>
+          <a href="/adminn/members/" class="btn btn-outline-secondary">Cancel</a>
+        </div>
+      </form>
+    </div>
+  </main>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.querySelectorAll('.role-opt').forEach(opt => {
+  opt.addEventListener('click', function() {
+    document.querySelectorAll('.role-opt').forEach(o => o.classList.remove('sel'));
+    this.classList.add('sel');
+    this.querySelector('input').checked = true;
+  });
+});
+</script>
+{% endblock %}

@@ -105,14 +105,20 @@
     <a href="/events" class="sidebar-link"><i class="bi bi-calendar-event"></i>Events</a>
 
     <div class="sidebar-section">Members</div>
+    <a href="/adminn/members/" class="sidebar-link"><i class="bi bi-person-plus"></i>Add / Manage Members</a>
     <a href="/adminn/manage-users/" class="sidebar-link"><i class="bi bi-shield-person"></i>Manage Roles</a>
-    <a href="/adminn/userreports" class="sidebar-link"><i class="bi bi-people"></i>All Members</a>
+    <a href="/adminn/userreports" class="sidebar-link"><i class="bi bi-people"></i>All Users</a>
     <a href="/groups/" class="sidebar-link"><i class="bi bi-collection"></i>Groups</a>
     <a href="/create-group/" class="sidebar-link"><i class="bi bi-plus-circle"></i>Create Group</a>
 
+    <div class="sidebar-section">Sermons & Hymns</div>
+    <a href="/sermon-notes/" class="sidebar-link"><i class="bi bi-journal-bookmark"></i>Sermon Notes</a>
+    <a href="/sermon-notes/add/" class="sidebar-link"><i class="bi bi-plus-square"></i>Add Sermon Note</a>
+    <a href="/hymns/" class="sidebar-link"><i class="bi bi-music-note-list"></i>Hymns</a>
+
     <div class="sidebar-section">Media</div>
     <a href="/adminn/uploadimages" class="sidebar-link"><i class="bi bi-image"></i>Upload Images</a>
-    <a href="/adminn/uploadvideos" class="sidebar-link"><i class="bi bi-camera-video"></i>Upload Videos</a>
+    <a href="/adminn/uploadvideos" class="sidebar-link"><i class="bi bi-camera-video"></i>Add Video / Link</a>
     <a href="/gallery" class="sidebar-link"><i class="bi bi-images"></i>Gallery</a>
     <a href="/video" class="sidebar-link"><i class="bi bi-play-circle"></i>Videos</a>
 
@@ -219,12 +225,14 @@
       <div class="data-card mb-4">
         <div class="data-card-header"><h6><i class="bi bi-lightning-charge me-2 text-warning"></i>Quick Actions</h6></div>
         <div class="p-3 d-flex flex-wrap gap-2">
-          <a href="/adminn/addevents" class="qa-btn red"><i class="bi bi-calendar-plus"></i>Add Event</a>
+          <a href="/adminn/members/add/" class="qa-btn red"><i class="bi bi-person-plus"></i>Add Member</a>
+          <a href="/adminn/addevents" class="qa-btn gold"><i class="bi bi-calendar-plus"></i>Add Event</a>
           <a href="/announcements/add/" class="qa-btn gold"><i class="bi bi-megaphone"></i>Announcement</a>
+          <a href="/sermon-notes/add/" class="qa-btn dark"><i class="bi bi-journal-plus"></i>Sermon Note</a>
           <a href="/create-group/" class="qa-btn dark"><i class="bi bi-plus-circle"></i>Create Group</a>
           <a href="/adminn/uploadimages" class="qa-btn outline"><i class="bi bi-image"></i>Upload Image</a>
-          <a href="/adminn/uploadvideos" class="qa-btn outline"><i class="bi bi-camera-video"></i>Upload Video</a>
-          <a href="/adminn/userreports" class="qa-btn outline"><i class="bi bi-people"></i>View Members</a>
+          <a href="/adminn/uploadvideos" class="qa-btn outline"><i class="bi bi-camera-video"></i>Add Video</a>
+          <a href="/adminn/members/" class="qa-btn outline"><i class="bi bi-people"></i>Members</a>
           <a href="/adminn/manage-users/" class="qa-btn outline"><i class="bi bi-shield-person"></i>Manage Roles</a>
           <a href="/admin/" class="qa-btn outline"><i class="bi bi-gear"></i>Django Admin</a>
         </div>

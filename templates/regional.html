@@ -110,7 +110,7 @@ const churches = [
     name: "{{ c.name|escapejs }}",
     location: "{{ c.location|escapejs }}",
     phone: "{{ c.phone|default:''|escapejs }}",
-    isHQ: {{ "true" if "HQ" in c.name else "false" }}
+    isHQ: {% if "HQ" in c.name %}true{% else %}false{% endif %}
   },
   {% endif %}
   {% endfor %}

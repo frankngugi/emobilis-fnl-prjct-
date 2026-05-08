@@ -1,25 +1,148 @@
 {% extends "base.html" %}
-{% block title %}Upload Videos – RGC Nyahururu{% endblock %}
+{% load static %}
+{% block title %}Add Video – RGC Admin{% endblock %}
+
+{% block extra_css %}
+<style>
+  .upload-wrap { max-width:680px; margin:100px auto 60px; padding:0 16px; }
+  .upload-card { background:#fff; border-radius:16px; box-shadow:0 6px 30px rgba(0,0,0,0.1); padding:36px; }
+  .form-control:focus, .form-select:focus { border-color:#8b0000; box-shadow:0 0 0 3px rgba(139,0,0,.12); }
+  .btn-upload { background:linear-gradient(135deg,#8b0000,#c9a227); border:none; color:#fff; padding:13px 30px; border-radius:9px; font-weight:700; }
+  .or-divider { display:flex; align-items:center; gap:12px; color:#bbb; font-size:0.82rem; margin:16px 0; }
+  .or-divider::before, .or-divider::after { content:''; flex:1; height:1px; background:#eee; }
+  .source-tabs .nav-link { color:#888; border-radius:9px 9px 0 0; font-weight:600; font-size:0.85rem; }
+  .source-tabs .nav-link.active { color:#8b0000; background:#fff0f0; border-color:#ddd #ddd #fff; }
+  .platform-hint { background:#f9f9f9; border-radius:8px; padding:10px 14px; font-size:0.8rem; color:#666; margin-top:8px; }
+</style>
+{% endblock %}
+
 {% block content %}
-<div style="margin-top:80px; background:#f5f5f5; min-height:calc(100vh - 70px);" class="py-5">
-  <div class="container">
-    <div class="row justify-content-center">
-      <div class="col-lg-6">
-        <div class="card border-0 shadow-sm rounded-4 p-4">
-          <h4 class="fw-bold mb-1" style="color:#8b0000;"><i class="ri-video-add-line me-2"></i>Upload Video</h4>
-          <p class="text-muted mb-4">Add a sermon or event video. You can also paste a YouTube URL.</p>
-          {% if messages %}{% for m in messages %}<div class="alert alert-{% if m.tags == 'error' %}danger{% else %}{{ m.tags }}{% endif %}">{{ m }}</div>{% endfor %}{% endif %}
-          <form method="POST" enctype="multipart/form-data">
-            {% csrf_token %}
-            {% for field in form %}
-            <div class="mb-3"><label class="form-label fw-semibold small">{{ field.label }}</label>{{ field }}</div>
-            {% endfor %}
-            <button type="submit" class="btn btn-danger w-100">Upload Video</button>
-            <a href="/video" class="btn btn-outline-secondary w-100 mt-2">View Videos</a>
-          </form>
-        </div>
+<div class="upload-wrap">
+  <div class="upload-card">
+    <div class="d-flex align-items-center gap-3 mb-4 pb-3" style="border-bottom:2px solid #f0f0f0;">
+      <div style="width:50px;height:50px;border-radius:50%;background:linear-gradient(135deg,#8b0000,#c9a227);display:flex;align-items:center;justify-content:center;color:#fff;font-size:1.5rem;">
+        <i class="ri-video-add-line"></i>
+      </div>
+      <div>
+        <h4 class="mb-0 fw-bold">Add Video</h4>
+        <p class="text-muted mb-0 small">Paste a YouTube / Facebook / Vimeo link, or upload a file</p>
       </div>
     </div>
+
+    {% if messages %}{% for m in messages %}<div class="alert alert-{% if m.tags == 'error' %}danger{% else %}{{ m.tags }}{% endif %} alert-dismissible fade show">{{ m }}<button class="btn-close" data-bs-dismiss="alert"></button></div>{% endfor %}{% endif %}
+
+    <form method="POST" enctype="multipart/form-data">
+      {% csrf_token %}
+
+      <div class="mb-3">
+        <label class="form-label fw-semibold small">Video Title <span class="text-danger">*</span></label>
+        <input type="text" name="title" class="form-control" placeholder="e.g. Sunday Sermon – Rev. John Mwangi" required>
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label fw-semibold small">Category</label>
+        <select name="category" class="form-select">
+          {% for val, label in form.fields.category.choices %}
+          <option value="{{ val }}">{{ label }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label fw-semibold small">Description</label>
+        <textarea name="description" class="form-control" rows="3" placeholder="Brief description of the video…"></textarea>
+      </div>
+
+      <!-- Video source: URL or File -->
+      <div class="mb-4">
+        <label class="form-label fw-semibold small">Video Source</label>
+
+        <ul class="nav source-tabs" id="videoSourceTabs">
+          <li class="nav-item">
+            <a class="nav-link active" href="#" onclick="switchTab('link', this); return false;">
+              <i class="bi bi-link-45deg me-1"></i>Paste Link (YouTube / Facebook / Vimeo)
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="#" onclick="switchTab('file', this); return false;">
+              <i class="bi bi-upload me-1"></i>Upload File
+            </a>
+          </li>
+        </ul>
+
+        <div id="tab-link" class="border border-top-0 rounded-bottom p-3">
+          <label class="form-label small fw-semibold text-muted mb-2">Video URL</label>
+          <input type="url" name="youtube_url" id="videoUrl" class="form-control"
+            placeholder="https://www.youtube.com/watch?v=...   or  https://www.facebook.com/...   or  https://vimeo.com/...">
+          <div class="platform-hint mt-2">
+            <i class="bi bi-info-circle me-1"></i>
+            Supports: <strong>YouTube</strong> (watch, youtu.be, Shorts) · <strong>Facebook</strong> (fb.com, fb.watch) · <strong>Vimeo</strong><br>
+            Members will watch the video embedded here on the site/app — they won't need to leave.
+          </div>
+          <!-- Preview -->
+          <div id="urlPreview" class="mt-2 ratio ratio-16x9 rounded d-none" style="background:#000;overflow:hidden;">
+            <iframe id="previewIframe" allowfullscreen allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"></iframe>
+          </div>
+        </div>
+
+        <div id="tab-file" class="border border-top-0 rounded-bottom p-3 d-none">
+          <label class="form-label small fw-semibold text-muted mb-2">Video File (MP4, MOV…)</label>
+          <input type="file" name="video" class="form-control" accept="video/*">
+          <p class="text-muted small mt-2"><i class="bi bi-info-circle me-1"></i>Maximum size depends on your server. For large videos, use a YouTube link instead.</p>
+        </div>
+      </div>
+
+      <div class="d-flex gap-2">
+        <button type="submit" class="btn-upload"><i class="bi bi-plus-circle me-2"></i>Add Video</button>
+        <a href="/video" class="btn btn-outline-secondary">Cancel</a>
+      </div>
+    </form>
   </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function switchTab(tab, el) {
+  document.getElementById('tab-link').classList.add('d-none');
+  document.getElementById('tab-file').classList.add('d-none');
+  document.getElementById('tab-' + tab).classList.remove('d-none');
+  document.querySelectorAll('.source-tabs .nav-link').forEach(l => l.classList.remove('active'));
+  el.classList.add('active');
+}
+
+function getEmbedUrl(url) {
+  if (!url) return null;
+  url = url.replace(/&amp;/g, '&');
+  var m = url.match(/[?&]v=([A-Za-z0-9_-]{11})/);
+  if (m) return 'https://www.youtube.com/embed/' + m[1];
+  m = url.match(/youtu\.be\/([A-Za-z0-9_-]{11})/);
+  if (m) return 'https://www.youtube.com/embed/' + m[1];
+  if (url.indexOf('youtube.com/embed/') >= 0) return url.split('?')[0];
+  m = url.match(/youtube\.com\/shorts\/([A-Za-z0-9_-]{11})/);
+  if (m) return 'https://www.youtube.com/embed/' + m[1];
+  m = url.match(/vimeo\.com\/(\d+)/);
+  if (m) return 'https://player.vimeo.com/video/' + m[1];
+  if (url.indexOf('facebook.com') >= 0 || url.indexOf('fb.watch') >= 0)
+    return 'https://www.facebook.com/plugins/video.php?href=' + encodeURIComponent(url) + '&show_text=false&width=640';
+  return null;
+}
+
+let previewTimer;
+document.getElementById('videoUrl').addEventListener('input', function() {
+  clearTimeout(previewTimer);
+  previewTimer = setTimeout(() => {
+    const embed = getEmbedUrl(this.value.trim());
+    const preview = document.getElementById('urlPreview');
+    const iframe = document.getElementById('previewIframe');
+    if (embed) {
+      iframe.src = embed;
+      preview.classList.remove('d-none');
+    } else {
+      iframe.src = '';
+      preview.classList.add('d-none');
+    }
+  }, 700);
+});
+</script>
 {% endblock %}

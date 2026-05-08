@@ -27,6 +27,9 @@ urlpatterns = [
 
     # Hymns
     path('hymns/', views.hymns, name='hymns'),
+    path('hymns/add/', views.add_hymn, name='add_hymn'),
+    path('hymns/<int:pk>/edit/', views.add_hymn, name='edit_hymn'),
+    path('hymns/<int:pk>/delete/', views.delete_hymn, name='delete_hymn'),
     path('api/hymns/', views.hymns_api, name='hymns_api'),
 
     # Bible
@@ -82,4 +85,21 @@ urlpatterns = [
 
     # User-facing role upgrade request
     path('request-role/', views.request_role_upgrade, name='request_role_upgrade'),
+
+    # Member / Guest Management
+    path('adminn/members/', views.manage_members, name='manage_members'),
+    path('adminn/members/add/', views.add_member, name='add_member'),
+    path('adminn/members/<int:user_id>/edit/', views.edit_member, name='edit_member'),
+    path('adminn/members/<int:user_id>/delete/', views.delete_member, name='delete_member'),
+
+    # Sermon Notes
+    path('sermon-notes/', views.sermon_notes, name='sermon_notes'),
+    path('sermon-notes/add/', views.add_sermon_note, name='add_sermon_note'),
+    path('sermon-notes/<int:pk>/', views.sermon_note_detail, name='sermon_note_detail'),
+    path('sermon-notes/<int:pk>/edit/', views.add_sermon_note, name='edit_sermon_note'),
+    path('sermon-notes/<int:pk>/delete/', views.delete_sermon_note, name='delete_sermon_note'),
+    path('sermon-notes/<int:pk>/approve/', views.approve_sermon_note, name='approve_sermon_note'),
+
+    # Notification Preferences
+    path('notifications/preferences/', views.notification_preferences, name='notification_preferences'),
 ]

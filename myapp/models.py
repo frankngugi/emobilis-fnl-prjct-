@@ -252,6 +252,55 @@ class ChatMessage(models.Model):
         return f"{self.sender.username}: {self.message[:50]}"
 
 
+class SermonNote(models.Model):
+    """Pastor's sermon notes / presentation slides for projection."""
+    title = models.CharField(max_length=200)
+    pastor = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='sermon_notes'
+    )
+    scripture_ref = models.CharField(max_length=100, blank=True, help_text='e.g. John 3:16')
+    date = models.DateField(null=True, blank=True)
+    content = models.TextField(help_text='Sermon notes. Use --- to separate slides/sections.')
+    is_public = models.BooleanField(default=False, help_text='Released to all members by admin')
+    approved_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL,
+        null=True, blank=True, related_name='approved_sermon_notes',
+        help_text='Admin who released this note to all members'
+    )
+    approved_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-date', '-created_at']
+
+    def __str__(self):
+        return f"{self.title} — {self.pastor.get_full_name() or self.pastor.username}"
+
+    def get_slides(self):
+        """Split content on --- to get individual projection slides."""
+        return [s.strip() for s in self.content.split('---') if s.strip()]
+
+
+class NotificationPreference(models.Model):
+    """Per-user notification channel preferences."""
+    user = models.OneToOneField(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='notif_prefs'
+    )
+    email_announcements = models.BooleanField(default=True)
+    email_events = models.BooleanField(default=True)
+    email_payments = models.BooleanField(default=True)
+    push_announcements = models.BooleanField(default=True)
+    push_events = models.BooleanField(default=True)
+    push_payments = models.BooleanField(default=True)
+    sms_payments = models.BooleanField(default=False)
+    whatsapp_otp = models.BooleanField(default=True)
+    whatsapp_payments = models.BooleanField(default=False)
+
+    def __str__(self):
+        return f"{self.user.username} notification prefs"
+
+
 class PushToken(models.Model):
     """Expo push notification token for mobile app users."""
     PLATFORM_CHOICES = [('android', 'Android'), ('ios', 'iOS')]

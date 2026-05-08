@@ -1,0 +1,110 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}{% if hymn %}Edit{% else %}Add{% endif %} Hymn – RGC{% endblock %}
+
+{% block extra_css %}
+<style>
+  .hymn-form-wrap { max-width:780px; margin:110px auto 60px; padding:0 16px; }
+  .form-card { background:#fff; border-radius:16px; box-shadow:0 6px 30px rgba(0,0,0,.08); padding:36px; }
+  .form-control:focus, .form-select:focus { border-color:#8b0000; box-shadow:0 0 0 3px rgba(139,0,0,.12); }
+  .btn-save { background:linear-gradient(135deg,#8b0000,#c9a227); border:none; color:#fff; padding:13px 30px; border-radius:9px; font-weight:700; }
+  .lyrics-hint { background:#f9f9f9; border-radius:8px; padding:10px 14px; font-size:0.8rem; color:#666; margin-bottom:8px; }
+  .lang-badge { display:inline-block; padding:5px 14px; border-radius:20px; border:2px solid #e0e0e0; cursor:pointer; font-size:0.82rem; font-weight:600; margin:4px; transition:all .2s; }
+  .lang-badge.sel-en { border-color:#4CAF50; background:#e8f5e9; color:#27ae60; }
+  .lang-badge.sel-sw { border-color:#2196F3; background:#e3f2fd; color:#1565c0; }
+  .lang-badge.sel-ki { border-color:#c9a227; background:#fffbea; color:#a07800; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="hymn-form-wrap">
+  <div class="form-card">
+    <div class="d-flex align-items-center gap-3 mb-4 pb-3" style="border-bottom:2px solid #f0f0f0;">
+      <div style="width:50px;height:50px;border-radius:50%;background:linear-gradient(135deg,#8b0000,#c9a227);display:flex;align-items:center;justify-content:center;color:#fff;font-size:1.5rem;">
+        <i class="bi bi-music-note-beamed"></i>
+      </div>
+      <div>
+        <h4 class="mb-0 fw-bold">{% if hymn %}Edit Hymn #{{ hymn.number }}{% else %}Add New Hymn{% endif %}</h4>
+        <p class="text-muted mb-0 small">{% if hymn %}Update the hymn details below{% else %}Add an English, Swahili, or Kikuyu hymn{% endif %}</p>
+      </div>
+    </div>
+
+    {% if messages %}{% for m in messages %}<div class="alert alert-{% if m.tags == 'error' %}danger{% else %}{{ m.tags }}{% endif %} alert-dismissible fade show">{{ m }}<button class="btn-close" data-bs-dismiss="alert"></button></div>{% endfor %}{% endif %}
+
+    <form method="POST">
+      {% csrf_token %}
+      <div class="row g-3 mb-3">
+        <div class="col-md-3">
+          <label class="form-label fw-semibold small">Hymn Number <span class="text-danger">*</span></label>
+          <input type="number" name="number" class="form-control" value="{{ hymn.number|default:next_num }}" min="1" required>
+        </div>
+        <div class="col-md-9">
+          <label class="form-label fw-semibold small">Hymn Title <span class="text-danger">*</span></label>
+          <input type="text" name="title" class="form-control" value="{{ hymn.title|default:'' }}" placeholder="e.g. Amazing Grace" required>
+        </div>
+        <div class="col-md-6">
+          <label class="form-label fw-semibold small">Author / Composer</label>
+          <input type="text" name="author" class="form-control" value="{{ hymn.author|default:'' }}" placeholder="e.g. John Newton">
+        </div>
+        <div class="col-md-6">
+          <label class="form-label fw-semibold small">Category / Theme</label>
+          <input type="text" name="category" class="form-control" value="{{ hymn.category|default:'' }}" placeholder="e.g. Praise, Grace, Salvation">
+        </div>
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label fw-semibold small">Language <span class="text-danger">*</span></label>
+        <div>
+          <label class="lang-badge {% if hymn.language == 'English' or not hymn %}sel-en{% endif %}" id="lb-en" onclick="setLang('English', this)">
+            <input type="radio" name="language" value="English" class="d-none" {% if hymn.language == 'English' or not hymn %}checked{% endif %}>
+            🇬🇧 English
+          </label>
+          <label class="lang-badge {% if hymn.language == 'Swahili' %}sel-sw{% endif %}" id="lb-sw" onclick="setLang('Swahili', this)">
+            <input type="radio" name="language" value="Swahili" class="d-none" {% if hymn.language == 'Swahili' %}checked{% endif %}>
+            🇰🇪 Swahili
+          </label>
+          <label class="lang-badge {% if hymn.language == 'Kikuyu' %}sel-ki{% endif %}" id="lb-ki" onclick="setLang('Kikuyu', this)">
+            <input type="radio" name="language" value="Kikuyu" class="d-none" {% if hymn.language == 'Kikuyu' %}checked{% endif %}>
+            🏔 Kikuyu
+          </label>
+        </div>
+      </div>
+
+      <div class="mb-4">
+        <label class="form-label fw-semibold small">Lyrics <span class="text-danger">*</span></label>
+        <div class="lyrics-hint">
+          <i class="bi bi-info-circle me-1"></i>
+          Separate verses with a blank line. The projector will split lyrics into verses automatically.
+          For a chorus, label it <code>Chorus:</code> on its own line.
+        </div>
+        <textarea name="lyrics" class="form-control font-monospace" rows="18"
+          placeholder="Verse 1&#10;First line of the hymn...&#10;Second line...&#10;&#10;Chorus:&#10;Chorus line...&#10;&#10;Verse 2&#10;Second verse...">{{ hymn.lyrics|default:'' }}</textarea>
+      </div>
+
+      <div class="d-flex gap-2 flex-wrap">
+        <button type="submit" class="btn-save"><i class="bi bi-save me-2"></i>{% if hymn %}Update{% else %}Add{% endif %} Hymn</button>
+        <a href="/hymns/{% if hymn %}?hymn={{ hymn.id }}{% endif %}" class="btn btn-outline-secondary">Cancel</a>
+        {% if hymn and user.is_superuser %}
+        <a href="/hymns/{{ hymn.id }}/delete/" class="btn btn-outline-danger ms-auto"
+           onclick="return confirm('Delete this hymn permanently?')"><i class="bi bi-trash me-1"></i>Delete</a>
+        {% endif %}
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const colors = {English:'sel-en', Swahili:'sel-sw', Kikuyu:'sel-ki'};
+const ids = {English:'lb-en', Swahili:'lb-sw', Kikuyu:'lb-ki'};
+function setLang(lang, el) {
+  Object.values(ids).forEach(id => {
+    const badge = document.getElementById(id);
+    if (badge) badge.className = 'lang-badge';
+  });
+  el.classList.add(colors[lang] || 'sel-en');
+  el.querySelector('input').checked = true;
+}
+</script>
+{% endblock %}

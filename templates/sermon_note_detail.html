@@ -1,0 +1,171 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}{{ note.title }} – Sermon Notes{% endblock %}
+
+{% block extra_css %}
+<style>
+  .note-wrap { max-width:860px; margin:100px auto 60px; padding:0 16px; }
+  .note-header { background:linear-gradient(135deg,#1a1a1a,#8b0000); color:#fff; border-radius:16px; padding:32px; margin-bottom:24px; }
+  .note-body { background:#fff; border-radius:16px; box-shadow:0 4px 20px rgba(0,0,0,.08); padding:30px; }
+  .slide-block { background:#f9f9f9; border-left:4px solid #c9a227; border-radius:0 10px 10px 0; padding:18px 22px; margin-bottom:16px; white-space:pre-wrap; font-size:0.95rem; line-height:1.7; }
+  .slide-num { font-size:0.7rem; font-weight:700; color:#c9a227; text-transform:uppercase; letter-spacing:0.1em; margin-bottom:6px; }
+
+  /* ═══ Projector Overlay ═══ */
+  #projector { display:none; position:fixed; inset:0; background:#000; z-index:99999; cursor:pointer; }
+  #projector.active { display:flex; flex-direction:column; align-items:center; justify-content:center; }
+  #proj-slide { color:#fff; font-size:2.2rem; font-weight:600; text-align:center; line-height:1.5; padding:40px 8vw; white-space:pre-wrap; max-width:1200px; }
+  #proj-ref { color:#c9a227; font-size:1rem; font-weight:600; letter-spacing:0.08em; margin-bottom:24px; }
+  #proj-title { color:rgba(255,255,255,.5); font-size:0.85rem; position:absolute; top:18px; left:24px; }
+  #proj-controls { position:absolute; bottom:20px; display:flex; gap:12px; align-items:center; }
+  .proj-btn { background:rgba(255,255,255,.1); border:1px solid rgba(255,255,255,.2); color:#fff; border-radius:8px; padding:9px 18px; cursor:pointer; font-size:0.85rem; transition:background .2s; }
+  .proj-btn:hover { background:rgba(255,255,255,.2); }
+  #proj-counter { color:rgba(255,255,255,.5); font-size:0.85rem; min-width:70px; text-align:center; }
+  #proj-close { position:absolute; top:16px; right:20px; background:rgba(255,255,255,.1); border:none; color:#fff; border-radius:8px; padding:8px 14px; cursor:pointer; font-size:0.82rem; }
+  #proj-theme-btn { position:absolute; top:16px; right:130px; background:rgba(255,255,255,.1); border:none; color:#fff; border-radius:8px; padding:8px 14px; cursor:pointer; font-size:0.82rem; }
+  #projector.light-theme { background:#fff; }
+  #projector.light-theme #proj-slide { color:#1a1a1a; }
+  #projector.light-theme #proj-title { color:#888; }
+  #projector.light-theme .proj-btn { background:rgba(0,0,0,.08); border-color:rgba(0,0,0,.15); color:#333; }
+  #projector.light-theme #proj-close, #projector.light-theme #proj-theme-btn { background:rgba(0,0,0,.08); color:#333; }
+  #proj-size { position:absolute; top:16px; right:270px; display:flex; gap:6px; }
+  #proj-size button { background:rgba(255,255,255,.1); border:none; color:#fff; border-radius:6px; width:32px; height:32px; cursor:pointer; font-size:1rem; }
+  #projector.light-theme #proj-size button { background:rgba(0,0,0,.08); color:#333; }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<!-- Projector Overlay -->
+<div id="projector">
+  <div id="proj-title">{{ note.title }}</div>
+  <div id="proj-size">
+    <button onclick="changeSize(-1)">−</button>
+    <button onclick="changeSize(1)">+</button>
+  </div>
+  <button id="proj-theme-btn" onclick="toggleTheme()">☀ Theme</button>
+  <button id="proj-close" onclick="closeProjector()">✕ Close (Esc)</button>
+  <div id="proj-ref">{{ note.scripture_ref }}</div>
+  <div id="proj-slide"></div>
+  <div id="proj-controls">
+    <button class="proj-btn" onclick="prevSlide()">← Prev</button>
+    <div id="proj-counter"></div>
+    <button class="proj-btn" onclick="nextSlide()">Next →</button>
+  </div>
+</div>
+
+<div class="note-wrap">
+  <!-- Header -->
+  <div class="note-header">
+    <div class="d-flex justify-content-between align-items-start flex-wrap gap-3">
+      <div>
+        {% if note.scripture_ref %}<p style="color:#c9a227;font-size:0.85rem;font-weight:600;margin-bottom:6px;"><i class="bi bi-book me-1"></i>{{ note.scripture_ref }}</p>{% endif %}
+        <h2 class="fw-bold mb-1">{{ note.title }}</h2>
+        <p style="color:rgba(255,255,255,.7);font-size:0.85rem;margin:0;">
+          <i class="bi bi-person me-1"></i>{{ note.pastor.get_full_name|default:note.pastor.username }}
+          {% if note.date %} · <i class="bi bi-calendar me-1"></i>{{ note.date|date:"F d, Y" }}{% endif %}
+          · {{ slides|length }} slide{{ slides|length|pluralize }}
+        </p>
+        <div class="mt-2">
+          {% if note.is_public %}
+          <span style="background:rgba(39,174,96,.25);color:#b8f0cf;border-radius:20px;padding:3px 12px;font-size:0.72rem;font-weight:700;">
+            <i class="bi bi-check-circle me-1"></i>Released to all members
+            {% if note.approved_by %} by {{ note.approved_by.get_full_name|default:note.approved_by.username }}{% endif %}
+          </span>
+          {% else %}
+          <span style="background:rgba(255,152,0,.2);color:#ffd080;border-radius:20px;padding:3px 12px;font-size:0.72rem;font-weight:700;">
+            <i class="bi bi-lock me-1"></i>Restricted — not yet released
+          </span>
+          {% endif %}
+        </div>
+      </div>
+      <div class="d-flex gap-2 flex-wrap">
+        <button class="btn btn-warning text-dark fw-bold" onclick="openProjector()">
+          <i class="bi bi-projector me-1"></i>Project
+        </button>
+        {% if can_approve %}
+          {% if note.is_public %}
+          <form method="POST" action="/sermon-notes/{{ note.id }}/approve/">
+            {% csrf_token %}<input type="hidden" name="action" value="revoke">
+            <button class="btn btn-outline-warning btn-sm" title="Revoke — make private again"><i class="bi bi-lock me-1"></i>Revoke</button>
+          </form>
+          {% else %}
+          <form method="POST" action="/sermon-notes/{{ note.id }}/approve/">
+            {% csrf_token %}<input type="hidden" name="action" value="approve">
+            <button class="btn btn-success btn-sm fw-bold"><i class="bi bi-send-check me-1"></i>Release to Members</button>
+          </form>
+          {% endif %}
+        {% endif %}
+        {% if can_edit %}
+        <a href="/sermon-notes/{{ note.id }}/edit/" class="btn btn-outline-light btn-sm"><i class="bi bi-pencil me-1"></i>Edit</a>
+        {% endif %}
+        <a href="/sermon-notes/" class="btn btn-outline-light btn-sm"><i class="bi bi-arrow-left me-1"></i>Back</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Slides -->
+  <div class="note-body">
+    <h6 class="fw-bold mb-3 text-muted text-uppercase" style="font-size:0.75rem;letter-spacing:0.1em;">Sermon Content / Slides</h6>
+    {% if slides %}
+    {% for slide in slides %}
+    <div class="slide-block" onclick="openProjector({{ forloop.counter0 }})">
+      <div class="slide-num">Slide {{ forloop.counter }}</div>
+      {{ slide }}
+    </div>
+    {% endfor %}
+    {% else %}
+    <p class="text-muted">{{ note.content }}</p>
+    {% endif %}
+
+    <div class="mt-4 pt-3" style="border-top:1px solid #f0f0f0;">
+      <p class="small text-muted mb-0">
+        <i class="bi bi-info-circle me-1"></i>
+        Click any slide to project it. During projection: <kbd>←</kbd><kbd>→</kbd> to navigate,
+        <kbd>+</kbd><kbd>-</kbd> for font size, <kbd>T</kbd> to toggle theme, <kbd>Esc</kbd> to exit.
+      </p>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const slides = [{% for s in slides %}"{{ s|escapejs }}", {% endfor %}];
+let cur = 0, fontSize = 2.2, dark = true;
+
+function openProjector(idx) {
+  cur = (idx !== undefined) ? idx : 0;
+  document.getElementById('projector').classList.add('active');
+  document.body.style.overflow = 'hidden';
+  showSlide();
+}
+function closeProjector() {
+  document.getElementById('projector').classList.remove('active');
+  document.body.style.overflow = '';
+}
+function showSlide() {
+  document.getElementById('proj-slide').textContent = slides[cur] || '';
+  document.getElementById('proj-counter').textContent = `${cur + 1} / ${slides.length}`;
+}
+function nextSlide() { if (cur < slides.length - 1) { cur++; showSlide(); } }
+function prevSlide() { if (cur > 0) { cur--; showSlide(); } }
+function changeSize(d) {
+  fontSize = Math.max(1, Math.min(5, fontSize + d * 0.3));
+  document.getElementById('proj-slide').style.fontSize = fontSize + 'rem';
+}
+function toggleTheme() {
+  dark = !dark;
+  document.getElementById('projector').classList.toggle('light-theme', !dark);
+}
+
+document.addEventListener('keydown', e => {
+  if (!document.getElementById('projector').classList.contains('active')) return;
+  if (e.key === 'ArrowRight') nextSlide();
+  if (e.key === 'ArrowLeft') prevSlide();
+  if (e.key === '+' || e.key === '=') changeSize(1);
+  if (e.key === '-') changeSize(-1);
+  if (e.key === 't' || e.key === 'T') toggleTheme();
+  if (e.key === 'Escape') closeProjector();
+});
+</script>
+{% endblock %}

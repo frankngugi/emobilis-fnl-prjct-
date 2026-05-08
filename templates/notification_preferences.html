@@ -1,0 +1,120 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Notification Settings – RGC{% endblock %}
+
+{% block extra_css %}
+<style>
+  .notif-wrap { max-width:700px; margin:100px auto 60px; padding:0 16px; }
+  .notif-card { background:#fff; border-radius:16px; box-shadow:0 6px 30px rgba(0,0,0,.08); overflow:hidden; }
+  .notif-header { background:linear-gradient(135deg,#1a1a1a,#8b0000); color:#fff; padding:28px 30px; }
+  .notif-header h4 { color:#c9a227; margin:0; font-weight:700; }
+  .notif-body { padding:28px 30px; }
+  .channel-section { margin-bottom:28px; }
+  .channel-title { font-size:0.7rem; font-weight:700; text-transform:uppercase; letter-spacing:0.12em; color:#888; margin-bottom:12px; display:flex; align-items:center; gap:8px; }
+  .channel-title::after { content:''; flex:1; height:1px; background:#f0f0f0; }
+  .pref-row { display:flex; align-items:center; justify-content:space-between; padding:12px 0; border-bottom:1px solid #f5f5f5; }
+  .pref-row:last-child { border-bottom:none; }
+  .pref-label { font-size:0.88rem; font-weight:600; }
+  .pref-label small { font-weight:400; color:#888; display:block; font-size:0.75rem; }
+  .form-switch .form-check-input { width:3em; height:1.5em; cursor:pointer; }
+  .form-switch .form-check-input:checked { background-color:#8b0000; border-color:#8b0000; }
+  .btn-save { background:linear-gradient(135deg,#8b0000,#c9a227); border:none; color:#fff; padding:13px 30px; border-radius:9px; font-weight:700; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="notif-wrap">
+  {% if messages %}{% for m in messages %}<div class="alert alert-{% if m.tags == 'error' %}danger{% else %}{{ m.tags }}{% endif %} alert-dismissible fade show mb-3">{{ m }}<button class="btn-close" data-bs-dismiss="alert"></button></div>{% endfor %}{% endif %}
+
+  <div class="notif-card">
+    <div class="notif-header">
+      <h4><i class="bi bi-bell me-2"></i>Notification Preferences</h4>
+      <p class="mb-0 opacity-75 small mt-1">Choose how RGC Nyahururu reaches you for different events</p>
+    </div>
+    <div class="notif-body">
+      <form method="POST">
+        {% csrf_token %}
+
+        <!-- Email -->
+        <div class="channel-section">
+          <div class="channel-title"><i class="bi bi-envelope-fill text-danger"></i>Email Notifications</div>
+          <div class="pref-row">
+            <div class="pref-label">Announcements <small>Church news, events, and updates via email</small></div>
+            <div class="form-check form-switch mb-0">
+              <input class="form-check-input" type="checkbox" name="email_announcements" id="ea" {% if prefs.email_announcements %}checked{% endif %}>
+            </div>
+          </div>
+          <div class="pref-row">
+            <div class="pref-label">Events <small>Reminders for upcoming services and events</small></div>
+            <div class="form-check form-switch mb-0">
+              <input class="form-check-input" type="checkbox" name="email_events" id="ee" {% if prefs.email_events %}checked{% endif %}>
+            </div>
+          </div>
+          <div class="pref-row">
+            <div class="pref-label">Payment Confirmations <small>M-Pesa contribution receipts via email</small></div>
+            <div class="form-check form-switch mb-0">
+              <input class="form-check-input" type="checkbox" name="email_payments" id="ep" {% if prefs.email_payments %}checked{% endif %}>
+            </div>
+          </div>
+        </div>
+
+        <!-- Push -->
+        <div class="channel-section">
+          <div class="channel-title"><i class="bi bi-phone-fill text-danger"></i>Push Notifications (Mobile App)</div>
+          <div class="pref-row">
+            <div class="pref-label">Announcements <small>Instant push notifications for church news</small></div>
+            <div class="form-check form-switch mb-0">
+              <input class="form-check-input" type="checkbox" name="push_announcements" id="pa" {% if prefs.push_announcements %}checked{% endif %}>
+            </div>
+          </div>
+          <div class="pref-row">
+            <div class="pref-label">Events <small>Event reminders on your mobile device</small></div>
+            <div class="form-check form-switch mb-0">
+              <input class="form-check-input" type="checkbox" name="push_events" id="pe" {% if prefs.push_events %}checked{% endif %}>
+            </div>
+          </div>
+          <div class="pref-row">
+            <div class="pref-label">Payment Confirmations <small>Instant confirmation after M-Pesa payment</small></div>
+            <div class="form-check form-switch mb-0">
+              <input class="form-check-input" type="checkbox" name="push_payments" id="pp" {% if prefs.push_payments %}checked{% endif %}>
+            </div>
+          </div>
+        </div>
+
+        <!-- WhatsApp -->
+        <div class="channel-section">
+          <div class="channel-title"><i class="ri-whatsapp-fill" style="color:#25D366;font-size:1rem;"></i>WhatsApp</div>
+          <div class="pref-row">
+            <div class="pref-label">OTP Verification <small>Receive login / registration OTP via WhatsApp</small></div>
+            <div class="form-check form-switch mb-0">
+              <input class="form-check-input" type="checkbox" name="whatsapp_otp" id="wo" {% if prefs.whatsapp_otp %}checked{% endif %}>
+            </div>
+          </div>
+          <div class="pref-row">
+            <div class="pref-label">Payment Updates <small>WhatsApp message when a payment is confirmed</small></div>
+            <div class="form-check form-switch mb-0">
+              <input class="form-check-input" type="checkbox" name="whatsapp_payments" id="wp" {% if prefs.whatsapp_payments %}checked{% endif %}>
+            </div>
+          </div>
+        </div>
+
+        <!-- SMS -->
+        <div class="channel-section">
+          <div class="channel-title"><i class="bi bi-chat-fill text-danger"></i>SMS (Kenya)</div>
+          <div class="pref-row">
+            <div class="pref-label">Payment Confirmations <small>SMS receipt after M-Pesa contribution (requires AT SMS credit)</small></div>
+            <div class="form-check form-switch mb-0">
+              <input class="form-check-input" type="checkbox" name="sms_payments" id="sp" {% if prefs.sms_payments %}checked{% endif %}>
+            </div>
+          </div>
+        </div>
+
+        <div class="d-flex gap-2 flex-wrap pt-2">
+          <button type="submit" class="btn-save"><i class="bi bi-save me-2"></i>Save Preferences</button>
+          <a href="/profile/" class="btn btn-outline-secondary">Back to Profile</a>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

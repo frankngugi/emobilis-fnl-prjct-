@@ -25,10 +25,47 @@
   .no-hymn-selected i { font-size: 4rem; color: #c9a227; display: block; margin-bottom: 15px; }
   .pagination .page-link { color: #8b0000; }
   .pagination .page-item.active .page-link { background: #8b0000; border-color: #8b0000; }
+
+  /* ═══ Hymn Projector ═══ */
+  #hymnProjector { display:none; position:fixed; inset:0; background:#000; z-index:99999; }
+  #hymnProjector.active { display:flex; flex-direction:column; align-items:center; justify-content:center; }
+  #hproj-hymn-title { color:rgba(255,255,255,.45); font-size:0.85rem; position:absolute; top:18px; left:24px; }
+  #hproj-size { position:absolute; top:16px; right:270px; display:flex; gap:6px; }
+  #hproj-size button { background:rgba(255,255,255,.1); border:none; color:#fff; border-radius:6px; width:32px; height:32px; cursor:pointer; font-size:1rem; }
+  #hproj-theme-btn { position:absolute; top:16px; right:130px; background:rgba(255,255,255,.1); border:none; color:#fff; border-radius:8px; padding:8px 14px; cursor:pointer; font-size:0.82rem; }
+  #hproj-close { position:absolute; top:16px; right:20px; background:rgba(255,255,255,.1); border:none; color:#fff; border-radius:8px; padding:8px 14px; cursor:pointer; font-size:0.82rem; }
+  #hproj-slide { color:#fff; font-size:2.2rem; font-weight:600; text-align:center; line-height:1.7; padding:40px 8vw; white-space:pre-wrap; max-width:1200px; }
+  #hproj-controls { position:absolute; bottom:20px; display:flex; gap:12px; align-items:center; }
+  .hproj-btn { background:rgba(255,255,255,.1); border:1px solid rgba(255,255,255,.2); color:#fff; border-radius:8px; padding:9px 18px; cursor:pointer; font-size:0.85rem; }
+  .hproj-btn:hover { background:rgba(255,255,255,.2); }
+  #hproj-counter { color:rgba(255,255,255,.5); font-size:0.85rem; min-width:70px; text-align:center; }
+  #hymnProjector.light-theme { background:#fff; }
+  #hymnProjector.light-theme #hproj-slide { color:#1a1a1a; }
+  #hymnProjector.light-theme #hproj-hymn-title { color:#888; }
+  #hymnProjector.light-theme .hproj-btn { background:rgba(0,0,0,.08); border-color:rgba(0,0,0,.15); color:#333; }
+  #hymnProjector.light-theme #hproj-close, #hymnProjector.light-theme #hproj-theme-btn { background:rgba(0,0,0,.08); color:#333; }
+  #hymnProjector.light-theme #hproj-size button { background:rgba(0,0,0,.08); color:#333; }
 </style>
 {% endblock %}
 
 {% block content %}
+
+<!-- Hymn Projector Overlay -->
+<div id="hymnProjector">
+  <div id="hproj-hymn-title"></div>
+  <div id="hproj-size">
+    <button onclick="hProjSize(-1)">−</button>
+    <button onclick="hProjSize(1)">+</button>
+  </div>
+  <button id="hproj-theme-btn" onclick="hProjTheme()">☀ Theme</button>
+  <button id="hproj-close" onclick="hProjClose()">✕ Close (Esc)</button>
+  <div id="hproj-slide"></div>
+  <div id="hproj-controls">
+    <button class="hproj-btn" onclick="hProjPrev()">← Prev</button>
+    <div id="hproj-counter"></div>
+    <button class="hproj-btn" onclick="hProjNext()">Next →</button>
+  </div>
+</div>
 
 <section class="hymns-hero">
   <div class="container">
@@ -49,15 +86,23 @@
     <div class="row g-4">
       <!-- Hymn List -->
       <div class="col-lg-5">
-        <div class="d-flex justify-content-between align-items-center mb-3">
+        <div class="d-flex justify-content-between align-items-center mb-2">
           <h5 class="fw-bold mb-0">
-            {% if query %}
-              Results for "{{ query }}"
-            {% else %}
-              All Hymns ({{ page_obj.paginator.count }})
-            {% endif %}
+            {% if query %}Results for "{{ query }}"{% else %}All Hymns ({{ page_obj.paginator.count }}){% endif %}
           </h5>
-          {% if query %}<a href="/hymns/" class="btn btn-sm btn-outline-secondary">Clear</a>{% endif %}
+          <div class="d-flex gap-1">
+            {% if query %}<a href="/hymns/" class="btn btn-sm btn-outline-secondary">Clear</a>{% endif %}
+            {% if user.is_authenticated and user.is_staff or user.is_authenticated and user.role in 'admin,manager' %}
+            <a href="/hymns/add/" class="btn btn-sm btn-danger"><i class="bi bi-plus-lg me-1"></i>Add</a>
+            {% endif %}
+          </div>
+        </div>
+        <!-- Language filter -->
+        <div class="d-flex gap-1 mb-3 flex-wrap">
+          <a href="/hymns/{% if query %}?q={{ query }}{% endif %}" class="btn btn-xs btn-sm {% if not lang_filter %}btn-danger{% else %}btn-outline-secondary{% endif %}" style="font-size:0.75rem;padding:3px 10px;">All</a>
+          <a href="/hymns/?lang=English{% if query %}&q={{ query }}{% endif %}" class="btn btn-xs btn-sm {% if lang_filter == 'English' %}btn-success{% else %}btn-outline-secondary{% endif %}" style="font-size:0.75rem;padding:3px 10px;">🇬🇧 English</a>
+          <a href="/hymns/?lang=Swahili{% if query %}&q={{ query }}{% endif %}" class="btn btn-xs btn-sm {% if lang_filter == 'Swahili' %}btn-primary{% else %}btn-outline-secondary{% endif %}" style="font-size:0.75rem;padding:3px 10px;">🇰🇪 Swahili</a>
+          <a href="/hymns/?lang=Kikuyu{% if query %}&q={{ query }}{% endif %}" class="btn btn-xs btn-sm {% if lang_filter == 'Kikuyu' %}btn-warning text-dark{% else %}btn-outline-secondary{% endif %}" style="font-size:0.75rem;padding:3px 10px;">🏔 Kikuyu</a>
         </div>
 
         {% if page_obj.object_list %}
@@ -69,7 +114,12 @@
                 <span class="hymn-number">#{{ hymn.number }}</span>
                 <div class="flex-grow-1">
                   <div class="hymn-title">{{ hymn.title }}</div>
-                  {% if hymn.author %}<div class="hymn-author">{{ hymn.author }}</div>{% endif %}
+                  <div class="d-flex align-items-center gap-1 mt-1 flex-wrap">
+                    {% if hymn.author %}<span class="hymn-author">{{ hymn.author }}</span>{% endif %}
+                    {% if hymn.language != 'English' %}
+                    <span style="font-size:0.63rem;background:#fffbea;color:#a07800;border-radius:12px;padding:1px 6px;font-weight:700;">{{ hymn.language }}</span>
+                    {% endif %}
+                  </div>
                 </div>
                 <i class="bi bi-chevron-right text-muted"></i>
               </div>
@@ -111,11 +161,17 @@
               <span class="badge bg-danger me-2"># {{ selected_hymn.number }}</span>
               {% if selected_hymn.category %}<span class="badge bg-warning text-dark">{{ selected_hymn.category }}</span>{% endif %}
             </div>
-            <button onclick="window.print()" class="btn btn-sm btn-outline-secondary"><i class="bi bi-printer me-1"></i>Print</button>
+            <div class="d-flex gap-2 flex-wrap">
+              <button onclick="hProjOpen()" class="btn btn-sm btn-warning text-dark fw-semibold" title="Project lyrics fullscreen"><i class="bi bi-projector me-1"></i>Project</button>
+              <button onclick="window.print()" class="btn btn-sm btn-outline-secondary"><i class="bi bi-printer me-1"></i>Print</button>
+              {% if user.is_authenticated and user.is_staff or user.is_authenticated and user.role in 'admin,manager' %}
+              <a href="/hymns/{{ selected_hymn.id }}/edit/" class="btn btn-sm btn-outline-danger"><i class="bi bi-pencil me-1"></i>Edit</a>
+              {% endif %}
+            </div>
           </div>
           <h2>{{ selected_hymn.title }}</h2>
           {% if selected_hymn.author %}<p class="text-muted mb-4"><i class="bi bi-person me-1"></i>{{ selected_hymn.author }}</p>{% endif %}
-          <div class="hymn-lyrics">{{ selected_hymn.lyrics }}</div>
+          <div class="hymn-lyrics" id="hymnLyricsText">{{ selected_hymn.lyrics }}</div>
           {% else %}
           <div class="no-hymn-selected">
             <i class="ri-music-2-line"></i>
@@ -135,4 +191,56 @@
   </div>
 </section>
 
+{% endblock %}
+
+{% block extra_js %}
+{% if selected_hymn %}
+<script>
+const hymnTitle = "#{{ selected_hymn.number }} — {{ selected_hymn.title|escapejs }}";
+const rawLyrics = document.getElementById('hymnLyricsText') ? document.getElementById('hymnLyricsText').textContent : '';
+
+function getHymnSlides(lyrics) {
+  return lyrics.split(/\n\s*\n/).map(s => s.trim()).filter(s => s.length > 0);
+}
+let hSlides = getHymnSlides(rawLyrics);
+let hCur = 0, hFontSize = 2.2, hDark = true;
+
+function hProjOpen() {
+  hSlides = getHymnSlides(rawLyrics);
+  if (!hSlides.length) hSlides = [rawLyrics];
+  hCur = 0;
+  document.getElementById('hproj-hymn-title').textContent = hymnTitle;
+  document.getElementById('hymnProjector').classList.add('active');
+  document.body.style.overflow = 'hidden';
+  hProjShow();
+}
+function hProjClose() {
+  document.getElementById('hymnProjector').classList.remove('active');
+  document.body.style.overflow = '';
+}
+function hProjShow() {
+  document.getElementById('hproj-slide').textContent = hSlides[hCur] || '';
+  document.getElementById('hproj-counter').textContent = `${hCur + 1} / ${hSlides.length}`;
+}
+function hProjNext() { if (hCur < hSlides.length - 1) { hCur++; hProjShow(); } }
+function hProjPrev() { if (hCur > 0) { hCur--; hProjShow(); } }
+function hProjSize(d) {
+  hFontSize = Math.max(1, Math.min(5, hFontSize + d * 0.3));
+  document.getElementById('hproj-slide').style.fontSize = hFontSize + 'rem';
+}
+function hProjTheme() {
+  hDark = !hDark;
+  document.getElementById('hymnProjector').classList.toggle('light-theme', !hDark);
+}
+document.addEventListener('keydown', e => {
+  if (!document.getElementById('hymnProjector').classList.contains('active')) return;
+  if (e.key === 'ArrowRight' || e.key === 'ArrowDown') hProjNext();
+  if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') hProjPrev();
+  if (e.key === '+' || e.key === '=') hProjSize(1);
+  if (e.key === '-') hProjSize(-1);
+  if (e.key === 't' || e.key === 'T') hProjTheme();
+  if (e.key === 'Escape') hProjClose();
+});
+</script>
+{% endif %}
 {% endblock %}

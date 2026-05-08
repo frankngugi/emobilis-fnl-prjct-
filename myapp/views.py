@@ -14,6 +14,7 @@ from django.conf import settings
 from django.core.mail import send_mail
 from django.core.paginator import Paginator
 from django.views.decorators.http import require_POST
+from django.db import models
 
 from .models import (
     Events, Attendee, UserProfile, Group, CustomUser,
@@ -306,11 +307,16 @@ def delete_announcement(request, pk):
 
 def hymns(request):
     query = request.GET.get('q', '').strip()
+    lang_filter = request.GET.get('lang', '').strip()
     hymn_list = Hymn.objects.all()
     if query:
-        hymn_list = hymn_list.filter(title__icontains=query) | hymn_list.filter(
-            number__icontains=query if query.isdigit() else ''
+        hymn_list = hymn_list.filter(
+            models.Q(title__icontains=query) |
+            models.Q(author__icontains=query) |
+            (models.Q(number=int(query)) if query.isdigit() else models.Q())
         )
+    if lang_filter:
+        hymn_list = hymn_list.filter(language__iexact=lang_filter)
     paginator = Paginator(hymn_list, 20)
     page_obj = paginator.get_page(request.GET.get('page'))
     selected_hymn = None
@@ -320,6 +326,7 @@ def hymns(request):
     return render(request, 'hymns.html', {
         'page_obj': page_obj,
         'query': query,
+        'lang_filter': lang_filter,
         'selected_hymn': selected_hymn,
     })
 
@@ -327,14 +334,88 @@ def hymns(request):
 def hymns_api(request):
     """JSON endpoint for hymn search."""
     query = request.GET.get('q', '')
+    lang = request.GET.get('lang', '')
     hymns_qs = Hymn.objects.all()
     if query:
-        hymns_qs = hymns_qs.filter(title__icontains=query)
-    data = [{'id': h.id, 'number': h.number, 'title': h.title, 'author': h.author} for h in hymns_qs[:50]]
+        hymns_qs = hymns_qs.filter(title__icontains=query) | hymns_qs.filter(author__icontains=query)
+    if lang:
+        hymns_qs = hymns_qs.filter(language__iexact=lang)
+    data = [{'id': h.id, 'number': h.number, 'title': h.title, 'author': h.author, 'language': h.language} for h in hymns_qs[:100]]
     return JsonResponse({'hymns': data})
 
 
+@login_required
+def add_hymn(request, pk=None):
+    """Add or edit a hymn — media team and admin only."""
+    if not (request.user.is_staff or request.user.is_superuser or request.user.role in ('admin', 'manager')):
+        messages.error(request, "Only media team and administrators can manage hymns.")
+        return redirect('hymns')
+    hymn = get_object_or_404(Hymn, pk=pk) if pk else None
+    if request.method == 'POST':
+        number = request.POST.get('number', '').strip()
+        title = request.POST.get('title', '').strip()
+        author = request.POST.get('author', '').strip()
+        lyrics = request.POST.get('lyrics', '').strip()
+        category = request.POST.get('category', '').strip()
+        language = request.POST.get('language', 'English').strip()
+        errors = []
+        if not number or not number.isdigit():
+            errors.append("A valid hymn number is required.")
+        elif not hymn and Hymn.objects.filter(number=int(number)).exists():
+            errors.append(f"Hymn #{number} already exists.")
+        if not title:
+            errors.append("Title is required.")
+        if not lyrics:
+            errors.append("Lyrics are required.")
+        if errors:
+            for e in errors:
+                messages.error(request, e)
+        else:
+            if hymn:
+                hymn.number = int(number)
+                hymn.title = title
+                hymn.author = author
+                hymn.lyrics = lyrics
+                hymn.category = category
+                hymn.language = language
+                hymn.save()
+                messages.success(request, f"Hymn #{number} updated.")
+            else:
+                hymn = Hymn.objects.create(
+                    number=int(number), title=title, author=author,
+                    lyrics=lyrics, category=category, language=language,
+                )
+                messages.success(request, f"Hymn #{number} '{title}' added.")
+            return redirect(f'/hymns/?hymn={hymn.pk}')
+    next_num = (Hymn.objects.order_by('-number').first().number + 1) if Hymn.objects.exists() else 1
+    return render(request, 'add_hymn.html', {'hymn': hymn, 'next_num': next_num})
+
+
+@login_required
+def delete_hymn(request, pk):
+    if not (request.user.is_superuser or request.user.role in ('admin', 'manager')):
+        messages.error(request, "Only administrators can delete hymns.")
+        return redirect('hymns')
+    hymn = get_object_or_404(Hymn, pk=pk)
+    if request.method == 'POST':
+        hymn.delete()
+        messages.success(request, f"Hymn deleted.")
+        return redirect('hymns')
+    return redirect('hymns')
+
+
 # ─── Bible ─────────────────────────────────────────────────────────────────────
+
+BIBLE_TRANSLATIONS = [
+    ('kjv',      'King James Version (KJV)'),
+    ('web',      'World English Bible (WEB)'),
+    ('asv',      'American Standard Version (ASV)'),
+    ('bbe',      'Bible in Basic English (BBE)'),
+    ('darby',    'Darby Translation'),
+    ('dra',      'Douay-Rheims (Catholic)'),
+    ('ylt',      "Young's Literal Translation"),
+    ('weymouth', 'Weymouth New Testament'),
+]
 
 def bible(request):
     verse_data = None
@@ -356,12 +437,18 @@ def bible(request):
         "Jude", "Revelation"
     ]
     reference = request.GET.get('ref', '')
+    translation = request.GET.get('translation', 'kjv')
+    if translation not in [t[0] for t in BIBLE_TRANSLATIONS]:
+        translation = 'kjv'
     if reference:
         try:
-            url = f"https://bible-api.com/{reference.replace(' ', '%20')}"
+            url = f"https://bible-api.com/{reference.replace(' ', '%20')}?translation={translation}"
             resp = http_requests.get(url, timeout=10)
             if resp.status_code == 200:
                 verse_data = resp.json()
+                if 'error' in verse_data:
+                    error = verse_data['error']
+                    verse_data = None
             else:
                 error = "Verse not found. Try: John 3:16 or Psalms 23:1-6"
         except Exception:
@@ -371,6 +458,8 @@ def bible(request):
         'reference': reference,
         'books': books,
         'error': error,
+        'translation': translation,
+        'translations': BIBLE_TRANSLATIONS,
         'quick_refs': [
             'John 3:16','Psalms 23','Romans 8:28','Proverbs 3:5-6',
             'Philippians 4:13','Isaiah 40:31','Matthew 6:33',
@@ -518,15 +607,27 @@ def uploadimages(request):
 @login_required
 def uploadvideos(request):
     if request.method == 'POST':
-        form = VideoForm(request.POST, request.FILES)
-        if form.is_valid():
-            vid = form.save(commit=False)
-            vid.uploader = request.user
+        title = request.POST.get('title', '').strip()
+        youtube_url = request.POST.get('youtube_url', '').strip()
+        category = request.POST.get('category', 'general')
+        description = request.POST.get('description', '').strip()
+        has_file = bool(request.FILES.get('video'))
+        if not title:
+            messages.error(request, "Title is required.")
+        elif not youtube_url and not has_file:
+            messages.error(request, "Please provide either a video link (YouTube/Facebook/Vimeo) or upload a file.")
+        else:
+            from .models import Video as VideoModel
+            vid = VideoModel(
+                title=title, category=category, description=description,
+                youtube_url=youtube_url, uploader=request.user,
+            )
+            if has_file:
+                vid.video = request.FILES['video']
             vid.save()
-            messages.success(request, "Video uploaded.")
+            messages.success(request, f"Video '{title}' added successfully.")
             return redirect('video')
-    else:
-        form = VideoForm()
+    form = VideoForm()
     return render(request, 'uploadvideos.html', {'form': form})
 
 
@@ -964,15 +1065,10 @@ def get_chat_messages(request, room_id):
 from .models import BranchChurch, ChurchLeader, RegionalMember, ClergyPayment
 
 def regional_churches(request):
-    churches = BranchChurch.objects.filter(is_active=True).order_by('region', 'name') if True else []
-    try:
-        from .models import BranchChurch as BC
-        churches = BC.objects.all().order_by('region', 'name')
-    except Exception:
-        churches = []
+    churches = BranchChurch.objects.exclude(status='inactive').order_by('region', 'name')
     context = {
         'churches': churches,
-        'total': len(list(churches)),
+        'total': churches.count(),
         'regions': BranchChurch.REGION_CHOICES,
     }
     return render(request, 'regional.html', context)
@@ -1035,3 +1131,289 @@ def add_clergy_payment(request):
         'churches': churches,
         'payment_types': ClergyPayment.PAYMENT_TYPE_CHOICES,
     })
+
+
+# ─── Member / Guest Management ────────────────────────────────────────────────
+
+@login_required
+def manage_members(request):
+    if not (request.user.is_staff or request.user.is_superuser or request.user.role in ('admin', 'manager')):
+        messages.error(request, "Permission denied.")
+        return redirect('adminn')
+    search = request.GET.get('q', '').strip()
+    role_filter = request.GET.get('role', '')
+    users = User.objects.select_related().order_by('-date_joined')
+    if search:
+        users = users.filter(
+            models.Q(username__icontains=search) |
+            models.Q(first_name__icontains=search) |
+            models.Q(last_name__icontains=search) |
+            models.Q(email__icontains=search) |
+            models.Q(phone__icontains=search)
+        )
+    if role_filter:
+        users = users.filter(role=role_filter)
+    paginator = Paginator(users, 20)
+    page_obj = paginator.get_page(request.GET.get('page'))
+    return render(request, 'manage_members.html', {
+        'page_obj': page_obj,
+        'search': search,
+        'role_filter': role_filter,
+        'role_choices': CustomUser.ROLE_CHOICES,
+        'total': users.count(),
+    })
+
+
+@login_required
+def add_member(request):
+    if not (request.user.is_staff or request.user.is_superuser or request.user.role in ('admin', 'manager')):
+        messages.error(request, "Permission denied.")
+        return redirect('adminn')
+    if request.method == 'POST':
+        first_name = request.POST.get('first_name', '').strip()
+        last_name = request.POST.get('last_name', '').strip()
+        username = request.POST.get('username', '').strip()
+        email = request.POST.get('email', '').strip()
+        phone = request.POST.get('phone', '').strip()
+        role = request.POST.get('role', 'member')
+        password = request.POST.get('password', '').strip()
+        group_id = request.POST.get('group', '')
+        is_staff = request.POST.get('is_staff') == 'on'
+        member_type = request.POST.get('member_type', 'member')
+
+        errors = []
+        if not username:
+            errors.append("Username is required.")
+        elif User.objects.filter(username=username).exists():
+            errors.append(f"Username '{username}' is already taken.")
+        if email and User.objects.filter(email=email).exists():
+            errors.append(f"Email '{email}' is already in use.")
+        if password and len(password) < 6:
+            errors.append("Password must be at least 6 characters.")
+
+        if errors:
+            for e in errors:
+                messages.error(request, e)
+        else:
+            user = User.objects.create(
+                username=username, first_name=first_name, last_name=last_name,
+                email=email, phone=phone, role=role,
+                is_staff=is_staff or role in ('admin', 'manager'),
+                is_active=True, is_email_verified=bool(email),
+            )
+            if password:
+                user.set_password(password)
+            else:
+                user.set_unusable_password()
+            user.save()
+
+            group = Group.objects.filter(pk=group_id).first() if group_id else None
+            Member.objects.create(
+                user=user,
+                name=f"{first_name} {last_name}".strip() or username,
+                email=email,
+                phonenumber=phone,
+                group=group,
+            )
+            messages.success(request, f"Member '{user.get_full_name() or username}' added successfully.")
+            return redirect('manage_members')
+
+    groups = Group.objects.all()
+    return render(request, 'add_member.html', {
+        'groups': groups,
+        'role_choices': CustomUser.ROLE_CHOICES,
+    })
+
+
+@login_required
+def edit_member(request, user_id):
+    if not (request.user.is_staff or request.user.is_superuser or request.user.role in ('admin', 'manager')):
+        messages.error(request, "Permission denied.")
+        return redirect('adminn')
+    target = get_object_or_404(User, pk=user_id)
+    member = Member.objects.filter(user=target).first()
+    if request.method == 'POST':
+        target.first_name = request.POST.get('first_name', '').strip()
+        target.last_name = request.POST.get('last_name', '').strip()
+        target.email = request.POST.get('email', '').strip()
+        target.phone = request.POST.get('phone', '').strip()
+        new_role = request.POST.get('role', target.role)
+        target.role = new_role
+        target.is_staff = request.POST.get('is_staff') == 'on' or new_role in ('admin', 'manager')
+        target.is_active = request.POST.get('is_active', 'on') == 'on'
+        new_pw = request.POST.get('password', '').strip()
+        if new_pw and len(new_pw) >= 6:
+            target.set_password(new_pw)
+        target.save()
+        if member:
+            member.name = f"{target.first_name} {target.last_name}".strip() or target.username
+            member.email = target.email
+            member.phonenumber = target.phone
+            group_id = request.POST.get('group', '')
+            member.group = Group.objects.filter(pk=group_id).first() if group_id else member.group
+            member.save()
+        messages.success(request, f"Member '{target.get_full_name() or target.username}' updated.")
+        return redirect('manage_members')
+    groups = Group.objects.all()
+    return render(request, 'add_member.html', {
+        'edit_user': target,
+        'member': member,
+        'groups': groups,
+        'role_choices': CustomUser.ROLE_CHOICES,
+    })
+
+
+@login_required
+def delete_member(request, user_id):
+    if not (request.user.is_superuser or request.user.role == 'admin'):
+        messages.error(request, "Only administrators can delete members.")
+        return redirect('manage_members')
+    target = get_object_or_404(User, pk=user_id)
+    if target == request.user:
+        messages.error(request, "You cannot delete your own account.")
+        return redirect('manage_members')
+    name = target.get_full_name() or target.username
+    target.delete()
+    messages.success(request, f"Member '{name}' deleted.")
+    return redirect('manage_members')
+
+
+# ─── Sermon Notes ─────────────────────────────────────────────────────────────
+
+from .models import SermonNote
+
+def _can_manage_sermons(user):
+    """True for pastor, reverend/bishop, admin, manager, or staff (media team)."""
+    return (
+        user.is_authenticated and (
+            user.is_staff or user.is_superuser or
+            user.role in ('pastor', 'reverend', 'admin', 'manager')
+        )
+    )
+
+def _can_approve_sermon(user):
+    return user.is_authenticated and (user.is_superuser or user.role in ('admin', 'manager') or user.is_staff)
+
+
+@login_required
+def sermon_notes(request):
+    user = request.user
+    if not _can_manage_sermons(user):
+        # Regular members only see admin-released notes
+        notes = SermonNote.objects.filter(is_public=True).select_related('pastor')
+    else:
+        notes = SermonNote.objects.select_related('pastor').all()
+    return render(request, 'sermon_notes.html', {
+        'notes': notes,
+        'can_manage': _can_manage_sermons(user),
+        'can_approve': _can_approve_sermon(user),
+    })
+
+
+@login_required
+def add_sermon_note(request, pk=None):
+    if not _can_manage_sermons(request.user):
+        messages.error(request, "Only pastors, bishops, and administrators can create sermon notes.")
+        return redirect('index')
+    note = get_object_or_404(SermonNote, pk=pk) if pk else None
+    if request.method == 'POST':
+        title = request.POST.get('title', '').strip()
+        scripture_ref = request.POST.get('scripture_ref', '').strip()
+        date_val = request.POST.get('date', '') or None
+        content = request.POST.get('content', '').strip()
+        if not title or not content:
+            messages.error(request, "Title and content are required.")
+        else:
+            if note:
+                note.title = title
+                note.scripture_ref = scripture_ref
+                note.date = date_val
+                note.content = content
+                note.save()
+                messages.success(request, "Sermon note updated.")
+            else:
+                note = SermonNote.objects.create(
+                    title=title, pastor=request.user,
+                    scripture_ref=scripture_ref, date=date_val,
+                    content=content, is_public=False,
+                )
+                messages.success(request, "Sermon note saved. An admin can release it for all members to view.")
+            return redirect('sermon_note_detail', pk=note.pk)
+    return render(request, 'add_sermon_note.html', {'note': note})
+
+
+@login_required
+def sermon_note_detail(request, pk):
+    note = get_object_or_404(SermonNote, pk=pk)
+    user = request.user
+    can_manage = _can_manage_sermons(user)
+    can_approve = _can_approve_sermon(user)
+    can_edit = user.is_superuser or user.is_staff or note.pastor == user or user.role in ('admin', 'manager')
+    if not note.is_public and not can_manage:
+        messages.error(request, "This sermon note has not been released to members yet.")
+        return redirect('index')
+    slides = note.get_slides()
+    return render(request, 'sermon_note_detail.html', {
+        'note': note,
+        'slides': slides,
+        'can_edit': can_edit,
+        'can_approve': can_approve,
+    })
+
+
+@login_required
+def approve_sermon_note(request, pk):
+    """Admin releases a sermon note to all members, or revokes release."""
+    if not _can_approve_sermon(request.user):
+        messages.error(request, "Only administrators can release sermon notes.")
+        return redirect('sermon_notes')
+    note = get_object_or_404(SermonNote, pk=pk)
+    action = request.POST.get('action', 'approve')
+    if action == 'revoke':
+        note.is_public = False
+        note.approved_by = None
+        note.approved_at = None
+        note.save()
+        messages.success(request, f"'{note.title}' is now private again.")
+    else:
+        note.is_public = True
+        note.approved_by = request.user
+        note.approved_at = timezone.now()
+        note.save()
+        messages.success(request, f"'{note.title}' released to all members.")
+    return redirect('sermon_note_detail', pk=pk)
+
+
+@login_required
+def delete_sermon_note(request, pk):
+    note = get_object_or_404(SermonNote, pk=pk)
+    user = request.user
+    if not (user.is_superuser or user.is_staff or note.pastor == user):
+        messages.error(request, "Permission denied.")
+        return redirect('sermon_notes')
+    note.delete()
+    messages.success(request, "Sermon note deleted.")
+    return redirect('sermon_notes')
+
+
+# ─── Notification Preferences ─────────────────────────────────────────────────
+
+from .models import NotificationPreference
+
+@login_required
+def notification_preferences(request):
+    prefs, _ = NotificationPreference.objects.get_or_create(user=request.user)
+    if request.method == 'POST':
+        prefs.email_announcements = request.POST.get('email_announcements') == 'on'
+        prefs.email_events = request.POST.get('email_events') == 'on'
+        prefs.email_payments = request.POST.get('email_payments') == 'on'
+        prefs.push_announcements = request.POST.get('push_announcements') == 'on'
+        prefs.push_events = request.POST.get('push_events') == 'on'
+        prefs.push_payments = request.POST.get('push_payments') == 'on'
+        prefs.sms_payments = request.POST.get('sms_payments') == 'on'
+        prefs.whatsapp_otp = request.POST.get('whatsapp_otp') == 'on'
+        prefs.whatsapp_payments = request.POST.get('whatsapp_payments') == 'on'
+        prefs.save()
+        messages.success(request, "Notification preferences saved.")
+        return redirect('notification_preferences')
+    return render(request, 'notification_preferences.html', {'prefs': prefs})

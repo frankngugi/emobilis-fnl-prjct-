@@ -1,0 +1,119 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Sermon Notes – RGC Nyahururu{% endblock %}
+
+{% block extra_css %}
+<style>
+  .notes-hero { background:linear-gradient(135deg,#1a1a1a,#8b0000); color:#fff; padding:100px 0 40px; margin-top:70px; text-align:center; }
+  .notes-hero h1 { font-size:2.2rem; font-weight:700; color:#c9a227; }
+  .note-card { background:#fff; border-radius:14px; padding:22px; box-shadow:0 3px 15px rgba(0,0,0,.07); transition:transform .2s; height:100%; display:flex; flex-direction:column; }
+  .note-card:hover { transform:translateY(-3px); box-shadow:0 6px 24px rgba(0,0,0,.12); }
+  .slide-count { background:#fff0f0; color:#8b0000; border-radius:20px; padding:3px 10px; font-size:0.72rem; font-weight:700; }
+  .status-badge-released { background:#e8f5e9; color:#27ae60; border-radius:20px; padding:3px 10px; font-size:0.72rem; font-weight:700; }
+  .status-badge-pending { background:#fff3e0; color:#f57c00; border-radius:20px; padding:3px 10px; font-size:0.72rem; font-weight:700; }
+  .restricted-notice { background:linear-gradient(135deg,#fff8e1,#fffbea); border:1px solid #f0d060; border-radius:12px; padding:16px 20px; margin-bottom:24px; }
+</style>
+{% endblock %}
+
+{% block content %}
+<section class="notes-hero">
+  <div class="container">
+    <i class="bi bi-journal-bookmark" style="font-size:2.5rem;color:#c9a227;display:block;margin-bottom:10px;"></i>
+    <h1>Sermon Notes</h1>
+    <p style="color:rgba(255,255,255,.75);">
+      {% if can_manage %}
+      Pastor's notes and outlines — project them during services
+      {% else %}
+      Released sermons from our pastors
+      {% endif %}
+    </p>
+    {% if can_manage %}
+    <a href="/sermon-notes/add/" class="btn btn-warning text-dark fw-bold mt-3">
+      <i class="bi bi-plus-circle me-1"></i>Add Sermon Note
+    </a>
+    {% endif %}
+  </div>
+</section>
+
+<section style="background:#f5f5f5;padding:40px 0 60px;">
+  <div class="container">
+    {% if messages %}{% for m in messages %}<div class="alert alert-{% if m.tags == 'error' %}danger{% else %}{{ m.tags }}{% endif %} alert-dismissible fade show">{{ m }}<button class="btn-close" data-bs-dismiss="alert"></button></div>{% endfor %}{% endif %}
+
+    {% if can_manage %}
+    <div class="restricted-notice mb-4">
+      <i class="bi bi-shield-lock me-2 text-warning"></i>
+      <strong>Restricted section</strong> — Visible to pastors, bishops, admins, and the media team.
+      Only administrators can <strong>Release</strong> a note to make it visible to all members.
+    </div>
+    {% endif %}
+
+    {% if notes %}
+    <div class="row g-3">
+      {% for note in notes %}
+      <div class="col-md-6 col-lg-4">
+        <div class="note-card">
+          <div class="d-flex justify-content-between align-items-start mb-2 gap-2 flex-wrap">
+            <span class="slide-count"><i class="bi bi-collection me-1"></i>{{ note.get_slides|length }} slide{{ note.get_slides|length|pluralize }}</span>
+            {% if note.is_public %}
+            <span class="status-badge-released"><i class="bi bi-check-circle me-1"></i>Released</span>
+            {% elif can_manage %}
+            <span class="status-badge-pending"><i class="bi bi-clock me-1"></i>Pending Approval</span>
+            {% endif %}
+          </div>
+          <h5 class="fw-bold mb-1">{{ note.title }}</h5>
+          {% if note.scripture_ref %}
+          <p class="text-danger small mb-1"><i class="bi bi-book me-1"></i>{{ note.scripture_ref }}</p>
+          {% endif %}
+          <p class="text-muted small mb-2">
+            <i class="bi bi-person me-1"></i>{{ note.pastor.get_full_name|default:note.pastor.username }}
+            {% if note.date %} · <i class="bi bi-calendar me-1"></i>{{ note.date|date:"M d, Y" }}{% endif %}
+          </p>
+          {% if note.is_public and note.approved_by %}
+          <p class="small mb-2" style="color:#27ae60;font-size:0.72rem;">
+            <i class="bi bi-check-circle me-1"></i>Released by {{ note.approved_by.get_full_name|default:note.approved_by.username }}
+          </p>
+          {% endif %}
+          <p class="small text-muted mb-3">{{ note.content|truncatewords:18 }}</p>
+          <div class="mt-auto d-flex gap-2 flex-wrap">
+            <a href="/sermon-notes/{{ note.id }}/" class="btn btn-sm btn-outline-danger flex-fill">
+              <i class="bi bi-eye me-1"></i>View{% if can_manage %} & Project{% endif %}
+            </a>
+            {% if can_approve and not note.is_public %}
+            <form method="POST" action="/sermon-notes/{{ note.id }}/approve/" class="d-inline">
+              {% csrf_token %}<input type="hidden" name="action" value="approve">
+              <button class="btn btn-sm btn-success" title="Release to all members"><i class="bi bi-send-check"></i></button>
+            </form>
+            {% endif %}
+            {% if can_approve and note.is_public %}
+            <form method="POST" action="/sermon-notes/{{ note.id }}/approve/" class="d-inline">
+              {% csrf_token %}<input type="hidden" name="action" value="revoke">
+              <button class="btn btn-sm btn-outline-warning" title="Revoke release"><i class="bi bi-lock"></i></button>
+            </form>
+            {% endif %}
+            {% if can_manage %}
+            <a href="/sermon-notes/{{ note.id }}/edit/" class="btn btn-sm btn-outline-secondary" title="Edit"><i class="bi bi-pencil"></i></a>
+            {% if user.is_superuser or user.is_staff or note.pastor == user %}
+            <a href="/sermon-notes/{{ note.id }}/delete/" class="btn btn-sm btn-outline-danger"
+               onclick="return confirm('Delete this sermon note?')" title="Delete"><i class="bi bi-trash"></i></a>
+            {% endif %}
+            {% endif %}
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="text-center py-5">
+      <i class="bi bi-journal" style="font-size:4rem;color:#c9a227;"></i>
+      {% if can_manage %}
+      <h5 class="mt-3 text-muted">No sermon notes yet</h5>
+      <a href="/sermon-notes/add/" class="btn btn-danger mt-2">Add First Sermon Note</a>
+      {% else %}
+      <h5 class="mt-3 text-muted">No released sermons yet</h5>
+      <p class="text-muted small">Sermon notes will appear here once released by an administrator.</p>
+      {% endif %}
+    </div>
+    {% endif %}
+  </div>
+</section>
+{% endblock %}

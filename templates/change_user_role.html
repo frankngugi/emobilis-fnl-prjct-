@@ -60,30 +60,88 @@
         {% csrf_token %}
         <h6 class="fw-bold mb-3">Assign Role</h6>
         <div class="row g-2 mb-4">
-          <div class="col-4">
+          {% with roles=target_user.ROLE_CHOICES %}
+          <div class="col-4 col-sm-4 col-md-4">
             <label class="role-option {% if target_user.role == 'member' %}selected-member{% endif %} d-block text-center" id="opt-member">
-              <input type="radio" name="role" value="member" {% if target_user.role == 'member' %}checked{% endif %} class="d-none" onchange="updateOpts()">
-              <i class="bi bi-person-fill d-block" style="font-size:1.8rem; color:#27ae60;"></i>
+              <input type="radio" name="role" value="member" {% if target_user.role == 'member' %}checked{% endif %} class="d-none">
+              <i class="bi bi-person-fill d-block" style="font-size:1.5rem;color:#27ae60;"></i>
               <strong class="small">Member</strong>
-              <div class="text-muted" style="font-size:0.72rem;">Basic access</div>
+              <div class="text-muted" style="font-size:0.68rem;">Basic access</div>
             </label>
           </div>
-          <div class="col-4">
+          <div class="col-4 col-sm-4 col-md-4">
+            <label class="role-option {% if target_user.role == 'patron' %}selected-manager{% endif %} d-block text-center" id="opt-patron">
+              <input type="radio" name="role" value="patron" {% if target_user.role == 'patron' %}checked{% endif %} class="d-none">
+              <i class="bi bi-star-fill d-block" style="font-size:1.5rem;color:#c9a227;"></i>
+              <strong class="small">Patron</strong>
+              <div class="text-muted" style="font-size:0.68rem;">Senior supporter</div>
+            </label>
+          </div>
+          <div class="col-4 col-sm-4 col-md-4">
+            <label class="role-option {% if target_user.role == 'secretary' %}selected-manager{% endif %} d-block text-center" id="opt-secretary">
+              <input type="radio" name="role" value="secretary" {% if target_user.role == 'secretary' %}checked{% endif %} class="d-none">
+              <i class="bi bi-journal-text d-block" style="font-size:1.5rem;color:#c9a227;"></i>
+              <strong class="small">Secretary</strong>
+              <div class="text-muted" style="font-size:0.68rem;">Records & groups</div>
+            </label>
+          </div>
+          <div class="col-4 col-sm-4 col-md-4">
+            <label class="role-option {% if target_user.role == 'treasurer' %}selected-manager{% endif %} d-block text-center" id="opt-treasurer">
+              <input type="radio" name="role" value="treasurer" {% if target_user.role == 'treasurer' %}checked{% endif %} class="d-none">
+              <i class="bi bi-cash-coin d-block" style="font-size:1.5rem;color:#c9a227;"></i>
+              <strong class="small">Treasurer</strong>
+              <div class="text-muted" style="font-size:0.68rem;">Finances</div>
+            </label>
+          </div>
+          <div class="col-4 col-sm-4 col-md-4">
+            <label class="role-option {% if target_user.role == 'chairperson' %}selected-manager{% endif %} d-block text-center" id="opt-chairperson">
+              <input type="radio" name="role" value="chairperson" {% if target_user.role == 'chairperson' %}checked{% endif %} class="d-none">
+              <i class="bi bi-person-badge-fill d-block" style="font-size:1.5rem;color:#c9a227;"></i>
+              <strong class="small">Chairperson</strong>
+              <div class="text-muted" style="font-size:0.68rem;">Chair of board</div>
+            </label>
+          </div>
+          <div class="col-4 col-sm-4 col-md-4">
+            <label class="role-option {% if target_user.role == 'leader' %}selected-manager{% endif %} d-block text-center" id="opt-leader">
+              <input type="radio" name="role" value="leader" {% if target_user.role == 'leader' %}checked{% endif %} class="d-none">
+              <i class="bi bi-people-fill d-block" style="font-size:1.5rem;color:#c9a227;"></i>
+              <strong class="small">Leader</strong>
+              <div class="text-muted" style="font-size:0.68rem;">Group / ministry</div>
+            </label>
+          </div>
+          <div class="col-4 col-sm-4 col-md-4">
+            <label class="role-option {% if target_user.role == 'pastor' %}selected-admin{% endif %} d-block text-center" id="opt-pastor">
+              <input type="radio" name="role" value="pastor" {% if target_user.role == 'pastor' %}checked{% endif %} class="d-none">
+              <i class="bi bi-book-half d-block" style="font-size:1.5rem;color:#8b0000;"></i>
+              <strong class="small">Pastor</strong>
+              <div class="text-muted" style="font-size:0.68rem;">Clergy</div>
+            </label>
+          </div>
+          <div class="col-4 col-sm-4 col-md-4">
+            <label class="role-option {% if target_user.role == 'reverend' %}selected-admin{% endif %} d-block text-center" id="opt-reverend">
+              <input type="radio" name="role" value="reverend" {% if target_user.role == 'reverend' %}checked{% endif %} class="d-none">
+              <i class="bi bi-emoji-sunglasses-fill d-block" style="font-size:1.5rem;color:#8b0000;"></i>
+              <strong class="small">Rev. / Bishop</strong>
+              <div class="text-muted" style="font-size:0.68rem;">Senior clergy</div>
+            </label>
+          </div>
+          <div class="col-4 col-sm-4 col-md-4">
             <label class="role-option {% if target_user.role == 'manager' %}selected-manager{% endif %} d-block text-center" id="opt-manager">
-              <input type="radio" name="role" value="manager" {% if target_user.role == 'manager' %}checked{% endif %} class="d-none" onchange="updateOpts()">
-              <i class="bi bi-briefcase-fill d-block" style="font-size:1.8rem; color:#c9a227;"></i>
+              <input type="radio" name="role" value="manager" {% if target_user.role == 'manager' %}checked{% endif %} class="d-none">
+              <i class="bi bi-briefcase-fill d-block" style="font-size:1.5rem;color:#c9a227;"></i>
               <strong class="small">Manager</strong>
-              <div class="text-muted" style="font-size:0.72rem;">Staff + dashboard</div>
+              <div class="text-muted" style="font-size:0.68rem;">Staff dashboard</div>
             </label>
           </div>
-          <div class="col-4">
+          <div class="col-4 col-sm-4 col-md-4">
             <label class="role-option {% if target_user.role == 'admin' %}selected-admin{% endif %} d-block text-center" id="opt-admin">
-              <input type="radio" name="role" value="admin" {% if target_user.role == 'admin' %}checked{% endif %} class="d-none" onchange="updateOpts()">
-              <i class="bi bi-shield-fill d-block" style="font-size:1.8rem; color:#8b0000;"></i>
+              <input type="radio" name="role" value="admin" {% if target_user.role == 'admin' %}checked{% endif %} class="d-none">
+              <i class="bi bi-shield-fill d-block" style="font-size:1.5rem;color:#8b0000;"></i>
               <strong class="small">Admin</strong>
-              <div class="text-muted" style="font-size:0.72rem;">Full access</div>
+              <div class="text-muted" style="font-size:0.68rem;">Full access</div>
             </label>
           </div>
+          {% endwith %}
         </div>
 
         <h6 class="fw-bold mb-3">Permissions</h6>
@@ -139,20 +197,26 @@
 
 {% block extra_js %}
 <script>
+const roleColors = {
+  member:'selected-member', patron:'selected-manager', secretary:'selected-manager',
+  treasurer:'selected-manager', chairperson:'selected-manager', leader:'selected-manager',
+  pastor:'selected-admin', reverend:'selected-admin', manager:'selected-manager', admin:'selected-admin'
+};
+const allRoles = Object.keys(roleColors);
+
 function updateOpts() {
-  ['member','manager','admin'].forEach(r => {
+  allRoles.forEach(r => {
     const opt = document.getElementById('opt-' + r);
+    if (!opt) return;
     const radio = opt.querySelector('input[type=radio]');
     opt.className = 'role-option d-block text-center';
-    if (radio.checked) opt.classList.add('selected-' + r);
+    if (radio && radio.checked) opt.classList.add(roleColors[r]);
   });
 }
-// Clicking the label div triggers radio
 document.querySelectorAll('.role-option').forEach(opt => {
   opt.addEventListener('click', function() {
     const radio = this.querySelector('input[type=radio]');
-    radio.checked = true;
-    updateOpts();
+    if (radio) { radio.checked = true; updateOpts(); }
   });
 });
 </script>
