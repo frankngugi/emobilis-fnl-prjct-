@@ -150,21 +150,31 @@ def register_view(request):
                 email=user.email,
                 defaults={'user': user, 'name': f"{user.first_name} {user.last_name}".strip() or user.username}
             )
-            # Send email verification OTP (non-fatal if email fails)
+            # Send email verification OTP — skip gracefully if email is down
+            email_sent = False
             try:
                 _send_email_otp(request, user)
-                messages.success(request, "Account created! Check your email for your verification code.")
-            except Exception:
-                messages.success(request, "Account created! Email verification is temporarily unavailable — you can log in directly.")
-                return redirect('login')
-            # Send welcome SMS if phone provided
+                email_sent = True
+            except BaseException:
+                pass
+            # Welcome SMS (optional, non-fatal)
             if user.phone:
                 try:
                     from .services import send_welcome_sms
                     send_welcome_sms(user.phone, user.first_name or user.username)
-                except Exception:
+                except BaseException:
                     pass
-            return redirect('verify_email_notice')
+            if email_sent:
+                messages.success(request, "Account created! Check your email for your verification code.")
+                return redirect('verify_email_notice')
+            else:
+                # Email unavailable — mark as verified and log them in directly
+                user.is_email_verified = True
+                user.save()
+                from django.contrib.auth import login as _login
+                _login(request, user)
+                messages.success(request, f"Welcome, {user.first_name or user.username}! Your account is ready.")
+                return redirect('index')
         else:
             for field, errors in form.errors.items():
                 for error in errors:

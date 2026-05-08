@@ -166,6 +166,7 @@ if _email_password and _email_password != 'PASTE_YOUR_16_CHAR_APP_PASSWORD_HERE'
     EMAIL_HOST = 'smtp.gmail.com'
     EMAIL_PORT = 587
     EMAIL_USE_TLS = True
+    EMAIL_TIMEOUT = 8  # fail fast — don't let SMTP hang and kill the gunicorn worker
     EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER', 'frneltp@gmail.com')
     EMAIL_HOST_PASSWORD = _email_password
     DEFAULT_FROM_EMAIL = f"Redeemed Gospel Church <{EMAIL_HOST_USER}>"
