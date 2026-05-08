@@ -41,7 +41,7 @@ def send_email(subject: str, message: str, to: list[str], html_message: str = ''
                 message=message,
                 from_email=settings.DEFAULT_FROM_EMAIL,
                 recipient_list=to,
-                fail_silently=False,
+                fail_silently=True,
             )
         logger.info(f'Email sent to {to}: {subject}')
         return True

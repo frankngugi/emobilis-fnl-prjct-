@@ -95,13 +95,20 @@ def register_view(request):
                 email=user.email,
                 defaults={'user': user, 'name': f"{user.first_name} {user.last_name}".strip() or user.username}
             )
-            # Send email verification OTP
-            _send_email_otp(request, user)
+            # Send email verification OTP (non-fatal if email fails)
+            try:
+                _send_email_otp(request, user)
+                messages.success(request, "Account created! Check your email for your verification code.")
+            except Exception:
+                messages.success(request, "Account created! Email verification is temporarily unavailable — you can log in directly.")
+                return redirect('login')
             # Send welcome SMS if phone provided
             if user.phone:
-                from .services import send_welcome_sms
-                send_welcome_sms(user.phone, user.first_name or user.username)
-            messages.success(request, "Account created! Check your email to verify your account.")
+                try:
+                    from .services import send_welcome_sms
+                    send_welcome_sms(user.phone, user.first_name or user.username)
+                except Exception:
+                    pass
             return redirect('verify_email_notice')
         else:
             for field, errors in form.errors.items():
