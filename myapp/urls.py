@@ -102,4 +102,7 @@ urlpatterns = [
 
     # Notification Preferences
     path('notifications/preferences/', views.notification_preferences, name='notification_preferences'),
+
+    # One-time setup — REMOVE this line from urls.py after first use
+    path('setup/', views.first_time_setup, name='first_time_setup'),
 ]

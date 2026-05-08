@@ -29,6 +29,61 @@ from .forms import (
 User = get_user_model()
 
 
+# ─── One-time Setup (no shell access needed) ──────────────────────────────────
+
+def first_time_setup(request):
+    """
+    One-time setup URL to create superuser and clean test data.
+    Protected by DJANGO_SUPERUSER_PASSWORD env var — safe to leave in code.
+    Remove this URL from urls.py after setup is complete.
+    """
+    import os
+    from myapp.models import BranchChurch
+
+    password = os.environ.get('DJANGO_SUPERUSER_PASSWORD', '')
+    username = os.environ.get('DJANGO_SUPERUSER_USERNAME', 'admin')
+    email = os.environ.get('DJANGO_SUPERUSER_EMAIL', '')
+
+    if not password:
+        return JsonResponse({'error': 'DJANGO_SUPERUSER_PASSWORD not set in environment.'}, status=403)
+
+    results = []
+
+    # Create superuser if not exists
+    if not User.objects.filter(is_superuser=True).exists():
+        user = User.objects.create_superuser(username=username, email=email, password=password)
+        results.append(f'✅ Superuser "{username}" created.')
+    else:
+        su = User.objects.filter(is_superuser=True).first()
+        results.append(f'ℹ️ Superuser already exists: "{su.username}".')
+
+    # Delete test/incomplete registrations (non-staff, non-superuser, unverified)
+    if request.GET.get('clean') == '1':
+        deleted = User.objects.filter(
+            is_staff=False, is_superuser=False, is_active=True
+        ).delete()
+        Member.objects.filter(user__isnull=True).delete()
+        results.append(f'🗑️ Deleted {deleted[0]} test user(s).')
+    else:
+        test_users = User.objects.filter(is_staff=False, is_superuser=False)
+        results.append(f'ℹ️ {test_users.count()} non-staff user(s) exist. Add ?clean=1 to delete them.')
+
+    # Seed RGC HQ church
+    obj, created = BranchChurch.objects.get_or_create(
+        name='RGC Nyahururu HQ',
+        defaults={
+            'region': 'nyahururu', 'location': 'Nyahururu Town, Laikipia County',
+            'status': 'active', 'latitude': -0.0296, 'longitude': 36.3590,
+            'notes': 'Central Rift Regional Headquarters',
+        }
+    )
+    results.append(f'{"✅ HQ church created." if created else "ℹ️ HQ church already exists."}')
+    results.append('---')
+    results.append(f'👉 Now go to /admin/ and log in with: {username} / [your password]')
+
+    return JsonResponse({'setup': results})
+
+
 # ─── Authentication ────────────────────────────────────────────────────────────
 
 def login_view(request):
