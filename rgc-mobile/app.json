@@ -22,7 +22,18 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#1a1a1a"
       },
-      "package": "org.redeemedgospelchurch.nyahururu"
+      "package": "org.redeemedgospelchurch.nyahururu",
+      "versionCode": 1,
+      "permissions": [
+        "INTERNET",
+        "CAMERA",
+        "READ_EXTERNAL_STORAGE",
+        "WRITE_EXTERNAL_STORAGE",
+        "RECEIVE_BOOT_COMPLETED",
+        "VIBRATE",
+        "USE_BIOMETRIC",
+        "USE_FINGERPRINT"
+      ]
     },
     "web": {
       "favicon": "./assets/favicon.png",
@@ -35,12 +46,24 @@
         "expo-notifications",
         {
           "icon": "./assets/notification-icon.png",
-          "color": "#8b0000"
+          "color": "#8b0000",
+          "sounds": []
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Allow RGC Nyahururu to access your photos for profile pictures."
         }
       ]
     ],
     "experiments": {
       "typedRoutes": true
+    },
+    "extra": {
+      "eas": {
+        "projectId": "rgc-nyahururu-church-app"
+      }
     }
   }
 }

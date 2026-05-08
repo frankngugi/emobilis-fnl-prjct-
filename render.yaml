@@ -2,22 +2,29 @@ services:
   - type: web
     name: rgc-nyahururu-cms
     env: python
-    region: oregon
+    region: frankfurt
     plan: free
-    buildCommand: |
+    buildCommand: >
       pip install -r requirements.txt &&
       python manage.py collectstatic --noinput &&
       python manage.py migrate --noinput &&
       python manage.py load_hymns
-    startCommand: gunicorn msys.wsgi:application --bind 0.0.0.0:$PORT --workers 2
+    startCommand: gunicorn msys.wsgi:application --bind 0.0.0.0:$PORT --workers 2 --timeout 120
+    healthCheckPath: /api/categories/
     envVars:
       - key: DEBUG
         value: false
+      - key: PYTHON_VERSION
+        value: 3.13.0
       - key: SECRET_KEY
         generateValue: true
       - key: ALLOWED_HOSTS
         value: rgc-nyahururu-cms.onrender.com
       - key: MPESA_ENVIRONMENT
+        value: sandbox
+      - key: MPESA_TILL_NUMBER
+        value: "538394"
+      - key: AT_USERNAME
         value: sandbox
       - key: DATABASE_URL
         fromDatabase:
@@ -28,3 +35,4 @@ databases:
   - name: rgc-db
     databaseName: rgc_cms
     plan: free
+    region: frankfurt
