@@ -1,241 +1,367 @@
-# RGC Nyahururu CMS — Complete Deployment Guide
-# Website (Render) + Mobile App (EAS APK)
+# RGC Nyahururu CMS — Deployment Guide
+# Last updated: May 2026
+
+---
+
+## QUICK ANSWER: DO I REMOVE THE API KEYS?
+
+**NO. Do not remove or delete anything from your code.**
+
+Here is exactly what happens with your secrets:
+
+| File | Goes to GitHub? | What you do |
+|------|----------------|-------------|
+| `msys/.env` | ❌ NO — blocked by `.gitignore` | Leave it as-is. It stays on your laptop only. |
+| `render.yaml` | ✅ YES — it has NO secrets (safe) | Nothing to change. |
+| `msys/settings.py` | ✅ YES — it has NO real secrets (safe) | Nothing to change. |
+| `rgc-mobile/constants/Api.ts` | ✅ YES — has no secrets | Only update social links (see Step 3 below). |
+
+**On Render**, you type the values from your `.env` file into their dashboard manually.
+Render stores them securely — they are never visible in your code.
+
+---
+
+## WHAT YOU MUST MANUALLY EDIT BEFORE DEPLOYING
+
+Only **two files** need changes. Everything else is already correct.
+
+### Edit 1 — `msys/.env` (update the M-Pesa callback URL)
+
+Open `msys/.env` and change this one line:
+
+```
+BEFORE:  MPESA_CALLBACK_URL=https://yourdomain.com/mpesa/callback/
+AFTER:   MPESA_CALLBACK_URL=https://rgc-nyahururu-cms.onrender.com/mpesa/callback/
+```
+
+Everything else in `.env` stays the same. Do not delete anything.
+
+### Edit 2 — `rgc-mobile/constants/Api.ts` (update your church social links)
+
+Open the file and fill in your actual social media page URLs:
+
+```typescript
+export const SOCIAL = {
+  facebook:  'https://www.facebook.com/YOUR_ACTUAL_PAGE',  // ← change this
+  instagram: 'https://www.instagram.com/YOUR_ACTUAL_PAGE', // ← change this
+  youtube:   'https://www.youtube.com/@YOUR_CHANNEL',       // ← change this
+  linkedin:  'https://www.linkedin.com/company/YOUR_PAGE',  // ← change this (or delete)
+  twitter:   'https://twitter.com/YOUR_PAGE',               // ← change this (or leave as-is)
+};
+```
+
+If you don't have a page for one of them, leave it as-is — the app won't show a broken link.
+
+**The BASE_URL is already set correctly:**
+```typescript
+export const BASE_URL = 'https://rgc-nyahururu-cms.onrender.com';
+```
+Do not change this unless you use a custom domain.
 
 ---
 
 ## PART 1 — DEPLOY THE WEBSITE TO RENDER
 
-### Step 1 — Push latest code to GitHub
-Open Command Prompt:
+### Step 1 — Push your code to GitHub
+
+Open Command Prompt and run:
 ```
 cd C:\Users\NGM\Documents\Francis\emobilis-fnl-prjct-
 git add -A
-git commit -m "Deploy to production"
+git commit -m "Production deployment"
 git push origin master
 ```
 
-### Step 2 — Deploy on Render
-1. Go to **https://render.com** → Log in
+> **Note:** The `msys/.env` file will NOT be pushed because it is in `.gitignore`.
+> GitHub will never see your passwords or API keys.
+
+---
+
+### Step 2 — Create the service on Render
+
+1. Go to **https://render.com** → Log in (or create a free account)
 2. Click **New** → **Blueprint**
-3. Connect GitHub → select **`emobilis-fnl-prjct-`**
-4. Render auto-reads `render.yaml` → creates web app + PostgreSQL
-5. Click **Apply**
+3. Click **Connect a repository** → Connect GitHub → select **`emobilis-fnl-prjct-`**
+4. Render reads `render.yaml` automatically
+5. Click **Apply** — Render creates:
+   - A web service named `rgc-nyahururu-cms`
+   - A free PostgreSQL database named `rgc-db`
 
-### Step 3 — Set environment variables
-In Render → your web service → **Environment** tab → add:
+> Render will run the build automatically. The first build takes 3–5 minutes.
 
-| Key | Value |
-|-----|-------|
-| `EMAIL_HOST_USER` | `frneltp@gmail.com` |
-| `EMAIL_HOST_PASSWORD` | `ifph nfgy onjh rpuh` |
-| `MPESA_CONSUMER_KEY` | *(from msys/.env)* |
-| `MPESA_CONSUMER_SECRET` | *(from msys/.env)* |
-| `MPESA_TILL_NUMBER` | `538394` |
-| `AT_USERNAME` | `sandbox` |
-| `AT_API_KEY` | *(from msys/.env)* |
-| `TWILIO_ACCOUNT_SID` | *(from msys/.env)* |
-| `TWILIO_AUTH_TOKEN` | *(from msys/.env)* |
-| `TWILIO_VERIFY_SERVICE_SID` | *(from msys/.env)* |
-| `WHATSAPP_ACCESS_TOKEN` | *(from Meta — optional)* |
-| `WHATSAPP_PHONE_NUMBER_ID` | *(from Meta — optional)* |
+---
 
-Click **Save Changes** → service restarts with new vars.
+### Step 3 — Add your secret environment variables
+
+In Render → your `rgc-nyahururu-cms` service → click **Environment** tab.
+
+Click **Add Environment Variable** and add each one below.
+Copy the exact values from your `msys/.env` file.
+
+| Key | Where to get the value | Example value from your .env |
+|-----|------------------------|-------------------------------|
+| `EMAIL_HOST_USER` | Your Gmail address | e.g. `yourchurch@gmail.com` |
+| `EMAIL_HOST_PASSWORD` | Gmail App Password (16 chars from myaccount.google.com/apppasswords) | `xxxx xxxx xxxx xxxx` |
+| `MPESA_CONSUMER_KEY` | Your Daraja sandbox app | Value in your `.env` |
+| `MPESA_CONSUMER_SECRET` | Your Daraja sandbox app | Value in your `.env` |
+| `MPESA_TILL_NUMBER` | Your real till (or `538394` for sandbox) | `538394` |
+| `MPESA_PASSKEY` | Daraja sandbox passkey | Value in your `.env` |
+| `MPESA_CALLBACK_URL` | Your Render URL | `https://rgc-nyahururu-cms.onrender.com/mpesa/callback/` |
+| `AT_USERNAME` | Africa's Talking | `sandbox` (for testing) |
+| `AT_API_KEY` | Africa's Talking dashboard | Value in your `.env` |
+| `TWILIO_ACCOUNT_SID` | Twilio console | Value in your `.env` |
+| `TWILIO_AUTH_TOKEN` | Twilio console | Value in your `.env` |
+| `TWILIO_VERIFY_SERVICE_SID` | Twilio console | Value in your `.env` |
+| `WHATSAPP_ACCESS_TOKEN` | Meta Business → WhatsApp | Value in your `.env` (if set up) |
+| `WHATSAPP_PHONE_NUMBER_ID` | Meta Business → WhatsApp | Value in your `.env` (if set up) |
+
+> **Which ones are required right now?**
+> - ✅ Required immediately: `EMAIL_HOST_USER`, `EMAIL_HOST_PASSWORD`
+> - ✅ Required for M-Pesa: `MPESA_CONSUMER_KEY`, `MPESA_CONSUMER_SECRET`, `MPESA_CALLBACK_URL`
+> - ⏳ Can skip for now: `TWILIO_*`, `WHATSAPP_*`, `AT_*` (app still works without them)
+
+Click **Save Changes** — the service restarts automatically.
+
+---
 
 ### Step 4 — Initialize the database
-In Render → your service → **Shell** tab:
+
+In Render → `rgc-nyahururu-cms` → **Shell** tab, run these commands:
+
 ```bash
+# Create your admin account (you will be asked for username/email/password)
 python manage.py createsuperuser
+
+# Load all 41 hymns (English, Swahili, Kikuyu)
 python manage.py load_hymns
+
+# Seed the RGC Nyahururu HQ church record
+python manage.py shell -c "
+from myapp.models import BranchChurch
+BranchChurch.objects.get_or_create(
+    name='RGC Nyahururu HQ',
+    defaults={
+        'region': 'nyahururu',
+        'location': 'Nyahururu Town, Laikipia County',
+        'status': 'active',
+        'latitude': -0.0296,
+        'longitude': 36.3590,
+        'notes': 'Central Rift Regional Headquarters',
+    }
+)
+print('HQ church created.')
+"
 ```
-Create a superuser with a strong password.
 
-### Step 5 — Verify deployment
-1. Visit `https://rgc-nyahururu-cms.onrender.com`
-2. Log in at `/login` with your superuser credentials
-3. Visit `/admin/` for Django admin
-4. Visit `/regional/` to see the regional churches map
-5. Visit `/bible/` to test Bible navigation + projector
-6. Test `/contribute` for M-Pesa (sandbox mode)
+---
 
-> **Note:** Render free tier sleeps after 15 min inactivity.
-> First request after sleep takes ~30 seconds.
+### Step 5 — Verify everything works
+
+Visit these URLs in your browser:
+
+| Page | URL to visit | What to check |
+|------|-------------|---------------|
+| Home | `https://rgc-nyahururu-cms.onrender.com` | Site loads with church name |
+| Login | `https://rgc-nyahururu-cms.onrender.com/login` | Can log in as admin |
+| Admin portal | `https://rgc-nyahururu-cms.onrender.com/adminn/` | Dashboard shows |
+| Django admin | `https://rgc-nyahururu-cms.onrender.com/admin/` | Full database admin |
+| Members | `https://rgc-nyahururu-cms.onrender.com/adminn/members/` | Member list loads |
+| Regional map | `https://rgc-nyahururu-cms.onrender.com/regional/` | Map shows churches |
+| Hymns | `https://rgc-nyahururu-cms.onrender.com/hymns/` | 41 hymns listed |
+| Bible | `https://rgc-nyahururu-cms.onrender.com/bible/` | Translation dropdown works |
+| Sermon notes | `https://rgc-nyahururu-cms.onrender.com/sermon-notes/` | Restricted page loads |
+| Videos | `https://rgc-nyahururu-cms.onrender.com/video` | Video page loads |
+| Contribute | `https://rgc-nyahururu-cms.onrender.com/contribute` | M-Pesa form shows |
+| API | `https://rgc-nyahururu-cms.onrender.com/api/` | Returns JSON |
+
+> **Important:** The free Render tier sleeps after 15 minutes of no traffic.
+> The first request after sleeping takes ~30 seconds. This is normal.
 > Upgrade to Starter ($7/month) to keep it always-on.
 
 ---
 
-## PART 2 — BUILD AND DEPLOY THE MOBILE APP (APK)
+## PART 2 — BUILD THE MOBILE APP (APK)
 
-### Step 1 — Update API URL to point to Render
-Edit `rgc-mobile/constants/Api.ts`:
+### Step 1 — Make sure the URL points to Render
+
+Open `rgc-mobile/constants/Api.ts` and confirm:
 ```typescript
 export const BASE_URL = 'https://rgc-nyahururu-cms.onrender.com';
 ```
+This is already set correctly. Do not change it.
 
-### Step 2 — Create Expo account
+### Step 2 — Create a free Expo account
+
 1. Go to **https://expo.dev** → Sign Up (free)
-2. Use any email → verify it
+2. Verify your email
 
-### Step 3 — Login to EAS
+### Step 3 — Login and build
+
 Open Command Prompt:
 ```
 cd C:\Users\NGM\Documents\Francis\emobilis-fnl-prjct-\rgc-mobile
+npm install
 eas login
 ```
 Enter your expo.dev email and password.
 
-### Step 4 — Configure EAS project
 ```
 eas build:configure
 ```
-Select **Android** when prompted. Press Enter for all defaults.
+Select **Android** → press Enter for defaults.
 
-### Step 5 — Build the APK
 ```
 eas build --platform android --profile preview
 ```
-When asked "Generate a new Android Keystore?" → press **Enter** (Yes).
+When asked **"Generate a new Android Keystore?"** → press **Enter** (Yes).
 
-Wait 10–15 minutes. The terminal shows progress.
-When done, you get a URL like:
+Wait **10–15 minutes**. When done you get a URL like:
 ```
 https://expo.dev/artifacts/eas/XXXXXXXXXX.apk
 ```
 
-### Step 6 — Download and share the APK
-1. Click the download URL → save the `.apk` file (typically ~80-120 MB)
-2. Send to your test user via:
-   - **WhatsApp** — send as a document/file attachment
-   - **Email** — attach and send
-   - **Google Drive** — upload, share link
-   - **USB** — copy directly to their phone
+### Step 4 — Share the APK
 
-### Step 7 — Instructions for end user (send this with the APK)
+Download the `.apk` file (about 80–120 MB) and send it to users via:
+- **WhatsApp** — send as a document/file (not as media)
+- **Google Drive** — upload, share the link
+- **Email** — attach and send
 
-> **"How to install RGC Nyahururu app:"**
-> 1. Download the file I sent you (it ends in `.apk`)
-> 2. Tap the downloaded file in your notifications or in the Downloads folder
-> 3. If phone asks "Allow from this source" → tap **Settings** → turn on → go back
-> 4. Tap **Install** → tap **Open**
+**Install instructions to send with the APK:**
+> 1. Download the file (ends in `.apk`)
+> 2. Tap it in your Downloads folder
+> 3. If asked "Allow from this source" → Settings → turn on → go back
+> 4. Tap Install → Open
 > 5. Register with your name, email, and phone number
-> 6. You're in! No need for any other app.
-
-### Step 8 — Future updates
-When you make changes to the app, just run:
-```
-eas build --platform android --profile preview
-```
-New APK link is generated. Share it — user uninstalls old and installs new.
 
 ---
 
-## PART 3 — GOING FULLY LIVE (Production M-Pesa)
+## PART 3 — SWITCH FROM SANDBOX TO REAL MONEY (M-Pesa Live)
 
-When ready to accept real money:
+When you are ready to accept real church contributions:
 
-### Get a real Safaricom M-Pesa Till
-1. Go to a Safaricom shop or M-Pesa agent with church documents
+### Get a real Safaricom Till Number
+1. Go to any **Safaricom shop** with your church registration documents
 2. Register a **Buy Goods (Merchant)** till number
-3. You'll receive a **Till Number** (e.g. 123456)
+3. You receive a **Till Number** (e.g., 654321)
 
-### Apply on Daraja Portal
+### Go Live on Daraja Portal
 1. Go to **https://developer.safaricom.co.ke**
-2. Log in → go to **My Apps** → your app → **Go Live**
-3. Fill in the application form (business registration required)
-4. Get approved production Consumer Key + Consumer Secret
+2. Log in → **My Apps** → your app → **Go Live**
+3. Fill in the application (needs business PIN or registration)
+4. You receive live **Consumer Key**, **Consumer Secret**, and **Passkey**
 
-### Update environment variables on Render
-```
-MPESA_ENVIRONMENT=production
-MPESA_TILL_NUMBER=your_real_till_number
-MPESA_CONSUMER_KEY=live_consumer_key
-MPESA_CONSUMER_SECRET=live_consumer_secret
-MPESA_CALLBACK_URL=https://rgc-nyahururu-cms.onrender.com/mpesa/callback/
-```
+### Update Render environment variables
+In Render → Environment tab, update:
 
-### Update the app API URL
-In `Api.ts` it already points to Render, so the app automatically uses production M-Pesa once the server is updated.
+| Key | Change to |
+|-----|-----------|
+| `MPESA_ENVIRONMENT` | `production` |
+| `MPESA_TILL_NUMBER` | Your real till number |
+| `MPESA_CONSUMER_KEY` | Live consumer key from Daraja |
+| `MPESA_CONSUMER_SECRET` | Live consumer secret from Daraja |
+| `MPESA_PASSKEY` | Live passkey from Daraja |
+
+Click Save Changes. Done — the app automatically uses real M-Pesa.
 
 ---
 
-## PART 4 — OPTIONAL: Custom Domain
+## PART 4 — CUSTOM DOMAIN (Optional)
 
-### Get a free domain
-- **Freenom** (.tk, .ml) — free but unreliable
-- **Cloudflare** (.com from ~$10/year) — recommended
+If you buy a domain like `rgcnyahururu.org`:
 
-### Connect to Render
-1. In Render → your service → **Settings** → **Custom Domains**
-2. Add your domain (e.g. `rgcnyahururu.org`)
-3. Render gives you CNAME records
-4. Add those CNAME records in your domain registrar's DNS settings
-5. HTTPS is automatic (Let's Encrypt)
+1. In Render → `rgc-nyahururu-cms` → **Settings** → **Custom Domains** → Add your domain
+2. Render gives you a **CNAME record** (e.g., `rgc-nyahururu-cms.onrender.com`)
+3. Go to your domain registrar → DNS settings → Add that CNAME
+4. HTTPS certificate is automatic (takes up to 24 hours)
 
-Update on Render environment:
+Update Render environment variables:
 ```
 ALLOWED_HOSTS=rgcnyahururu.org,www.rgcnyahururu.org
 MPESA_CALLBACK_URL=https://rgcnyahururu.org/mpesa/callback/
 ```
 
----
-
-## QUICK REFERENCE
-
-### Render Dashboard
+Update `rgc-mobile/constants/Api.ts`:
+```typescript
+export const BASE_URL = 'https://rgcnyahururu.org';
 ```
-https://dashboard.render.com
-→ Your service: rgc-nyahururu-cms
-→ Logs: to debug issues
-→ Shell: to run management commands
-→ Environment: to update secrets
-```
-
-### Expo Dashboard  
-```
-https://expo.dev
-→ Your project: rgc-nyahururu
-→ Builds: download past APKs
-→ Usage: track remaining free build minutes
-```
-
-### Key URLs (after deployment)
-| Page | URL |
-|------|-----|
-| Website | `https://rgc-nyahururu-cms.onrender.com` |
-| Admin | `https://rgc-nyahururu-cms.onrender.com/admin/` |
-| RGC Admin Portal | `https://rgc-nyahururu-cms.onrender.com/adminn/` |
-| API (for mobile) | `https://rgc-nyahururu-cms.onrender.com/api/` |
-| Regional Churches | `https://rgc-nyahururu-cms.onrender.com/regional/` |
-| Clergy Payments 🔒 | `https://rgc-nyahururu-cms.onrender.com/adminn/clergy-payments/` |
-
-### Default credentials (CHANGE IMMEDIATELY AFTER DEPLOY)
-```
-Username: admin
-Password: RGCAdmin2024!
-```
+Then rebuild the APK (`eas build --platform android --profile preview`).
 
 ---
 
 ## TROUBLESHOOTING
 
-### Website shows 500 error
-→ Check Render Logs tab for the actual error
-→ Common cause: missing environment variable
-→ Run `python manage.py check` in Shell
+### "Application error" or blank page on Render
+→ Render → your service → **Logs** tab → read the error message
+→ Most common cause: missing environment variable
+→ Fix: add the missing variable in Environment tab → Save → redeploy
 
-### Mobile app says "Network Error"
-→ Check BASE_URL in Api.ts points to Render URL
-→ Wait 30 sec if Render was sleeping (first request)
-→ Check `/api/categories/` returns JSON in browser
+### "Network Error" in the mobile app
+→ Check `Api.ts` has the correct Render URL
+→ Wait 30 seconds if Render was sleeping (first request)
+→ Test the URL in a browser: `https://rgc-nyahururu-cms.onrender.com/api/categories/`
+→ Should return JSON (not an error page)
 
-### M-Pesa "Auth Failed"
-→ Verify MPESA_CONSUMER_KEY and MPESA_CONSUMER_SECRET are set in Render
-→ For sandbox: use sandbox credentials from developer.safaricom.co.ke
-→ For production: use live credentials
+### "Cannot send email" / email not arriving
+→ Check `EMAIL_HOST_USER` and `EMAIL_HOST_PASSWORD` are set in Render Environment
+→ Gmail App Password must be 16 characters with spaces (e.g., `ifph nfgy onjh rpuh`)
+→ Go to **myaccount.google.com/apppasswords** to generate a new one if needed
 
-### Build fails on EAS
-→ Run `npx expo-doctor` in rgc-mobile folder
-→ Check expo.dev dashboard for build logs
-→ Common fix: `npm install` then try again
+### M-Pesa "Auth Failed" or "Invalid Transaction"
+→ Sandbox only works with `MPESA_ENVIRONMENT=sandbox` and shortcode `174379`
+→ Check `MPESA_CONSUMER_KEY` and `MPESA_CONSUMER_SECRET` are correct in Render
+→ For sandbox, get credentials at **developer.safaricom.co.ke**
+
+### EAS build fails
+→ Run `npx expo-doctor` in the `rgc-mobile` folder
+→ Check **expo.dev** → your project → Builds tab for full error logs
+→ Try: `npm install` then rebuild
+
+### Hymns not loading in app
+→ In Render Shell: `python manage.py load_hymns`
+→ The command skips hymns that already exist (safe to run multiple times)
+
+### New sermon note not visible to members
+→ This is correct behavior — pastors create notes privately
+→ Admin must go to `/sermon-notes/` → open the note → click **"Release to Members"**
+→ Only then will regular members be able to see it
+
+---
+
+## ADMIN CREDENTIALS (Change after first login)
+
+```
+Default superuser: whatever you set in Step 4 (createsuperuser)
+Django Admin:      /admin/
+RGC Admin Portal:  /adminn/
+```
+
+**Change your password immediately** after first login:
+`/adminn/` → top right → your name → Profile → Change Password
+
+---
+
+## KEY URLS REFERENCE
+
+| Page | URL |
+|------|-----|
+| Main website | `/` |
+| Login | `/login` |
+| Admin portal | `/adminn/` |
+| Django admin (full DB) | `/admin/` |
+| Members management | `/adminn/members/` |
+| Add member | `/adminn/members/add/` |
+| Manage roles | `/adminn/manage-users/` |
+| Sermon notes | `/sermon-notes/` |
+| Hymns | `/hymns/` |
+| Bible | `/bible/` |
+| Gallery | `/gallery` |
+| Videos | `/video` |
+| Regional churches | `/regional/` |
+| Clergy payments 🔒 | `/adminn/clergy-payments/` |
+| Notification settings | `/notifications/preferences/` |
+| Contribute (M-Pesa) | `/contribute` |
+| REST API | `/api/` |
 
 ---
 

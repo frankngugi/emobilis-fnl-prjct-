@@ -14,7 +14,7 @@ if os.path.exists(_env_path):
                 _val = _val.strip('<>').strip()
                 os.environ.setdefault(_key.strip(), _val)
 
-SECRET_KEY = '4+aqjgn#-v8@m*jb$*u^+2ikf=)04zq3zi(mjgm-o5j6gnylkd'
+SECRET_KEY = os.environ.get('SECRET_KEY', 'change-me-before-production-use')
 
 DEBUG = os.environ.get('DEBUG', 'True') == 'True'
 
