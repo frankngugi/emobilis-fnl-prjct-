@@ -1,6 +1,6 @@
 """
 RGC Notification Services
--  send_email()            — Gmail SMTP (FREE)
+-  send_email()            — Resend API (FREE, 3000/month, no SMTP blocking)
 -  send_push()             — Expo Push Notifications (FREE, for mobile app)
 -  send_push_to_user()     — Send push to all devices of a user
 -  send_push_to_all()      — Broadcast to all app users (announcements etc.)
@@ -8,34 +8,48 @@ RGC Notification Services
 -  send_phone_otp()        — Twilio Verify (optional, email OTP is default)
 -  verify_phone_otp()      — Twilio Verify check
 -  notify_user()           — Email + Push (free) + SMS (optional)
-
-NOTE: Twilio is NOT required. Email OTP works out of the box.
-      Push notifications replace SMS for mobile app users — completely FREE.
-      Africa's Talking SMS is available but costs ~KES 1.20/msg.
 """
 import logging
 from django.conf import settings
-from django.core.mail import send_mail, EmailMultiAlternatives
-from django.template.loader import render_to_string
 
 logger = logging.getLogger(__name__)
 
 
-# ── Email ─────────────────────────────────────────────────────────────────────
+# ── Email via Resend API (HTTPS, no SMTP port blocking) ───────────────────────
 
 def send_email(subject: str, message: str, to: list[str], html_message: str = '') -> bool:
-    """Send email via Gmail SMTP (or console in dev). Returns True on success."""
-    try:
-        if html_message:
-            email = EmailMultiAlternatives(
-                subject=subject,
-                body=message,
-                from_email=settings.DEFAULT_FROM_EMAIL,
-                to=to,
-            )
-            email.attach_alternative(html_message, 'text/html')
-            email.send()
-        else:
+    """
+    Send email via Resend API (https://resend.com).
+    Uses HTTPS — works on all cloud providers including Render free tier.
+    Falls back to Django console backend in development (no RESEND_API_KEY needed).
+    """
+    api_key = getattr(settings, 'RESEND_API_KEY', '')
+
+    if api_key:
+        # Production: use Resend HTTP API
+        try:
+            import resend
+            resend.api_key = api_key
+            from_email = getattr(settings, 'RESEND_FROM_EMAIL',
+                                  'RGC Nyahururu <onboarding@resend.dev>')
+            params = {
+                'from': from_email,
+                'to': to,
+                'subject': subject,
+                'text': message,
+            }
+            if html_message:
+                params['html'] = html_message
+            resend.Emails.send(params)
+            logger.info(f'Email sent via Resend to {to}: {subject}')
+            return True
+        except Exception as e:
+            logger.error(f'Resend email failed to {to}: {e}')
+            return False
+    else:
+        # Development: print to console
+        try:
+            from django.core.mail import send_mail
             send_mail(
                 subject=subject,
                 message=message,
@@ -43,11 +57,11 @@ def send_email(subject: str, message: str, to: list[str], html_message: str = ''
                 recipient_list=to,
                 fail_silently=True,
             )
-        logger.info(f'Email sent to {to}: {subject}')
-        return True
-    except Exception as e:
-        logger.error(f'Email failed to {to}: {e}')
-        return False
+            logger.info(f'Email (console) to {to}: {subject}')
+            return True
+        except Exception as e:
+            logger.error(f'Console email failed: {e}')
+            return False
 
 
 def send_registration_email(user) -> bool:

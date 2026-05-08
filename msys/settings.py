@@ -176,6 +176,12 @@ else:
     EMAIL_HOST_USER = 'frneltp@gmail.com'
     DEFAULT_FROM_EMAIL = 'Redeemed Gospel Church <frneltp@gmail.com>'
 
+# ── Resend — Email API (replaces SMTP, works on all cloud providers) ─────────
+RESEND_API_KEY = os.environ.get('RESEND_API_KEY', '')
+# Once you verify your own domain on resend.com, change this to your address:
+# e.g. 'RGC Nyahururu <noreply@rgcnyahururu.org>'
+RESEND_FROM_EMAIL = os.environ.get('RESEND_FROM_EMAIL', 'RGC Nyahururu <onboarding@resend.dev>')
+
 # ── Africa's Talking — SMS Kenya ─────────────────────────────────────────
 AT_USERNAME = os.environ.get('AT_USERNAME', 'sandbox')
 AT_API_KEY = os.environ.get('AT_API_KEY', '')

@@ -95,6 +95,10 @@ def login_view(request):
         selected_role = request.POST.get('portal', 'member')
         user = authenticate(request, username=username, password=password)
         if user is not None:
+            # Block unverified accounts (unless staff/superuser bypass)
+            if not user.is_email_verified and not user.is_staff and not user.is_superuser:
+                messages.error(request, "Please verify your email before logging in. Check your inbox for the verification code.")
+                return render(request, 'login.html')
             # Validate the user has permission for the selected portal
             if selected_role == 'admin' and not (user.is_superuser or user.role == 'admin'):
                 messages.error(request, "You do not have admin access.")
@@ -150,11 +154,9 @@ def register_view(request):
                 email=user.email,
                 defaults={'user': user, 'name': f"{user.first_name} {user.last_name}".strip() or user.username}
             )
-            # Send email verification OTP — skip gracefully if email is down
-            email_sent = False
+            # Send email verification OTP
             try:
                 _send_email_otp(request, user)
-                email_sent = True
             except BaseException:
                 pass
             # Welcome SMS (optional, non-fatal)
@@ -164,17 +166,8 @@ def register_view(request):
                     send_welcome_sms(user.phone, user.first_name or user.username)
                 except BaseException:
                     pass
-            if email_sent:
-                messages.success(request, "Account created! Check your email for your verification code.")
-                return redirect('verify_email_notice')
-            else:
-                # Email unavailable — mark as verified and log them in directly
-                user.is_email_verified = True
-                user.save()
-                from django.contrib.auth import login as _login
-                _login(request, user)
-                messages.success(request, f"Welcome, {user.first_name or user.username}! Your account is ready.")
-                return redirect('index')
+            messages.success(request, "Account created! Check your email for your verification code.")
+            return redirect('verify_email_notice')
         else:
             for field, errors in form.errors.items():
                 for error in errors:
