@@ -1,0 +1,134 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Regional Churches – RGC Central Rift{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<style>
+  .regional-hero { background:linear-gradient(135deg,#1a1a1a,#8b0000); color:#fff; padding:100px 0 40px; margin-top:100px; text-align:center; }
+  .regional-hero h1 { font-size:2.3rem; font-weight:700; color:#c9a227; }
+  .church-card { background:#fff; border-radius:14px; padding:22px; box-shadow:0 3px 15px rgba(0,0,0,.07); transition:transform .2s; height:100%; display:flex; flex-direction:column; }
+  .church-card:hover { transform:translateY(-3px); box-shadow:0 6px 24px rgba(0,0,0,.12); }
+  .church-badge { background:#fff0f0; color:#8b0000; border:1px solid #fcc; padding:4px 10px; border-radius:20px; font-size:.72rem; font-weight:700; align-self:flex-start; }
+  .church-badge.hq { background:linear-gradient(135deg,#8b0000,#c9a227); color:#fff; border:none; }
+  #regionalMap { height:400px; border-radius:14px; overflow:hidden; box-shadow:0 4px 20px rgba(0,0,0,.1); }
+  .stat-pill { background:#f5f5f5; border-radius:10px; padding:8px 14px; text-align:center; }
+  .stat-pill strong { display:block; font-size:1.4rem; font-weight:700; color:#8b0000; }
+  .stat-pill small { color:#888; font-size:.75rem; }
+</style>
+{% endblock %}
+
+{% block content %}
+<section class="regional-hero">
+  <div class="container">
+    <i class="bi bi-diagram-3" style="font-size:2.5rem;color:#c9a227;display:block;margin-bottom:10px;"></i>
+    <h1>Central Rift Regional Network</h1>
+    <p style="color:rgba(255,255,255,.75);">Redeemed Gospel Church — Regional HQ: Nyahururu, Laikipia County</p>
+    {% if user.is_staff or user.is_superuser %}
+    <a href="/admin/myapp/branchchurch/add/" target="_blank" class="btn btn-warning text-dark fw-bold mt-3">
+      <i class="bi bi-plus-circle me-1"></i>Add Branch Church
+    </a>
+    {% endif %}
+  </div>
+</section>
+
+<section style="background:#f5f5f5;padding:40px 0 60px;">
+  <div class="container">
+
+    <!-- Stats -->
+    <div class="row g-3 mb-4">
+      <div class="col-6 col-md-3"><div class="stat-pill"><strong>{{ total }}</strong><small>Churches</small></div></div>
+      <div class="col-6 col-md-3"><div class="stat-pill"><strong>Central Rift</strong><small>Region</small></div></div>
+      <div class="col-6 col-md-3"><div class="stat-pill"><strong>Nyahururu</strong><small>Regional HQ</small></div></div>
+      <div class="col-6 col-md-3"><div class="stat-pill"><strong>RGC Kenya</strong><small>National</small></div></div>
+    </div>
+
+    <!-- Map of all churches -->
+    <div class="mb-4">
+      <h5 class="fw-bold mb-3"><i class="bi bi-geo-alt me-2 text-danger"></i>Church Locations Map</h5>
+      <div id="regionalMap"></div>
+    </div>
+
+    <!-- Church listing -->
+    <h5 class="fw-bold mb-3"><i class="bi bi-building-check me-2 text-danger"></i>All Churches ({{ total }})</h5>
+    {% if churches %}
+    <div class="row g-3">
+      {% for church in churches %}
+      <div class="col-md-6 col-lg-4">
+        <div class="church-card">
+          <div class="d-flex justify-content-between align-items-start mb-2">
+            <span class="church-badge {% if 'HQ' in church.name or 'Nyahururu' in church.name and 'HQ' in church.notes %}hq{% endif %}">
+              {% if 'HQ' in church.name %}🏛 HQ{% else %}{{ church.get_region_display }}{% endif %}
+            </span>
+            <span class="badge {% if church.status == 'active' %}bg-success{% elif church.status == 'new' %}bg-warning text-dark{% else %}bg-secondary{% endif %}">
+              {{ church.get_status_display }}
+            </span>
+          </div>
+          <h5 class="fw-bold mb-1">{{ church.name }}</h5>
+          <p class="text-muted small mb-2"><i class="bi bi-geo-alt me-1"></i>{{ church.location }}</p>
+          {% if church.phone %}<p class="small mb-1"><i class="bi bi-telephone me-1 text-danger"></i>{{ church.phone }}</p>{% endif %}
+          {% if church.email %}<p class="small mb-1"><i class="bi bi-envelope me-1 text-danger"></i>{{ church.email }}</p>{% endif %}
+          {% if church.established_date %}<p class="small mb-2 text-muted"><i class="bi bi-calendar me-1"></i>Est. {{ church.established_date|date:"Y" }}</p>{% endif %}
+          <div class="mt-auto pt-2 d-flex gap-2">
+            <a href="/regional/{{ church.id }}/" class="btn btn-sm btn-outline-danger flex-fill">View Details</a>
+            {% if church.phone %}
+            <a href="https://wa.me/{{ church.phone|slice:'1:'|add:'254'|cut:'+' }}" target="_blank" class="btn btn-sm" style="background:#25D366;color:#fff;">
+              <i class="ri-whatsapp-fill"></i>
+            </a>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="text-center py-5">
+      <i class="bi bi-building" style="font-size:4rem;color:#c9a227;"></i>
+      <h5 class="mt-3 text-muted">No branch churches added yet</h5>
+      {% if user.is_staff or user.is_superuser %}
+      <a href="/admin/myapp/branchchurch/add/" class="btn btn-danger mt-2">Add First Church</a>
+      {% endif %}
+    </div>
+    {% endif %}
+  </div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+const map = L.map('regionalMap').setView([-0.0296, 36.3590], 9);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  attribution:'© OpenStreetMap', maxZoom:19
+}).addTo(map);
+
+const churches = [
+  {% for c in churches %}
+  {% if c.latitude and c.longitude %}
+  {
+    lat: {{ c.latitude }}, lng: {{ c.longitude }},
+    name: "{{ c.name|escapejs }}",
+    location: "{{ c.location|escapejs }}",
+    phone: "{{ c.phone|default:''|escapejs }}",
+    isHQ: {{ "true" if "HQ" in c.name else "false" }}
+  },
+  {% endif %}
+  {% endfor %}
+];
+
+churches.forEach(c => {
+  const color = c.isHQ ? '#c9a227' : '#8b0000';
+  const icon = L.divIcon({
+    className:'',
+    html:`<div style="background:${color};color:#fff;border-radius:50% 50% 50% 0;
+            width:32px;height:32px;display:flex;align-items:center;justify-content:center;
+            font-size:.9rem;box-shadow:0 2px 8px rgba(0,0,0,.3);transform:rotate(-45deg);">
+           <span style="transform:rotate(45deg);">${c.isHQ ? '★' : '✝'}</span></div>`,
+    iconSize:[32,32], iconAnchor:[16,32], popupAnchor:[0,-36]
+  });
+  L.marker([c.lat, c.lng], {icon})
+   .addTo(map)
+   .bindPopup(`<strong>${c.name}</strong><br><small>${c.location}</small>${c.phone ? `<br><small>📞 ${c.phone}</small>` : ''}`);
+});
+</script>
+{% endblock %}

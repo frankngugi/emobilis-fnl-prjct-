@@ -9,18 +9,47 @@ from django.utils import timezone
 
 class CustomUser(AbstractUser):
     ROLE_CHOICES = [
-        ('member', 'Member'),
-        ('manager', 'Manager'),
-        ('admin', 'Admin'),
+        ('member',      'Member'),
+        ('patron',      'Patron'),
+        ('secretary',   'Secretary'),
+        ('treasurer',   'Treasurer'),
+        ('chairperson', 'Chairperson'),
+        ('leader',      'Leader'),
+        ('pastor',      'Pastor'),
+        ('reverend',    'Reverend / Bishop'),
+        ('manager',     'Manager'),
+        ('admin',       'Admin'),
     ]
+
+    # Role → what they can access
+    ROLE_PERMISSIONS = {
+        'member':      {'read_content', 'register_events', 'give', 'chat', 'join_groups'},
+        'patron':      {'read_content', 'register_events', 'give', 'chat', 'view_members'},
+        'secretary':   {'read_content', 'manage_records', 'create_announcements', 'manage_groups',
+                        'create_events', 'view_members', 'chat'},
+        'treasurer':   {'read_content', 'view_finances', 'create_announcements', 'view_members', 'chat'},
+        'chairperson': {'read_content', 'manage_groups', 'create_events', 'create_announcements',
+                        'view_members', 'manage_members', 'chat'},
+        'leader':      {'read_content', 'manage_groups', 'create_events', 'create_announcements',
+                        'view_members', 'manage_members', 'view_finances', 'chat'},
+        'pastor':      {'read_content', 'manage_groups', 'create_events', 'create_announcements',
+                        'view_members', 'manage_members', 'view_finances',
+                        'view_own_clergy_records', 'chat'},
+        'reverend':    {'read_content', 'manage_groups', 'create_events', 'create_announcements',
+                        'view_members', 'manage_members', 'view_finances',
+                        'view_own_clergy_records', 'view_regional', 'chat'},
+        'manager':     {'read_content', 'manage_groups', 'create_events', 'create_announcements',
+                        'view_members', 'manage_members', 'view_finances',
+                        'upload_media', 'view_regional', 'chat'},
+        'admin':       {'all_except_clergy_finances'},
+    }
+
     phone = models.CharField(max_length=20, blank=True)
-    role = models.CharField(max_length=10, choices=ROLE_CHOICES, default='member')
+    role = models.CharField(max_length=15, choices=ROLE_CHOICES, default='member')
     is_verified = models.BooleanField(default=False)
     is_phone_verified = models.BooleanField(default=False)
     is_email_verified = models.BooleanField(default=False)
-    user_permissions = models.ManyToManyField(
-        Permission, related_name='custom_users', blank=True
-    )
+    user_permissions = models.ManyToManyField(Permission, related_name='custom_users', blank=True)
     first_name = models.CharField(max_length=30, blank=True)
     last_name = models.CharField(max_length=30, blank=True)
 
@@ -34,7 +63,23 @@ class CustomUser(AbstractUser):
         return self.role == 'admin' or self.is_superuser
 
     def is_manager_role(self):
-        return self.role in ('admin', 'manager') or self.is_staff or self.is_superuser
+        return self.role in ('admin', 'manager', 'reverend') or self.is_staff or self.is_superuser
+
+    def can(self, permission: str) -> bool:
+        """Check if user has a specific permission based on role."""
+        if self.is_superuser:
+            return True
+        perms = self.ROLE_PERMISSIONS.get(self.role, set())
+        return permission in perms or 'all_except_clergy_finances' in perms
+
+    def can_see_clergy_finances(self) -> bool:
+        return self.is_superuser
+
+    def can_manage_content(self) -> bool:
+        return self.can('create_announcements') or self.is_staff or self.is_superuser
+
+    def is_clergy(self) -> bool:
+        return self.role in ('pastor', 'reverend')
 
 
 class UserProfile(models.Model):
@@ -353,6 +398,153 @@ class Images(models.Model):
 
     def __str__(self):
         return self.title
+
+
+class BranchChurch(models.Model):
+    """Other RGC churches in the Central Rift region (RGC Nyahururu is HQ)."""
+    REGION_CHOICES = [
+        ('central_rift', 'Central Rift'),
+        ('nyahururu',    'Nyahururu Town'),
+        ('laikipia',     'Laikipia'),
+        ('nyandarua',    'Nyandarua'),
+        ('nakuru_north', 'Nakuru North'),
+        ('other',        'Other'),
+    ]
+    STATUS_CHOICES = [
+        ('active',   'Active'),
+        ('inactive', 'Inactive'),
+        ('new',      'Newly Planted'),
+    ]
+    name = models.CharField(max_length=200)
+    region = models.CharField(max_length=20, choices=REGION_CHOICES, default='central_rift')
+    location = models.CharField(max_length=200)
+    address = models.TextField(blank=True)
+    phone = models.CharField(max_length=20, blank=True)
+    email = models.EmailField(blank=True)
+    established_date = models.DateField(null=True, blank=True)
+    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='active')
+    # GPS coordinates for map
+    latitude = models.DecimalField(max_digits=9, decimal_places=6, null=True, blank=True)
+    longitude = models.DecimalField(max_digits=9, decimal_places=6, null=True, blank=True)
+    notes = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['region', 'name']
+
+    def __str__(self):
+        return f"{self.name} ({self.get_region_display()})"
+
+
+class ChurchLeader(models.Model):
+    """Pastors, Reverends, Bishops and other leaders across all branch churches."""
+    POSITION_CHOICES = [
+        ('reverend',    'Reverend / Bishop'),
+        ('pastor',      'Pastor'),
+        ('patron',      'Patron'),
+        ('chairperson', 'Chairperson'),
+        ('treasurer',   'Treasurer'),
+        ('secretary',   'Secretary'),
+        ('elder',       'Elder'),
+        ('deacon',      'Deacon'),
+        ('deaconess',   'Deaconess'),
+        ('worship',     'Worship Leader'),
+        ('youth',       'Youth Leader'),
+        ('other',       'Other'),
+    ]
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='leader_profiles'
+    )
+    church = models.ForeignKey(
+        BranchChurch, on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='leaders', help_text='Leave blank for HQ (RGC Nyahururu)'
+    )
+    position = models.CharField(max_length=20, choices=POSITION_CHOICES)
+    date_appointed = models.DateField(null=True, blank=True)
+    is_active = models.BooleanField(default=True)
+    bio = models.TextField(blank=True)
+    photo = models.ImageField(upload_to='leaders/', blank=True, null=True)
+    ordination_date = models.DateField(null=True, blank=True)
+    ordination_number = models.CharField(max_length=50, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['position', 'user__first_name']
+
+    def __str__(self):
+        church_name = self.church.name if self.church else 'HQ'
+        return f"{self.get_position_display()} {self.user.get_full_name() or self.user.username} — {church_name}"
+
+
+class RegionalMember(models.Model):
+    """Member record linked to a branch church."""
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, null=True, blank=True
+    )
+    church = models.ForeignKey(BranchChurch, on_delete=models.CASCADE, related_name='reg_members')
+    name = models.CharField(max_length=200)
+    email = models.EmailField(blank=True)
+    phone = models.CharField(max_length=20, blank=True)
+    date_joined = models.DateField(null=True, blank=True)
+    fellowship_group = models.CharField(max_length=100, blank=True)
+    notes = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['church', 'name']
+
+    def __str__(self):
+        return f"{self.name} — {self.church.name}"
+
+
+class ClergyPayment(models.Model):
+    """
+    Clergy salary, allowances and remittances.
+    ONLY visible to superadmin — completely separate from regular contributions.
+    """
+    PAYMENT_TYPE_CHOICES = [
+        ('salary',        'Monthly Salary'),
+        ('allowance',     'Allowance'),
+        ('tithe_share',   'Tithe Share'),
+        ('transport',     'Transport Allowance'),
+        ('housing',       'Housing Allowance'),
+        ('medical',       'Medical Allowance'),
+        ('other',         'Other'),
+    ]
+    STATUS_CHOICES = [
+        ('pending',  'Pending Approval'),
+        ('approved', 'Approved'),
+        ('paid',     'Paid'),
+        ('rejected', 'Rejected'),
+    ]
+    recipient = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='clergy_payments'
+    )
+    church = models.ForeignKey(
+        BranchChurch, on_delete=models.SET_NULL, null=True, blank=True
+    )
+    payment_type = models.CharField(max_length=20, choices=PAYMENT_TYPE_CHOICES)
+    amount = models.DecimalField(max_digits=10, decimal_places=2)
+    period = models.CharField(max_length=50, blank=True, help_text='e.g. May 2026')
+    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='pending')
+    paid_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='payments_made'
+    )
+    approved_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='payments_approved'
+    )
+    mpesa_receipt = models.CharField(max_length=50, blank=True)
+    notes = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    paid_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"{self.get_payment_type_display()} — {self.recipient.get_full_name() or self.recipient.username} — KES {self.amount}"
 
 
 class Video(models.Model):

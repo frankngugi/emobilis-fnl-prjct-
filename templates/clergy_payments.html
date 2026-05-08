@@ -1,0 +1,134 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Clergy Payments – SUPERADMIN ONLY{% endblock %}
+{% block body_class %}admin-portal{% endblock %}
+
+{% block extra_css %}
+<style>
+  .admin-layout { display:flex; min-height:calc(100vh - 100px); margin-top:100px; }
+  .admin-sidebar { width:240px; flex-shrink:0; background:linear-gradient(180deg,#1a1a1a,#2d0000); position:sticky; top:100px; height:calc(100vh - 100px); overflow-y:auto; }
+  .sidebar-link { display:flex; align-items:center; gap:9px; padding:10px 16px; color:rgba(255,255,255,.75); font-size:.84rem; text-decoration:none; transition:all .2s; }
+  .sidebar-link:hover, .sidebar-link.active { background:rgba(201,162,39,.13); color:#c9a227; border-right:3px solid #c9a227; text-decoration:none; }
+  .admin-main { flex:1; background:#f0f2f5; padding:24px; }
+  .restricted-banner { background:linear-gradient(135deg,#1a1a1a,#8b0000); color:#fff; border-radius:12px; padding:16px 20px; margin-bottom:20px; display:flex; align-items:center; gap:12px; }
+  .data-card { background:#fff; border-radius:12px; box-shadow:0 2px 12px rgba(0,0,0,.06); overflow:hidden; margin-bottom:20px; }
+  .data-card-header { padding:14px 20px; border-bottom:1px solid #f0f0f0; display:flex; align-items:center; justify-content:space-between; }
+  .data-card-header h6 { font-weight:700; margin:0; }
+  @media(max-width:900px){.admin-sidebar{display:none;}}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="admin-layout">
+  <aside class="admin-sidebar">
+    <div style="padding:18px 16px;border-bottom:1px solid rgba(255,255,255,.08);">
+      <span style="color:#c9a227;font-weight:700;">🔒 Superadmin Only</span>
+    </div>
+    <a href="/adminn/" class="sidebar-link"><i class="bi bi-speedometer2"></i>Dashboard</a>
+    <a href="/adminn/clergy-payments/" class="sidebar-link active"><i class="bi bi-cash-coin"></i>Clergy Payments</a>
+    <a href="/adminn/clergy-payments/add/" class="sidebar-link"><i class="bi bi-plus-circle"></i>Add Payment</a>
+    <a href="/adminn/manage-users/" class="sidebar-link"><i class="bi bi-people"></i>Manage Users</a>
+    <a href="/admin/myapp/branchchurch/" target="_blank" class="sidebar-link"><i class="bi bi-building"></i>Branch Churches</a>
+    <a href="/admin/" class="sidebar-link"><i class="bi bi-gear"></i>Django Admin</a>
+    <a href="/logout" class="sidebar-link" style="color:#ff6b6b;"><i class="bi bi-box-arrow-right"></i>Logout</a>
+  </aside>
+
+  <main class="admin-main">
+    <!-- Restricted banner -->
+    <div class="restricted-banner">
+      <i class="bi bi-shield-lock-fill fs-4 text-warning"></i>
+      <div>
+        <div class="fw-bold">Clergy Remuneration — Superadmin Access Only</div>
+        <div class="small opacity-75">This section is hidden from all other users including Admin and Manager roles.</div>
+      </div>
+    </div>
+
+    {% if messages %}{% for m in messages %}<div class="alert alert-{% if m.tags == 'error' %}danger{% else %}{{ m.tags }}{% endif %} alert-dismissible fade show">{{ m }}<button class="btn-close" data-bs-dismiss="alert"></button></div>{% endfor %}{% endif %}
+
+    <!-- Summary stats -->
+    <div class="row g-3 mb-4">
+      <div class="col-md-4">
+        <div class="data-card p-4 text-center">
+          <div class="fs-1 fw-bold text-danger">KES {{ total_approved|floatformat:0 }}</div>
+          <small class="text-muted">Total Approved/Paid</small>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="data-card p-4 text-center">
+          <div class="fs-1 fw-bold text-warning">{{ pending.count }}</div>
+          <small class="text-muted">Pending Approval</small>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="data-card p-4 text-center">
+          <div class="fs-1 fw-bold" style="color:#c9a227;">{{ payments.count }}</div>
+          <small class="text-muted">Total Records</small>
+        </div>
+      </div>
+    </div>
+
+    <!-- Pending payments alert -->
+    {% if pending %}
+    <div class="data-card" style="border-top:4px solid #c9a227;">
+      <div class="data-card-header">
+        <h6><i class="bi bi-hourglass-split me-2 text-warning"></i>Pending Approval ({{ pending.count }})</h6>
+        <a href="/adminn/clergy-payments/add/" class="btn btn-sm btn-danger">+ Add Payment</a>
+      </div>
+      <div class="table-responsive">
+        <table class="table table-hover mb-0">
+          <thead class="table-light"><tr><th>Recipient</th><th>Type</th><th>Amount</th><th>Period</th><th>Church</th><th>Date</th></tr></thead>
+          <tbody>
+            {% for p in pending %}
+            <tr>
+              <td class="fw-semibold">{{ p.recipient.get_full_name|default:p.recipient.username }}<br><small class="text-muted">{{ p.recipient.get_role_display_label }}</small></td>
+              <td>{{ p.get_payment_type_display }}</td>
+              <td><strong>KES {{ p.amount }}</strong></td>
+              <td>{{ p.period|default:"—" }}</td>
+              <td><small>{{ p.church.name|default:"HQ" }}</small></td>
+              <td><small>{{ p.created_at|date:"M d, Y" }}</small></td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+    {% endif %}
+
+    <!-- All payments -->
+    <div class="data-card">
+      <div class="data-card-header">
+        <h6><i class="bi bi-cash-coin me-2 text-danger"></i>All Clergy Payment Records</h6>
+        <a href="/adminn/clergy-payments/add/" class="btn btn-sm btn-danger">+ Add</a>
+      </div>
+      <div class="table-responsive">
+        <table class="table table-hover mb-0">
+          <thead class="table-light">
+            <tr><th>Recipient</th><th>Role</th><th>Type</th><th>Amount</th><th>Period</th><th>Church</th><th>Status</th><th>Receipt</th><th>Date</th></tr>
+          </thead>
+          <tbody>
+            {% for p in payments %}
+            <tr>
+              <td class="fw-semibold">{{ p.recipient.get_full_name|default:p.recipient.username }}</td>
+              <td><small class="badge bg-dark">{{ p.recipient.get_role_display_label }}</small></td>
+              <td>{{ p.get_payment_type_display }}</td>
+              <td><strong>KES {{ p.amount }}</strong></td>
+              <td>{{ p.period|default:"—" }}</td>
+              <td><small>{{ p.church.name|default:"HQ" }}</small></td>
+              <td>
+                <span class="badge {% if p.status == 'paid' %}bg-success{% elif p.status == 'approved' %}bg-primary{% elif p.status == 'pending' %}bg-warning text-dark{% else %}bg-danger{% endif %}">
+                  {{ p.get_status_display }}
+                </span>
+              </td>
+              <td><small class="text-muted">{{ p.mpesa_receipt|default:"—" }}</small></td>
+              <td><small>{{ p.created_at|date:"M d, Y" }}</small></td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="9" class="text-center text-muted py-4">No payment records yet</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+</div>
+{% endblock %}

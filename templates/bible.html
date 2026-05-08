@@ -1,137 +1,196 @@
 {% extends "base.html" %}
 {% load static %}
-
 {% block title %}Bible – Redeemed Gospel Church Nyahururu{% endblock %}
 
 {% block extra_css %}
 <style>
-  .bible-hero { background: linear-gradient(135deg, #1a1a1a 0%, #4a1000 100%); color: #fff; padding: 100px 0 50px; margin-top: 70px; text-align: center; }
-  .bible-hero h1 { font-size: 2.5rem; font-weight: 700; color: #c9a227; }
-  .search-card { background: #fff; border-radius: 14px; box-shadow: 0 8px 30px rgba(0,0,0,0.15); padding: 30px; max-width: 700px; margin: -40px auto 0; position: relative; z-index: 2; }
-  .ref-input { border: 2px solid #ddd; border-radius: 10px; padding: 14px 18px; font-size: 1rem; width: 100%; transition: border-color 0.3s; }
-  .ref-input:focus { border-color: #8b0000; outline: none; box-shadow: 0 0 0 3px rgba(139,0,0,0.12); }
-  .btn-bible { background: linear-gradient(135deg, #8b0000, #c9a227); color: #fff; border: none; border-radius: 10px; padding: 13px 30px; font-weight: 600; font-size: 1rem; width: 100%; }
-  .verse-card { background: #fff; border-radius: 14px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); padding: 35px; margin-bottom: 25px; border-left: 5px solid #c9a227; }
-  .verse-reference { font-size: 1.1rem; font-weight: 700; color: #8b0000; margin-bottom: 5px; }
-  .verse-text { font-size: 1.1rem; line-height: 2; color: #333; font-style: italic; }
-  .verse-number { color: #8b0000; font-size: 0.8rem; font-weight: 700; vertical-align: super; margin-right: 3px; }
-  .book-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 6px; }
-  .book-btn { background: #f8f8f8; border: 1.5px solid #e5e5e5; border-radius: 8px; padding: 7px 10px; font-size: 0.8rem; color: #444; text-align: center; transition: all 0.2s; text-decoration: none; display: block; }
-  .book-btn:hover { background: #8b0000; color: #fff; border-color: #8b0000; text-decoration: none; }
-  .book-btn.nt { border-color: #c9a227; }
-  .book-btn.nt:hover { background: #c9a227; color: #1a1a1a; }
-  .section-label { font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: #888; margin: 18px 0 8px; }
-  .tip-card { background: #fffbea; border: 1px solid #c9a227; border-radius: 10px; padding: 12px 18px; font-size: 0.88rem; }
-  .quick-ref { display: inline-block; padding: 5px 12px; background: #f0f0f0; border: 1px solid #ddd; border-radius: 20px; font-size: 0.82rem; color: #555; text-decoration: none; transition: all 0.2s; margin: 3px 2px; }
-  .quick-ref:hover { background: #8b0000; color: #fff; border-color: #8b0000; text-decoration: none; }
+  .bible-hero { background: linear-gradient(135deg, #1a1a1a 0%, #4a1000 100%); color:#fff; padding:100px 0 30px; margin-top:100px; text-align:center; }
+  .bible-hero h1 { font-size:2.4rem; font-weight:700; color:#c9a227; }
+  .search-card { background:#fff; border-radius:14px; box-shadow:0 8px 30px rgba(0,0,0,.15); padding:24px; max-width:800px; margin:-30px auto 0; position:relative; z-index:2; }
+  /* Book/Chapter/Verse selectors */
+  .bcv-row { display:flex; gap:10px; flex-wrap:wrap; }
+  .bcv-select { flex:1; min-width:140px; border:2px solid #e0e0e0; border-radius:10px; padding:11px 14px; font-size:.92rem; background:#fff; cursor:pointer; transition:border-color .2s; }
+  .bcv-select:focus { border-color:#8b0000; outline:none; }
+  .btn-fetch { background:linear-gradient(135deg,#8b0000,#c9a227); color:#fff; border:none; border-radius:10px; padding:11px 24px; font-weight:700; font-size:.95rem; white-space:nowrap; cursor:pointer; }
+  .btn-fetch:hover { opacity:.88; }
+  /* Quick search bar */
+  .quick-search { display:flex; gap:8px; margin-top:12px; }
+  .quick-input { flex:1; border:1.5px solid #ddd; border-radius:10px; padding:10px 14px; font-size:.9rem; }
+  .quick-input:focus { border-color:#8b0000; outline:none; }
+  /* Verse result */
+  .verse-card { background:#fff; border-radius:14px; box-shadow:0 4px 20px rgba(0,0,0,.08); padding:32px; margin:0 auto; max-width:800px; border-left:5px solid #c9a227; }
+  .verse-ref { font-size:1.1rem; font-weight:700; color:#8b0000; }
+  .verse-trans { font-size:.78rem; color:#aaa; margin-top:2px; }
+  .verse-body { font-size:1.15rem; line-height:2.1; color:#333; font-style:italic; margin:14px 0; }
+  .v-num { color:#8b0000; font-size:.75rem; font-weight:700; vertical-align:super; margin-right:3px; }
+  /* Navigation arrows */
+  .verse-nav { display:flex; gap:10px; align-items:center; }
+  .nav-btn { border:1.5px solid #e0e0e0; background:#fff; border-radius:8px; padding:7px 16px; font-size:.85rem; cursor:pointer; transition:all .2s; }
+  .nav-btn:hover { border-color:#8b0000; color:#8b0000; }
+  /* Book browser */
+  .books-panel { background:#fff; border-radius:12px; padding:20px; }
+  .section-lbl { font-size:.7rem; font-weight:700; text-transform:uppercase; letter-spacing:.1em; color:#aaa; margin:14px 0 8px; }
+  .books-grid { display:flex; flex-wrap:wrap; gap:5px; }
+  .book-chip { padding:6px 10px; background:#f5f5f5; border:1px solid #e5e5e5; border-radius:8px; font-size:.78rem; color:#444; cursor:pointer; transition:all .2s; text-decoration:none; }
+  .book-chip:hover { background:#8b0000; color:#fff; border-color:#8b0000; text-decoration:none; }
+  .book-chip.nt { border-color:#c9a227; }
+  .book-chip.nt:hover { background:#c9a227; color:#1a1a1a; }
+  /* Quick refs */
+  .quick-chip { display:inline-block; padding:5px 13px; background:#f8f8f8; border:1.5px solid #ddd; border-radius:20px; font-size:.8rem; color:#555; cursor:pointer; text-decoration:none; transition:all .2s; margin:3px 2px; }
+  .quick-chip:hover { background:#8b0000; color:#fff; border-color:#8b0000; text-decoration:none; }
+  .error-box { background:#fff5f5; border:1px solid #fcc; border-radius:10px; padding:14px 18px; color:#c0392b; }
+  /* ── PROJECTOR MODE ── */
+  #projectorOverlay {
+    display:none; position:fixed; inset:0; z-index:99999;
+    background:#1a1a1a; color:#fff;
+    flex-direction:column; align-items:center; justify-content:center;
+    padding:40px 60px; text-align:center;
+  }
+  #projectorOverlay.light { background:#fff; color:#1a1a1a; }
+  #projectorOverlay.active { display:flex; }
+  #projectorRef { font-size:1.4rem; font-weight:700; color:#c9a227; margin-bottom:20px; letter-spacing:.05em; }
+  #projectorOverlay.light #projectorRef { color:#8b0000; }
+  #projectorText { font-size:var(--proj-size, 2.4rem); line-height:1.7; font-style:italic; max-width:1000px; }
+  .proj-controls { position:fixed; top:20px; right:20px; display:flex; gap:10px; z-index:100000; }
+  .proj-btn { background:rgba(255,255,255,.15); border:none; color:#fff; border-radius:8px; padding:8px 14px; cursor:pointer; font-size:.85rem; transition:background .2s; }
+  #projectorOverlay.light .proj-btn { background:rgba(0,0,0,.1); color:#333; }
+  .proj-btn:hover { background:rgba(255,255,255,.3); }
+  #projectorOverlay.light .proj-btn:hover { background:rgba(0,0,0,.2); }
+  .proj-nav { position:fixed; bottom:30px; display:flex; gap:20px; }
+  .proj-nav-btn { background:rgba(201,162,39,.3); border:2px solid #c9a227; color:#fff; border-radius:50%; width:60px; height:60px; font-size:1.4rem; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:all .2s; }
+  .proj-nav-btn:hover { background:#c9a227; color:#1a1a1a; }
 </style>
 {% endblock %}
 
 {% block content %}
+<!-- ── PROJECTOR OVERLAY ── -->
+<div id="projectorOverlay">
+  <div class="proj-controls">
+    <button class="proj-btn" onclick="changeSize(1)">A+</button>
+    <button class="proj-btn" onclick="changeSize(-1)">A-</button>
+    <button class="proj-btn" onclick="toggleTheme()">☀ / ☾</button>
+    <button class="proj-btn" onclick="closeProjector()">✕ Exit</button>
+  </div>
+  <div id="projectorRef">John 3:16</div>
+  <div id="projectorText">"For God so loved the world..."</div>
+  <div class="proj-nav">
+    <button class="proj-nav-btn" onclick="projNav(-1)" title="Previous chapter">‹</button>
+    <button class="proj-nav-btn" onclick="projNav(1)" title="Next chapter">›</button>
+  </div>
+</div>
 
 <section class="bible-hero">
   <div class="container">
-    <h1><i class="ri-book-open-line me-2"></i>Holy Bible</h1>
-    <p>Read, search, and meditate on God's Word</p>
+    <i class="ri-book-open-line" style="font-size:2.5rem;color:#c9a227;"></i>
+    <h1>Holy Bible</h1>
+    <p style="color:rgba(255,255,255,.7);">World English Bible — Read, Search, and Project</p>
   </div>
 </section>
 
-<section class="py-5" style="background:#f5f5f5; padding-top:80px !important;">
+<section style="background:#f5f5f5; padding:60px 0 50px;">
   <div class="container">
 
-    <!-- Search Card -->
+    <!-- ── Search Card ── -->
     <div class="search-card">
-      <h5 class="fw-bold mb-1 text-center">Search a Verse or Passage</h5>
-      <p class="text-muted text-center small mb-4">Enter a Bible reference — e.g. John 3:16 · Psalms 23:1-6 · Romans 8:28</p>
-      <form method="GET" action="/bible/">
-        <div class="row g-2 align-items-end">
-          <div class="col-sm-8">
-            <input type="text" name="ref" class="ref-input" value="{{ reference }}" placeholder="e.g. John 3:16 or Psalms 23" autofocus>
-          </div>
-          <div class="col-sm-4">
-            <button type="submit" class="btn-bible"><i class="bi bi-search me-2"></i>Search</button>
-          </div>
+      <h5 class="fw-bold mb-1 text-center">Browse by Book → Chapter → Verse</h5>
+      <p class="text-muted text-center small mb-3">Select a book and chapter, or type a reference below</p>
+
+      <!-- Structured BCV selectors -->
+      <form id="bcvForm" onsubmit="fetchBCV(event)">
+        <div class="bcv-row mb-3">
+          <select id="bookSel" class="bcv-select" onchange="loadChapters()">
+            <option value="">— Select Book —</option>
+            <optgroup label="Old Testament">
+              {% for b in books|slice:":39" %}<option value="{{ b }}">{{ b }}</option>{% endfor %}
+            </optgroup>
+            <optgroup label="New Testament">
+              {% for b in books|slice:"39:" %}<option value="{{ b }}">{{ b }}</option>{% endfor %}
+            </optgroup>
+          </select>
+          <select id="chapSel" class="bcv-select" onchange="loadVerses()">
+            <option value="">— Chapter —</option>
+          </select>
+          <select id="verseSel" class="bcv-select">
+            <option value="">— Verse (opt) —</option>
+          </select>
+          <button type="submit" class="btn-fetch"><i class="bi bi-book me-1"></i>Read</button>
         </div>
       </form>
 
-      <!-- Quick reference links (hardcoded — no split filter needed) -->
-      <div class="tip-card mt-3">
-        <strong class="small">Quick examples:</strong>
-        <div class="mt-2">
-          <a href="/bible/?ref=John+3%3A16" class="quick-ref">John 3:16</a>
-          <a href="/bible/?ref=Psalms+23" class="quick-ref">Psalms 23</a>
-          <a href="/bible/?ref=Romans+8%3A28" class="quick-ref">Romans 8:28</a>
-          <a href="/bible/?ref=Proverbs+3%3A5-6" class="quick-ref">Proverbs 3:5-6</a>
-          <a href="/bible/?ref=Philippians+4%3A13" class="quick-ref">Philippians 4:13</a>
-          <a href="/bible/?ref=Genesis+1%3A1" class="quick-ref">Genesis 1:1</a>
-          <a href="/bible/?ref=Isaiah+40%3A31" class="quick-ref">Isaiah 40:31</a>
-          <a href="/bible/?ref=Matthew+6%3A33" class="quick-ref">Matthew 6:33</a>
-          <a href="/bible/?ref=Jeremiah+29%3A11" class="quick-ref">Jeremiah 29:11</a>
-        </div>
+      <!-- Free-text search -->
+      <div class="quick-search">
+        <input type="text" id="refInput" class="quick-input" placeholder="Or type: John 3:16 · Psalms 23 · Romans 8:28-39"
+               value="{{ reference }}" onkeydown="if(event.key==='Enter'){fetchRef()}">
+        <button class="btn-fetch" onclick="fetchRef()"><i class="bi bi-search me-1"></i>Search</button>
+      </div>
+
+      <!-- Quick refs -->
+      <div class="mt-3">
+        <strong class="small text-muted">Quick:</strong>
+        {% for r in quick_refs %}
+        <a href="javascript:void(0)" class="quick-chip" onclick="quickLoad('{{ r }}')">{{ r }}</a>
+        {% endfor %}
       </div>
     </div>
 
-    <!-- Verse Result -->
-    {% if verse_data %}
-    <div class="mt-5" data-aos="fade-up">
+    <!-- ── Loading indicator ── -->
+    <div id="bibleLoading" class="text-center py-4" style="display:none;">
+      <div class="spinner-border text-danger" role="status"></div>
+      <p class="mt-2 text-muted small">Fetching from Bible API...</p>
+    </div>
+
+    <!-- ── Error ── -->
+    <div id="bibleError" class="error-box mt-4" style="display:none;max-width:800px;margin:16px auto;">
+      <i class="bi bi-exclamation-triangle me-2"></i><span id="bibleErrorMsg"></span>
+    </div>
+
+    <!-- ── Verse Result ── -->
+    <div id="verseResult" style="margin-top:24px;display:none;">
       <div class="verse-card">
-        <div class="verse-reference"><i class="bi bi-book-fill me-2"></i>{{ verse_data.reference }}</div>
-        <p class="text-muted small mb-4">Translation: {{ verse_data.translation_name|default:"World English Bible" }}</p>
-        <div class="verse-text">
-          {% if verse_data.verses %}
-            {% for verse in verse_data.verses %}
-            <span><sup class="verse-number">{{ verse.verse }}</sup>{{ verse.text }} </span>
+        <div class="d-flex justify-content-between align-items-start flex-wrap gap-3">
+          <div>
+            <div class="verse-ref" id="verseRef"></div>
+            <div class="verse-trans" id="verseTrans"></div>
+          </div>
+          <div class="d-flex gap-2 flex-wrap">
+            <button class="nav-btn" onclick="window.print()"><i class="bi bi-printer me-1"></i>Print</button>
+            <button class="nav-btn" onclick="copyVerse()"><i class="bi bi-clipboard me-1"></i>Copy</button>
+            <button class="nav-btn" id="projBtn" onclick="openProjector()"
+                    style="background:linear-gradient(135deg,#1a1a1a,#8b0000);color:#fff;border-color:#8b0000;">
+              <i class="bi bi-projector me-1"></i>Project
+            </button>
+          </div>
+        </div>
+        <hr style="border-color:#f0f0f0;">
+        <div class="verse-body" id="verseBody"></div>
+        <div class="verse-nav mt-3">
+          <button class="nav-btn" id="prevBtn" onclick="navigateChapter(-1)">‹ Previous Chapter</button>
+          <button class="nav-btn" id="nextBtn" onclick="navigateChapter(1)">Next Chapter ›</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Books Browser ── -->
+    <div style="margin-top:30px; max-width:800px; margin-left:auto; margin-right:auto;">
+      <details open>
+        <summary style="cursor:pointer;font-weight:700;font-size:1rem;padding:12px 16px;background:#fff;border-radius:10px;list-style:none;">
+          <i class="ri-library-line me-2 text-danger"></i>Browse All 66 Books
+        </summary>
+        <div class="books-panel mt-2">
+          <div class="section-lbl">Old Testament (39 books)</div>
+          <div class="books-grid">
+            {% for b in books|slice:":39" %}
+            <a href="javascript:void(0)" class="book-chip" onclick="quickLoad('{{ b }} 1')">{{ b }}</a>
             {% endfor %}
-          {% else %}
-            {{ verse_data.text }}
-          {% endif %}
+          </div>
+          <div class="section-lbl">New Testament (27 books)</div>
+          <div class="books-grid">
+            {% for b in books|slice:"39:" %}
+            <a href="javascript:void(0)" class="book-chip nt" onclick="quickLoad('{{ b }} 1')">{{ b }}</a>
+            {% endfor %}
+          </div>
         </div>
-        <div class="mt-4 d-flex gap-2 flex-wrap">
-          <button onclick="copyVerse()" class="btn btn-sm btn-outline-secondary"><i class="bi bi-clipboard me-1"></i>Copy</button>
-          <button onclick="window.print()" class="btn btn-sm btn-outline-secondary"><i class="bi bi-printer me-1"></i>Print</button>
-        </div>
-      </div>
-    </div>
-    {% elif error %}
-    <div class="alert alert-warning mt-5 text-center"><i class="bi bi-exclamation-triangle me-2"></i>{{ error }}</div>
-    {% elif reference %}
-    <div class="alert alert-info mt-5 text-center"><i class="bi bi-info-circle me-2"></i>No results found for "{{ reference }}". Try a format like <strong>John 3:16</strong> or <strong>Psalms 23</strong>.</div>
-    {% endif %}
-
-    <!-- Books Browser -->
-    <div class="mt-5">
-      <h5 class="fw-bold mb-1">Browse by Book</h5>
-      <p class="text-muted small mb-3">Click a book to read its first chapter</p>
-      <div class="p-4 bg-white rounded-3 shadow-sm">
-        <div class="section-label">Old Testament (39 books)</div>
-        <div class="book-grid">
-          {% for book in books|slice:":39" %}
-          <a href="/bible/?ref={{ book|urlencode }}+1" class="book-btn">{{ book }}</a>
-          {% endfor %}
-        </div>
-        <div class="section-label mt-4">New Testament (27 books)</div>
-        <div class="book-grid">
-          {% for book in books|slice:"39:" %}
-          <a href="/bible/?ref={{ book|urlencode }}+1" class="book-btn nt">{{ book }}</a>
-          {% endfor %}
-        </div>
-      </div>
-    </div>
-
-    <!-- Daily Suggestions Banner -->
-    <div class="mt-4 p-4 rounded-3" style="background:linear-gradient(135deg,#1a1a1a,#8b0000);">
-      <div class="row align-items-center">
-        <div class="col-md-6">
-          <h6 class="mb-1" style="color:#c9a227;"><i class="ri-sun-line me-2"></i>Suggested Passages</h6>
-          <p class="mb-0 opacity-75 small" style="color:#fff;">Great passages to start your day</p>
-        </div>
-        <div class="col-md-6 mt-3 mt-md-0 d-flex flex-wrap gap-2">
-          <a href="/bible/?ref=Psalms+23" class="quick-ref" style="background:rgba(201,162,39,0.2);color:#c9a227;border-color:#c9a227;">Psalm 23</a>
-          <a href="/bible/?ref=John+15%3A1-17" class="quick-ref" style="background:rgba(255,255,255,0.1);color:#fff;border-color:rgba(255,255,255,0.3);">John 15:1-17</a>
-          <a href="/bible/?ref=Isaiah+40%3A28-31" class="quick-ref" style="background:rgba(201,162,39,0.2);color:#c9a227;border-color:#c9a227;">Isaiah 40:28-31</a>
-          <a href="/bible/?ref=Matthew+5%3A1-12" class="quick-ref" style="background:rgba(255,255,255,0.1);color:#fff;border-color:rgba(255,255,255,0.3);">Matthew 5:1-12</a>
-        </div>
-      </div>
+      </details>
     </div>
 
   </div>
@@ -140,12 +199,192 @@
 
 {% block extra_js %}
 <script>
-function copyVerse() {
-  const ref = document.querySelector('.verse-reference')?.textContent?.trim() || '';
-  const text = document.querySelector('.verse-text')?.textContent?.trim() || '';
-  navigator.clipboard.writeText(ref + '\n\n' + text)
-    .then(() => alert('Verse copied to clipboard!'))
-    .catch(() => { /* fallback */ });
+// ── Bible chapter counts ─────────────────────────────────────────────────────
+const CHAPTERS = {
+  "Genesis":66,"Exodus":40,"Leviticus":27,"Numbers":36,"Deuteronomy":34,
+  "Joshua":24,"Judges":21,"Ruth":4,"1 Samuel":31,"2 Samuel":24,
+  "1 Kings":22,"2 Kings":25,"1 Chronicles":29,"2 Chronicles":36,
+  "Ezra":10,"Nehemiah":13,"Esther":10,"Job":42,"Psalms":150,"Proverbs":31,
+  "Ecclesiastes":12,"Song of Solomon":8,"Isaiah":66,"Jeremiah":52,
+  "Lamentations":5,"Ezekiel":48,"Daniel":12,"Hosea":14,"Joel":3,"Amos":9,
+  "Obadiah":1,"Jonah":4,"Micah":7,"Nahum":3,"Habakkuk":3,"Zephaniah":3,
+  "Haggai":2,"Zechariah":14,"Malachi":4,
+  "Matthew":28,"Mark":16,"Luke":24,"John":21,"Acts":28,"Romans":16,
+  "1 Corinthians":16,"2 Corinthians":13,"Galatians":6,"Ephesians":6,
+  "Philippians":4,"Colossians":4,"1 Thessalonians":5,"2 Thessalonians":3,
+  "1 Timothy":6,"2 Timothy":4,"Titus":3,"Philemon":1,"Hebrews":13,
+  "James":5,"1 Peter":5,"2 Peter":3,"1 John":5,"2 John":1,"3 John":1,
+  "Jude":1,"Revelation":22
+};
+
+let currentRef = '', currentBook = '', currentChapter = 1;
+let projFontSize = 2.4;
+
+function loadChapters() {
+  const book = document.getElementById('bookSel').value;
+  const chapSel = document.getElementById('chapSel');
+  const verseSel = document.getElementById('verseSel');
+  chapSel.innerHTML = '<option value="">— Chapter —</option>';
+  verseSel.innerHTML = '<option value="">— Verse (opt) —</option>';
+  if (!book) return;
+  const total = CHAPTERS[book] || 1;
+  for (let i=1; i<=total; i++) {
+    chapSel.innerHTML += `<option value="${i}">${i}</option>`;
+  }
 }
+
+function loadVerses() {
+  const verseSel = document.getElementById('verseSel');
+  verseSel.innerHTML = '<option value="">— Verse (opt) —</option>';
+  // Add 1-176 as options (enough for any chapter)
+  for (let i=1; i<=176; i++) verseSel.innerHTML += `<option value="${i}">${i}</option>`;
+}
+
+function fetchBCV(e) {
+  if (e) e.preventDefault();
+  const book = document.getElementById('bookSel').value;
+  const chap = document.getElementById('chapSel').value;
+  const verse = document.getElementById('verseSel').value;
+  if (!book || !chap) { alert('Please select a book and chapter.'); return; }
+  const ref = verse ? `${book} ${chap}:${verse}` : `${book} ${chap}`;
+  fetchVerseByRef(ref);
+}
+
+function fetchRef() {
+  const ref = document.getElementById('refInput').value.trim();
+  if (!ref) return;
+  fetchVerseByRef(ref);
+}
+
+function quickLoad(ref) {
+  document.getElementById('refInput').value = ref;
+  fetchVerseByRef(ref);
+}
+
+async function fetchVerseByRef(ref) {
+  showLoading(true);
+  hideError();
+  hideResult();
+  currentRef = ref;
+  // Parse book and chapter for navigation
+  const parts = ref.match(/^(.+?)\s+(\d+)/);
+  if (parts) { currentBook = parts[1]; currentChapter = parseInt(parts[2]); }
+
+  try {
+    const enc = encodeURIComponent(ref.replace(/ /g, '+'));
+    const resp = await fetch(`https://bible-api.com/${enc}`);
+    if (!resp.ok) throw new Error('Verse not found');
+    const data = await resp.json();
+    if (data.error) throw new Error(data.error);
+    displayVerses(data);
+  } catch(err) {
+    showError(err.message || 'Could not fetch verse. Try another reference.');
+  } finally {
+    showLoading(false);
+  }
+}
+
+function displayVerses(data) {
+  document.getElementById('verseRef').textContent = data.reference;
+  document.getElementById('verseTrans').textContent = data.translation_name || 'World English Bible';
+
+  let html = '';
+  if (data.verses && data.verses.length > 0) {
+    data.verses.forEach(v => {
+      html += `<sup class="v-num">${v.verse}</sup>${v.text} `;
+    });
+  } else {
+    html = data.text || '';
+  }
+  document.getElementById('verseBody').innerHTML = html;
+
+  // Update projector content
+  document.getElementById('projectorRef').textContent = data.reference;
+  document.getElementById('projectorText').textContent = (data.verses
+    ? data.verses.map(v => v.text).join(' ')
+    : data.text || '').trim();
+
+  document.getElementById('verseResult').style.display = 'block';
+  document.getElementById('verseResult').scrollIntoView({behavior:'smooth', block:'start'});
+}
+
+function navigateChapter(delta) {
+  if (!currentBook) return;
+  const newChap = currentChapter + delta;
+  const maxChap = CHAPTERS[currentBook] || 1;
+  if (newChap < 1 || newChap > maxChap) return;
+  currentChapter = newChap;
+  fetchVerseByRef(`${currentBook} ${currentChapter}`);
+}
+
+// ── Projector ────────────────────────────────────────────────────────────────
+
+function openProjector() {
+  const overlay = document.getElementById('projectorOverlay');
+  overlay.classList.add('active');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeProjector() {
+  document.getElementById('projectorOverlay').classList.remove('active');
+  document.body.style.overflow = '';
+}
+
+function toggleTheme() {
+  document.getElementById('projectorOverlay').classList.toggle('light');
+}
+
+function changeSize(delta) {
+  projFontSize = Math.max(1.2, Math.min(5, projFontSize + delta * 0.3));
+  document.getElementById('projectorText').style.fontSize = projFontSize + 'rem';
+}
+
+function projNav(delta) {
+  navigateChapter(delta);
+  setTimeout(() => {
+    const txt = document.getElementById('verseBody').textContent;
+    const ref = document.getElementById('verseRef').textContent;
+    document.getElementById('projectorText').textContent = txt;
+    document.getElementById('projectorRef').textContent = ref;
+  }, 2000);
+}
+
+// Keyboard shortcuts in projector mode
+document.addEventListener('keydown', e => {
+  const proj = document.getElementById('projectorOverlay');
+  if (!proj.classList.contains('active')) return;
+  if (e.key === 'Escape') closeProjector();
+  if (e.key === 'ArrowRight' || e.key === 'ArrowDown') projNav(1);
+  if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') projNav(-1);
+  if (e.key === '+' || e.key === '=') changeSize(1);
+  if (e.key === '-') changeSize(-1);
+  if (e.key === 't' || e.key === 'T') toggleTheme();
+});
+
+// ── Utilities ────────────────────────────────────────────────────────────────
+
+function copyVerse() {
+  const ref = document.getElementById('verseRef').textContent;
+  const txt = document.getElementById('verseBody').textContent.trim();
+  navigator.clipboard.writeText(`${ref}\n\n${txt}`).then(() => {
+    const btn = document.querySelector('.nav-btn[onclick="copyVerse()"]');
+    btn.textContent = 'Copied!';
+    setTimeout(() => btn.innerHTML = '<i class="bi bi-clipboard me-1"></i>Copy', 2000);
+  });
+}
+
+function showLoading(v) { document.getElementById('bibleLoading').style.display = v ? 'block' : 'none'; }
+function hideError() { document.getElementById('bibleError').style.display = 'none'; }
+function hideResult() { document.getElementById('verseResult').style.display = 'none'; }
+function showError(msg) {
+  document.getElementById('bibleErrorMsg').textContent = msg;
+  document.getElementById('bibleError').style.display = 'block';
+}
+
+// ── Auto-load if reference in URL ─────────────────────────────────────────────
+{% if reference %}fetchVerseByRef('{{ reference }}');{% endif %}
+
+// Django template filter workaround for split
+// The quick-chips above use string splitting done server-side
 </script>
 {% endblock %}

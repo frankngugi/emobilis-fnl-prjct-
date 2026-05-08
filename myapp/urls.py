@@ -64,6 +64,12 @@ urlpatterns = [
     path('adminn/groups/<int:pk>/delete/', views.group_delete, name='group_delete'),
     path('adminn/userreports', views.user_report, name='user_report'),
 
+    # Regional Church Network
+    path('regional/', views.regional_churches, name='regional_churches'),
+    path('regional/<int:pk>/', views.church_detail, name='church_detail'),
+    path('adminn/clergy-payments/', views.clergy_payments, name='clergy_payments'),
+    path('adminn/clergy-payments/add/', views.add_clergy_payment, name='add_clergy_payment'),
+
     # Community Chat
     path('chats', views.chat_view, name='chats'),
     path('chats/send/<int:room_id>/', views.send_chat_message, name='send_chat_message'),

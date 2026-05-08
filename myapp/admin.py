@@ -5,7 +5,8 @@ from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 from .models import (
     CustomUser, UserProfile, Events, Attendee, Group, Member,
-    Announcement, Hymn, OTPCode, Payment, Media, Images, Video, RoleRequest
+    Announcement, Hymn, OTPCode, Payment, Media, Images, Video, RoleRequest,
+    BranchChurch, ChurchLeader, RegionalMember, ClergyPayment
 )
 
 # ── Admin site branding ─────────────────────────────────────────────────────
@@ -148,3 +149,56 @@ class RoleRequestAdmin(admin.ModelAdmin):
     search_fields = ('user__username', 'user__email')
     readonly_fields = ('created_at', 'reviewed_at')
     list_editable = ('status',)
+
+
+# ── Regional Church Network ────────────────────────────────────────────────────
+
+@admin.register(BranchChurch)
+class BranchChurchAdmin(admin.ModelAdmin):
+    list_display = ('name', 'region', 'location', 'phone', 'status', 'established_date')
+    list_filter = ('region', 'status')
+    search_fields = ('name', 'location', 'phone', 'email')
+    list_editable = ('status',)
+
+
+@admin.register(ChurchLeader)
+class ChurchLeaderAdmin(admin.ModelAdmin):
+    list_display = ('user', 'position', 'church', 'is_active', 'date_appointed')
+    list_filter = ('position', 'is_active', 'church')
+    search_fields = ('user__first_name', 'user__last_name', 'user__username')
+    list_editable = ('is_active',)
+    autocomplete_fields = ['user']
+
+
+@admin.register(RegionalMember)
+class RegionalMemberAdmin(admin.ModelAdmin):
+    list_display = ('name', 'church', 'fellowship_group', 'phone', 'date_joined')
+    list_filter = ('church', 'fellowship_group')
+    search_fields = ('name', 'email', 'phone')
+
+
+# ── Clergy Payments (SUPERADMIN ONLY) ─────────────────────────────────────────
+
+class ClergyPaymentAdmin(admin.ModelAdmin):
+    list_display = ('recipient', 'payment_type', 'amount', 'period', 'church', 'status', 'created_at')
+    list_filter = ('status', 'payment_type', 'church')
+    search_fields = ('recipient__username', 'recipient__first_name', 'mpesa_receipt')
+    readonly_fields = ('created_at',)
+    list_editable = ('status',)
+
+    def has_module_perms(self, request):
+        return request.user.is_superuser
+
+    def has_view_permission(self, request, obj=None):
+        return request.user.is_superuser
+
+    def has_change_permission(self, request, obj=None):
+        return request.user.is_superuser
+
+    def has_add_permission(self, request):
+        return request.user.is_superuser
+
+    def has_delete_permission(self, request, obj=None):
+        return request.user.is_superuser
+
+admin.site.register(ClergyPayment, ClergyPaymentAdmin)

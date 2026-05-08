@@ -270,51 +270,92 @@
   </section>
   {% endif %}
 
-  <!-- Contact Section -->
+  <!-- Contact + Map Section -->
   <section id="contact" class="contact">
     <div class="container" data-aos="fade-up">
       <div class="section-title">
-        <h2>Contact Us</h2>
-        <p>We'd love to hear from you</p>
+        <h2>Find Us</h2>
+        <p>Redeemed Gospel Church Nyahururu — Regional HQ, Central Rift Region</p>
       </div>
-      <div class="row mt-5">
+      <div class="row mt-4 g-4">
         <div class="col-lg-4">
           <div class="info">
-            <div class="address mb-3">
-              <i class="bi bi-geo-alt" style="color:#8b0000;"></i>
-              <h4>Location</h4>
-              <p>Nyahururu, Laikipia County, Kenya</p>
+            <div class="d-flex mb-3 gap-3">
+              <i class="bi bi-geo-alt-fill fs-4" style="color:#8b0000;flex-shrink:0;"></i>
+              <div><h4 class="mb-0">Location</h4><p class="mb-0">Nyahururu, Laikipia County, Kenya</p><small class="text-muted">Central Rift Regional HQ</small></div>
             </div>
-            <div class="email mb-3">
-              <i class="bi bi-envelope" style="color:#8b0000;"></i>
-              <h4>Email</h4>
-              <p>info@redeemedgospelchurch.org</p>
+            <div class="d-flex mb-3 gap-3">
+              <i class="bi bi-envelope-fill fs-4" style="color:#8b0000;flex-shrink:0;"></i>
+              <div><h4 class="mb-0">Email</h4><p class="mb-0">info@redeemedgospelchurch.org</p></div>
             </div>
-            <div class="phone mb-3">
-              <i class="bi bi-telephone" style="color:#8b0000;"></i>
-              <h4>Phone</h4>
-              <p>+254 712 760 740</p>
+            <div class="d-flex mb-3 gap-3">
+              <i class="ri-whatsapp-fill fs-4" style="color:#25D366;flex-shrink:0;"></i>
+              <div><h4 class="mb-0">WhatsApp / Phone</h4>
+                <a href="https://wa.me/254712760740" target="_blank" style="color:#25D366;font-weight:700;">+254 712 760 740</a>
+              </div>
+            </div>
+            <div class="p-3 rounded-3 mb-3" style="background:#f9f9f9;border-left:4px solid #c9a227;">
+              <h6 class="fw-bold mb-2">Service Times</h6>
+              <table class="table table-sm mb-0">
+                <tr><td>Sunday Service</td><td class="fw-bold text-danger">9:00 AM</td></tr>
+                <tr><td>Sunday School</td><td class="fw-bold text-danger">8:00 AM</td></tr>
+                <tr><td>Wed Bible Study</td><td class="fw-bold text-danger">6:00 PM</td></tr>
+                <tr><td>Fri Prayer</td><td class="fw-bold text-danger">6:00 PM</td></tr>
+              </table>
+            </div>
+            <div class="d-grid gap-2">
+              <a href="/register" class="btn btn-danger"><i class="bi bi-person-plus me-1"></i>Join RGC</a>
+              <a href="https://wa.me/254712760740?text=Hello%20RGC%20Nyahururu" target="_blank" class="btn" style="background:#25D366;color:#fff;"><i class="ri-whatsapp-fill me-1"></i>Chat on WhatsApp</a>
+              <a href="/regional/" class="btn btn-outline-dark btn-sm"><i class="bi bi-diagram-3 me-1"></i>Regional Churches</a>
             </div>
           </div>
         </div>
         <div class="col-lg-8">
-          <div class="p-4 rounded shadow-sm" style="background:#f9f9f9;">
-            <h5 class="mb-3">Service Times</h5>
-            <table class="table table-sm">
-              <tr><td><strong>Sunday Morning Service</strong></td><td>9:00 AM</td></tr>
-              <tr><td><strong>Sunday School</strong></td><td>8:00 AM</td></tr>
-              <tr><td><strong>Wednesday Bible Study</strong></td><td>6:00 PM</td></tr>
-              <tr><td><strong>Friday Prayer Meeting</strong></td><td>6:00 PM</td></tr>
-            </table>
-            <div class="mt-3">
-              <a href="/register" class="btn btn-danger me-2"><i class="bi bi-person-plus me-1"></i>Join Us</a>
-              <a href="/contribute" class="btn btn-warning text-dark"><i class="bi bi-heart me-1"></i>Give Online</a>
-            </div>
+          <div style="border-radius:14px;overflow:hidden;box-shadow:0 4px 20px rgba(0,0,0,.1);">
+            <div id="churchMap" style="height:420px;width:100%;"></div>
           </div>
+          <p class="text-muted small text-center mt-2">
+            <i class="bi bi-geo-alt-fill text-danger me-1"></i>RGC Nyahururu Regional HQ ·
+            <a href="https://www.google.com/maps/search/Redeemed+Gospel+Church+Nyahururu" target="_blank" class="text-danger">Open in Google Maps</a>
+          </p>
         </div>
       </div>
     </div>
   </section>
+
+  <!-- Leaflet map (OpenStreetMap — free, no API key) -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script>
+  document.addEventListener('DOMContentLoaded', function() {
+    const map = L.map('churchMap').setView([-0.0296, 36.3590], 15);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>', maxZoom:19
+    }).addTo(map);
+    const icon = L.divIcon({
+      className:'',
+      html:`<div style="background:#8b0000;color:#fff;border-radius:50% 50% 50% 0;
+              width:38px;height:38px;display:flex;align-items:center;justify-content:center;
+              font-size:1.1rem;box-shadow:0 3px 10px rgba(139,0,0,.5);transform:rotate(-45deg);">
+             <span style="transform:rotate(45deg);">✝</span></div>`,
+      iconSize:[38,38], iconAnchor:[19,38], popupAnchor:[0,-42]
+    });
+    L.marker([-0.0296,36.3590],{icon}).addTo(map).bindPopup(
+      `<div style="text-align:center;min-width:200px;">
+        <strong style="color:#8b0000;">Redeemed Gospel Church Nyahururu</strong><br>
+        <small style="color:#c9a227;font-weight:700;">Central Rift Regional HQ</small><br><br>
+        <small>📍 Nyahururu, Laikipia County, Kenya</small><br>
+        <small>📞 +254 712 760 740</small><br><br>
+        <a href="https://www.google.com/maps/search/Redeemed+Gospel+Church+Nyahururu"
+           target="_blank" style="background:#8b0000;color:#fff;padding:4px 14px;
+           border-radius:20px;font-size:.75rem;text-decoration:none;font-weight:700;">
+          Open in Google Maps
+        </a>
+      </div>`
+    ).openPopup();
+    L.control.scale({imperial:false}).addTo(map);
+  });
+  </script>
 
 </main>
 

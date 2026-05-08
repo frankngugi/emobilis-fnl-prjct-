@@ -113,17 +113,33 @@ def register_view(request):
 
 
 def _send_email_otp(request, user):
-    from .services import send_email
+    """
+    Send OTP via:
+    1. WhatsApp (if Meta credentials configured + user has phone)
+    2. Email (always, as primary or fallback)
+    """
+    from .services import send_email, send_whatsapp_otp, _normalize_phone
     code = OTPCode.generate_code()
     OTPCode.objects.create(user=user, email=user.email, code=code, purpose='email')
-    subject = f"Email Verification – {settings.CHURCH_NAME}"
-    message = (
-        f"Hello {user.first_name or user.username},\n\n"
-        f"Your email verification code is: {code}\n\n"
+
+    name = user.first_name or user.username
+    subject = f"Verification Code – {settings.CHURCH_NAME}"
+    email_body = (
+        f"Hello {name},\n\n"
+        f"Your RGC verification code is: {code}\n\n"
         f"This code expires in 10 minutes.\n\n"
         f"God bless you!\n{settings.CHURCH_NAME}"
     )
-    send_email(subject, message, [user.email])
+
+    # Try WhatsApp OTP first (if phone available + Meta configured)
+    wa_sent = False
+    if user.phone and getattr(settings, 'WHATSAPP_ACCESS_TOKEN', ''):
+        phone_e164 = _normalize_phone(user.phone)
+        wa_result = send_whatsapp_otp(phone_e164, code, name)
+        wa_sent = wa_result.get('success', False)
+
+    # Always send email as well (primary if no WhatsApp, confirmation otherwise)
+    send_email(subject, email_body, [user.email])
 
 
 def verify_email_notice(request):
@@ -355,6 +371,11 @@ def bible(request):
         'reference': reference,
         'books': books,
         'error': error,
+        'quick_refs': [
+            'John 3:16','Psalms 23','Romans 8:28','Proverbs 3:5-6',
+            'Philippians 4:13','Isaiah 40:31','Matthew 6:33',
+            'Jeremiah 29:11','Hebrews 11:1','1 Corinthians 13',
+        ],
     })
 
 
@@ -936,3 +957,81 @@ def get_chat_messages(request, room_id):
         'time': m.created_at.strftime('%H:%M'),
         'mine': m.sender == request.user,
     } for m in msgs]})
+
+
+# ─── Regional Church Network ───────────────────────────────────────────────────
+
+from .models import BranchChurch, ChurchLeader, RegionalMember, ClergyPayment
+
+def regional_churches(request):
+    churches = BranchChurch.objects.filter(is_active=True).order_by('region', 'name') if True else []
+    try:
+        from .models import BranchChurch as BC
+        churches = BC.objects.all().order_by('region', 'name')
+    except Exception:
+        churches = []
+    context = {
+        'churches': churches,
+        'total': len(list(churches)),
+        'regions': BranchChurch.REGION_CHOICES,
+    }
+    return render(request, 'regional.html', context)
+
+
+def church_detail(request, pk):
+    church = get_object_or_404(BranchChurch, pk=pk)
+    leaders = ChurchLeader.objects.filter(church=church, is_active=True)
+    members = RegionalMember.objects.filter(church=church)
+    return render(request, 'church_detail.html', {
+        'church': church, 'leaders': leaders, 'members': members,
+    })
+
+
+@login_required
+def clergy_payments(request):
+    """Clergy payments — ONLY superadmin can view."""
+    if not request.user.is_superuser:
+        messages.error(request, "Access denied. This section is restricted to the Super Administrator only.")
+        return redirect('adminn')
+    payments = ClergyPayment.objects.select_related('recipient', 'church', 'paid_by').order_by('-created_at')
+    pending = payments.filter(status='pending')
+    return render(request, 'clergy_payments.html', {
+        'payments': payments,
+        'pending': pending,
+        'total_approved': sum(p.amount for p in payments.filter(status__in=['approved', 'paid'])),
+    })
+
+
+@login_required
+def add_clergy_payment(request):
+    if not request.user.is_superuser:
+        messages.error(request, "Access denied.")
+        return redirect('adminn')
+    if request.method == 'POST':
+        from django.contrib.auth import get_user_model
+        U = get_user_model()
+        recipient_id = request.POST.get('recipient')
+        amount = request.POST.get('amount')
+        payment_type = request.POST.get('payment_type')
+        period = request.POST.get('period', '')
+        church_id = request.POST.get('church', '')
+        notes = request.POST.get('notes', '')
+        try:
+            recipient = U.objects.get(pk=recipient_id)
+            church = BranchChurch.objects.get(pk=church_id) if church_id else None
+            ClergyPayment.objects.create(
+                recipient=recipient, amount=amount, payment_type=payment_type,
+                period=period, church=church, notes=notes,
+                paid_by=request.user, status='approved',
+            )
+            messages.success(request, f"Payment record added for {recipient.get_full_name() or recipient.username}.")
+        except Exception as e:
+            messages.error(request, f"Error: {e}")
+        return redirect('clergy_payments')
+    clergy_users = get_user_model().objects.filter(role__in=['pastor', 'reverend'])
+    churches = BranchChurch.objects.all()
+    return render(request, 'add_clergy_payment.html', {
+        'clergy_users': clergy_users,
+        'churches': churches,
+        'payment_types': ClergyPayment.PAYMENT_TYPE_CHOICES,
+    })
