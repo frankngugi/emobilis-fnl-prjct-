@@ -52,6 +52,8 @@ INSTALLED_APPS = [
     'corsheaders',
     'rest_framework',
     'rest_framework_simplejwt',
+    'cloudinary',
+    'cloudinary_storage',
     'myapp',
 ]
 
@@ -156,7 +158,33 @@ STATIC_URL = '/static/'
 STATICFILES_DIRS = [BASE_DIR / 'static']
 STATIC_ROOT = BASE_DIR / 'staticfiles'    # collectstatic output for production
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
-MEDIA_URL = '/media/'
+
+# ── Cloudinary — Media / File Storage ────────────────────────────────────────
+# Uploads (images, videos, files) are stored on Cloudinary in production.
+# Locally, files fall back to MEDIA_ROOT when CLOUDINARY_CLOUD_NAME is not set.
+CLOUDINARY_CLOUD_NAME = os.environ.get('CLOUDINARY_CLOUD_NAME', '')
+CLOUDINARY_API_KEY    = os.environ.get('CLOUDINARY_API_KEY', '')
+CLOUDINARY_API_SECRET = os.environ.get('CLOUDINARY_API_SECRET', '')
+
+if CLOUDINARY_CLOUD_NAME:
+    import cloudinary
+    cloudinary.config(
+        cloud_name=CLOUDINARY_CLOUD_NAME,
+        api_key=CLOUDINARY_API_KEY,
+        api_secret=CLOUDINARY_API_SECRET,
+        secure=True,
+    )
+    CLOUDINARY_STORAGE = {
+        'CLOUD_NAME': CLOUDINARY_CLOUD_NAME,
+        'API_KEY':    CLOUDINARY_API_KEY,
+        'API_SECRET': CLOUDINARY_API_SECRET,
+    }
+    DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
+    MEDIA_URL = f'https://res.cloudinary.com/{CLOUDINARY_CLOUD_NAME}/'
+else:
+    # Local development — files stored in /media/
+    MEDIA_URL = '/media/'
+
 MEDIA_ROOT = BASE_DIR / 'media'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
