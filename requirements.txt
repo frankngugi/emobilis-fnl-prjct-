@@ -7,7 +7,7 @@ requests==2.33.1
 whitenoise==6.12.0
 gunicorn==26.0.0
 dj-database-url==3.1.2
-psycopg2-binary==2.9.10
+psycopg2-binary==2.9.12
 twilio>=9.0
 africastalking>=1.0.0
 resend>=0.8.0
