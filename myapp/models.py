@@ -82,6 +82,25 @@ class CustomUser(AbstractUser):
         return self.role in ('pastor', 'reverend')
 
 
+class SiteSettings(models.Model):
+    """Singleton: site-wide feature flags controlled by admin."""
+    mpesa_enabled = models.BooleanField(
+        default=False,
+        help_text="Show the Give / Contributions section to all logged-in members"
+    )
+
+    class Meta:
+        verbose_name = 'Site Settings'
+
+    @classmethod
+    def get(cls):
+        obj, _ = cls.objects.get_or_create(pk=1)
+        return obj
+
+    def __str__(self):
+        return 'Site Settings'
+
+
 class UserProfile(models.Model):
     user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     profile_picture = models.ImageField(upload_to='profile_pictures/', blank=True, null=True)

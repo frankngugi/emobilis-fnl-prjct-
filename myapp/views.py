@@ -784,15 +784,18 @@ def event_list(request):
 # ─── Contributions / M-Pesa ────────────────────────────────────────────────────
 
 def contribute(request):
+    from .models import SiteSettings
+    site = SiteSettings.get()
     is_bypass = request.session.get('dev_bypass', False)
     is_admin = request.user.is_authenticated and (
         request.user.is_staff or request.user.is_superuser or
         request.user.role in ('admin', 'manager', 'pastor')
     )
-    if not (is_admin or is_bypass):
+    # Access: admin always, members only after admin has deployed, dev bypass for testing
+    if not (is_admin or is_bypass or (site.mpesa_enabled and request.user.is_authenticated)):
         if not request.user.is_authenticated:
-            return redirect(f'/login?next=/contribute')
-        messages.warning(request, "Online giving is being set up. Please check back soon, or contact the church treasurer.")
+            return redirect('/login?next=/contribute')
+        messages.warning(request, "Online giving is coming soon. Check back later or contact the church treasurer.")
         return redirect('index')
 
     if request.method == 'POST':
@@ -964,6 +967,7 @@ def adminn(request):
     if not (request.user.is_staff or request.user.is_superuser):
         messages.error(request, "Admin access required.")
         return redirect('index')
+    from .models import SiteSettings
     context = {
         'total_members': Member.objects.count(),
         'total_events': Events.objects.count(),
@@ -973,8 +977,25 @@ def adminn(request):
         'recent_events': Events.objects.order_by('-created_at')[:5],
         'recent_announcements': Announcement.objects.order_by('-date_posted')[:5],
         'recent_members': Member.objects.order_by('-date_joined')[:10],
+        'site_settings': SiteSettings.get(),
     }
     return render(request, 'adminn.html', context)
+
+
+@login_required
+def toggle_mpesa(request):
+    """Admin-only: enable or disable Give / M-Pesa tab for all members."""
+    if not (request.user.is_staff or request.user.is_superuser):
+        messages.error(request, "Permission denied.")
+        return redirect('adminn')
+    if request.method == 'POST':
+        from .models import SiteSettings
+        s = SiteSettings.get()
+        s.mpesa_enabled = not s.mpesa_enabled
+        s.save()
+        label = "enabled and visible to all members" if s.mpesa_enabled else "disabled and hidden from members"
+        messages.success(request, f"Give / Contributions is now {label}.")
+    return redirect('adminn')
 
 
 @login_required

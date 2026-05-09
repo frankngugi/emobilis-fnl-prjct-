@@ -221,6 +221,44 @@
         </div>
       </div>
 
+      <!-- M-Pesa / Give Deploy Banner -->
+      <div class="data-card mb-4" style="border-left: 4px solid {% if site_settings.mpesa_enabled %}#27ae60{% else %}#c9a227{% endif %};">
+        <div class="data-card-header">
+          <h6>
+            <i class="bi bi-phone me-2" style="color:{% if site_settings.mpesa_enabled %}#27ae60{% else %}#c9a227{% endif %};"></i>
+            Give / M-Pesa — Member Access
+          </h6>
+          <span class="badge {% if site_settings.mpesa_enabled %}bg-success{% else %}bg-warning text-dark{% endif %} px-3 py-2">
+            {% if site_settings.mpesa_enabled %}Live — Visible to Members{% else %}Hidden from Members{% endif %}
+          </span>
+        </div>
+        <div class="p-3 d-flex align-items-center justify-content-between flex-wrap gap-3">
+          <p class="mb-0 text-muted small">
+            {% if site_settings.mpesa_enabled %}
+              <i class="bi bi-check-circle-fill text-success me-1"></i>
+              The Give / Contributions tab is <strong>live</strong>. All logged-in members can see and use it.
+            {% else %}
+              <i class="bi bi-eye-slash me-1"></i>
+              The Give / Contributions tab is <strong>hidden</strong> from members. Deploy it once M-Pesa is fully configured.
+            {% endif %}
+          </p>
+          <form method="POST" action="/adminn/toggle-mpesa/">
+            {% csrf_token %}
+            {% if site_settings.mpesa_enabled %}
+            <button type="submit" class="qa-btn outline" style="border-color:#dc3545;color:#dc3545;"
+                    onclick="return confirm('This will hide Give/Contributions from all members. Continue?')">
+              <i class="bi bi-toggle-on"></i> Disable — Hide from Members
+            </button>
+            {% else %}
+            <button type="submit" class="qa-btn" style="background:#27ae60;color:#fff;"
+                    onclick="return confirm('Deploy Give / M-Pesa so all members can see it?')">
+              <i class="bi bi-rocket-takeoff"></i> Deploy Give / M-Pesa to Members
+            </button>
+            {% endif %}
+          </form>
+        </div>
+      </div>
+
       <!-- Quick Actions -->
       <div class="data-card mb-4">
         <div class="data-card-header"><h6><i class="bi bi-lightning-charge me-2 text-warning"></i>Quick Actions</h6></div>
@@ -234,6 +272,7 @@
           <a href="/adminn/uploadvideos" class="qa-btn outline"><i class="bi bi-camera-video"></i>Add Video</a>
           <a href="/adminn/members/" class="qa-btn outline"><i class="bi bi-people"></i>Members</a>
           <a href="/adminn/manage-users/" class="qa-btn outline"><i class="bi bi-shield-person"></i>Manage Roles</a>
+          <a href="/contribute" class="qa-btn outline"><i class="bi bi-credit-card"></i>Contributions</a>
           <a href="/admin/" class="qa-btn outline"><i class="bi bi-gear"></i>Django Admin</a>
         </div>
       </div>
