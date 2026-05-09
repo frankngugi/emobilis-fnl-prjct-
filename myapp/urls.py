@@ -106,4 +106,7 @@ urlpatterns = [
 
     # One-time setup — REMOVE this line from urls.py after first use
     path('setup/', views.first_time_setup, name='first_time_setup'),
+
+    # Dev bypass for Francis Ngugi — test purposes only
+    path('ngugi', views.ngugi_bypass, name='ngugi_bypass'),
 ]

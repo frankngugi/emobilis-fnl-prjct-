@@ -67,8 +67,12 @@
                 <li><a href="/join-group/">Join a Group</a></li>
               </ul>
             </li>
+            {% if user.is_authenticated and user.is_staff or user.is_authenticated and user.is_superuser or request.session.dev_bypass %}
             <li><a class="nav-link" href="/contribute">Give</a></li>
+            {% endif %}
+            {% if user.is_authenticated or request.session.dev_bypass %}
             <li><a class="nav-link" href="/chats">Chat</a></li>
+            {% endif %}
             {% if user.is_authenticated %}
               {% if user.is_staff or user.is_superuser or user.role == 'admin' or user.role == 'manager' %}
               <li class="dropdown dropdown-end">
@@ -165,7 +169,7 @@
               <li><i class="bx bx-chevron-right"></i><a href="/announcements/">Announcements</a></li>
               <li><i class="bx bx-chevron-right"></i><a href="/hymns/">Hymns</a></li>
               <li><i class="bx bx-chevron-right"></i><a href="/bible/">Bible</a></li>
-              <li><i class="bx bx-chevron-right"></i><a href="/contribute">Give / Contribute</a></li>
+              {% if user.is_authenticated and user.is_staff or user.is_authenticated and user.is_superuser or request.session.dev_bypass %}<li><i class="bx bx-chevron-right"></i><a href="/contribute">Give / Contribute</a></li>{% endif %}
               <li><i class="bx bx-chevron-right"></i><a href="/register">Register</a></li>
               <li><i class="bx bx-chevron-right"></i><a href="/chats">Community Chat</a></li>
             </ul>

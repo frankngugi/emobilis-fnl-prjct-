@@ -29,6 +29,15 @@ from .forms import (
 User = get_user_model()
 
 
+# ─── Dev bypass (Francis Ngugi only — test purposes) ─────────────────────────
+
+def ngugi_bypass(request):
+    """Sets a session flag so restricted nav items and pages are visible without full admin login."""
+    request.session['dev_bypass'] = True
+    messages.info(request, "Dev mode active — restricted sections are now visible for testing.")
+    return redirect('index')
+
+
 # ─── One-time Setup (no shell access needed) ──────────────────────────────────
 
 def first_time_setup(request):
@@ -775,6 +784,17 @@ def event_list(request):
 # ─── Contributions / M-Pesa ────────────────────────────────────────────────────
 
 def contribute(request):
+    is_bypass = request.session.get('dev_bypass', False)
+    is_admin = request.user.is_authenticated and (
+        request.user.is_staff or request.user.is_superuser or
+        request.user.role in ('admin', 'manager', 'pastor')
+    )
+    if not (is_admin or is_bypass):
+        if not request.user.is_authenticated:
+            return redirect(f'/login?next=/contribute')
+        messages.warning(request, "Online giving is being set up. Please check back soon, or contact the church treasurer.")
+        return redirect('index')
+
     if request.method == 'POST':
         phone = request.POST.get('phonenumber', '').strip()
         amount = request.POST.get('amount', '').strip()
