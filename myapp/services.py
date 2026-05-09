@@ -1,6 +1,7 @@
 """
 RGC Notification Services
--  send_email()            — Resend API (FREE, 3000/month, no SMTP blocking)
+-  send_email()            — Brevo API primary (300/day free, no domain needed)
+                             Falls back to Resend if BREVO_API_KEY not set.
 -  send_push()             — Expo Push Notifications (FREE, for mobile app)
 -  send_push_to_user()     — Send push to all devices of a user
 -  send_push_to_all()      — Broadcast to all app users (announcements etc.)
@@ -15,53 +16,81 @@ from django.conf import settings
 logger = logging.getLogger(__name__)
 
 
-# ── Email via Resend API (HTTPS, no SMTP port blocking) ───────────────────────
+# ── Email (Brevo primary → Resend fallback → console) ────────────────────────
 
 def send_email(subject: str, message: str, to: list[str], html_message: str = '') -> bool:
     """
-    Send email via Resend API (https://resend.com).
-    Uses HTTPS — works on all cloud providers including Render free tier.
-    Falls back to Django console backend in development (no RESEND_API_KEY needed).
+    Send email via Brevo API (primary) or Resend (fallback).
+    Both use HTTPS — work on Render free tier without SMTP port issues.
+    Falls back to Django console backend in local development.
     """
-    api_key = getattr(settings, 'RESEND_API_KEY', '')
+    brevo_key = getattr(settings, 'BREVO_API_KEY', '')
+    print(f'[RGC EMAIL] BREVO_API_KEY present={bool(brevo_key)} len={len(brevo_key)} first4={brevo_key[:4]!r}', flush=True)
+    if brevo_key:
+        return _send_via_brevo(subject, message, to, html_message, brevo_key)
 
-    if api_key:
-        # Production: use Resend HTTP API
-        try:
-            import resend
-            resend.api_key = api_key
-            from_email = getattr(settings, 'RESEND_FROM_EMAIL',
-                                  'RGC Nyahururu <onboarding@resend.dev>')
-            params = {
-                'from': from_email,
-                'to': to,
-                'subject': subject,
-                'text': message,
-            }
-            if html_message:
-                params['html'] = html_message
-            resend.Emails.send(params)
-            logger.info(f'Email sent via Resend to {to}: {subject}')
-            return True
-        except Exception as e:
-            logger.error(f'Resend email failed to {to}: {e}')
+    resend_key = getattr(settings, 'RESEND_API_KEY', '')
+    if resend_key:
+        return _send_via_resend(subject, message, to, html_message, resend_key)
+
+    # Development fallback: print to console
+    try:
+        from django.core.mail import send_mail
+        send_mail(subject=subject, message=message,
+                  from_email=settings.DEFAULT_FROM_EMAIL,
+                  recipient_list=to, fail_silently=True)
+        logger.info(f'Email (console) to {to}: {subject}')
+        return True
+    except Exception as e:
+        logger.error(f'Console email failed: {e}')
+        return False
+
+
+def _send_via_brevo(subject, message, to, html_message, api_key):
+    import urllib.request, json as _json
+    sender_name = getattr(settings, 'BREVO_SENDER_NAME', 'RGC Nyahururu')
+    sender_email = getattr(settings, 'BREVO_SENDER_EMAIL', settings.DEFAULT_FROM_EMAIL.split('<')[-1].rstrip('>'))
+    payload = {
+        'sender': {'name': sender_name, 'email': sender_email},
+        'to': [{'email': addr} for addr in to],
+        'subject': subject,
+        'textContent': message,
+    }
+    if html_message:
+        payload['htmlContent'] = html_message
+    data = _json.dumps(payload).encode()
+    req = urllib.request.Request(
+        'https://api.brevo.com/v3/smtp/email',
+        data=data,
+        headers={'api-key': api_key, 'Content-Type': 'application/json'},
+        method='POST',
+    )
+    try:
+        with urllib.request.urlopen(req, timeout=10) as resp:
+            if resp.status in (200, 201):
+                logger.info(f'Email sent via Brevo to {to}: {subject}')
+                return True
+            logger.error(f'Brevo unexpected status {resp.status} for {to}')
             return False
-    else:
-        # Development: print to console
-        try:
-            from django.core.mail import send_mail
-            send_mail(
-                subject=subject,
-                message=message,
-                from_email=settings.DEFAULT_FROM_EMAIL,
-                recipient_list=to,
-                fail_silently=True,
-            )
-            logger.info(f'Email (console) to {to}: {subject}')
-            return True
-        except Exception as e:
-            logger.error(f'Console email failed: {e}')
-            return False
+    except Exception as e:
+        logger.error(f'Brevo email failed to {to}: {e}')
+        return False
+
+
+def _send_via_resend(subject, message, to, html_message, api_key):
+    try:
+        import resend
+        resend.api_key = api_key
+        from_email = getattr(settings, 'RESEND_FROM_EMAIL', 'RGC Nyahururu <onboarding@resend.dev>')
+        params = {'from': from_email, 'to': to, 'subject': subject, 'text': message}
+        if html_message:
+            params['html'] = html_message
+        resend.Emails.send(params)
+        logger.info(f'Email sent via Resend to {to}: {subject}')
+        return True
+    except Exception as e:
+        logger.error(f'Resend email failed to {to}: {e}')
+        return False
 
 
 def send_registration_email(user) -> bool:

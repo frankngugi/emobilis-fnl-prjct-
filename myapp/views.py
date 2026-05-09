@@ -205,11 +205,33 @@ def _send_email_otp(request, user):
         wa_sent = wa_result.get('success', False)
 
     # Always send email as well (primary if no WhatsApp, confirmation otherwise)
-    send_email(subject, email_body, [user.email])
+    sent = send_email(subject, email_body, [user.email])
+    if not sent:
+        # Email delivery failed (e.g. onboarding@resend.dev sender restriction).
+        # Log OTP so admin can look it up in Render logs as a temporary fallback.
+        import logging
+        logging.getLogger(__name__).warning(
+            f'OTP EMAIL FAILED for {user.email} — manual OTP: {code}'
+        )
 
 
 def verify_email_notice(request):
     return render(request, 'verify_email_notice.html')
+
+
+def resend_otp(request):
+    if request.method == 'POST':
+        email = request.POST.get('email', '').strip()
+        try:
+            user = User.objects.get(email=email, is_email_verified=False)
+            # Invalidate all previous unused OTPs for this user
+            OTPCode.objects.filter(user=user, purpose='email', is_used=False).update(is_used=True)
+            _send_email_otp(request, user)
+            messages.success(request, "A new verification code has been sent to your email.")
+        except User.DoesNotExist:
+            # Don't reveal whether the email exists or is already verified
+            messages.success(request, "If that email is registered and unverified, a new code has been sent.")
+    return redirect('verify_email')
 
 
 def verify_email(request):

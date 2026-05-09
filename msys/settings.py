@@ -20,9 +20,23 @@ DEBUG = os.environ.get('DEBUG', 'True') == 'True'
 
 ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', '*').split(',')
 
+# Tell Django it's behind Render's HTTPS proxy — fixes CSRF Origin: null issue
+# caused by Django issuing a 301 redirect when it doesn't know it's already on HTTPS.
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+
+# Django 4.0+ requires trusted origins for HTTPS POST requests
+CSRF_TRUSTED_ORIGINS = [
+    origin.strip()
+    for origin in os.environ.get(
+        'CSRF_TRUSTED_ORIGINS',
+        'https://rgc-nyahururu-cms.onrender.com'
+    ).split(',')
+    if origin.strip()
+]
+
 # Production security settings (auto-enabled when DEBUG=False)
 if not DEBUG:
-    SECURE_SSL_REDIRECT = True
+    SECURE_SSL_REDIRECT = False  # Render's proxy handles HTTPS — don't double-redirect
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SECURE = True
     SECURE_HSTS_SECONDS = 31536000
@@ -176,10 +190,13 @@ else:
     EMAIL_HOST_USER = 'frneltp@gmail.com'
     DEFAULT_FROM_EMAIL = 'Redeemed Gospel Church <frneltp@gmail.com>'
 
-# ── Resend — Email API (replaces SMTP, works on all cloud providers) ─────────
+# ── Brevo — Email API primary (300/day free, single-sender, no domain needed) ─
+BREVO_API_KEY = os.environ.get('BREVO_API_KEY', '')
+BREVO_SENDER_NAME = os.environ.get('BREVO_SENDER_NAME', 'RGC Nyahururu')
+BREVO_SENDER_EMAIL = os.environ.get('BREVO_SENDER_EMAIL', 'frneltp@gmail.com')
+
+# ── Resend — Email API fallback (requires verified domain to reach any inbox) ──
 RESEND_API_KEY = os.environ.get('RESEND_API_KEY', '')
-# Once you verify your own domain on resend.com, change this to your address:
-# e.g. 'RGC Nyahururu <noreply@rgcnyahururu.org>'
 RESEND_FROM_EMAIL = os.environ.get('RESEND_FROM_EMAIL', 'RGC Nyahururu <onboarding@resend.dev>')
 
 # ── Africa's Talking — SMS Kenya ─────────────────────────────────────────

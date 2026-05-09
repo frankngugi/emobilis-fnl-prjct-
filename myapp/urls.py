@@ -13,6 +13,7 @@ urlpatterns = [
     path('switch-portal/<str:portal>/', views.switch_portal, name='switch_portal'),
     path('verify-email/', views.verify_email, name='verify_email'),
     path('verify-email/notice/', views.verify_email_notice, name='verify_email_notice'),
+    path('verify-email/resend/', views.resend_otp, name='resend_otp'),
     path('send-phone-otp/', views.send_phone_otp, name='send_phone_otp'),
     path('verify-phone/', views.verify_phone, name='verify_phone'),
 
